@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wave.today</title>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+/* Video background */
+#bgVideo {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+/* GIF overlay */
+#bgGif {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<video id="bgVideo" autoplay muted loop playsinline>
+  <source src="./assets/video/wave.mp4" type="video/mp4">
+</video>
+
+<img id="bgGif" src="./assets/gif/wave.gif" alt="">
+
+<script>
+const v = document.getElementById("bgVideo");
+if (v) {
+  v.play().catch(()=>{});
+}
+</script>
+
+</body>
+</html>
