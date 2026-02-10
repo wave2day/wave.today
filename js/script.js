@@ -1,4 +1,4 @@
-// video autoplay
+// autoplay video
 const bg = document.getElementById("bgVideo");
 if (bg) {
   bg.play().catch(()=>{});
