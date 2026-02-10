@@ -1,0 +1,23 @@
+/* ===== VIDEO BACKGROUND ===== */
+#video-layer{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background:#000;
+}
+
+#video-layer video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+/* všechno ostatní nad pozadím */
+body > *:not(#video-layer){
+  position: relative;
+  z-index: 1;
+}
