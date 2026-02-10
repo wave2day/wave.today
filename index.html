@@ -11,228 +11,663 @@
 
     /* ===== edge-to-edge sheet geometry ===== */
     --sheetR: 32px;                 /* horní radius plochy */
-    --sinkY: 0px;          
+    --sinkY: 0px;                  /* kolik je plocha pod displejem (zmizí spodní hrana) */
+    --platePad: 18px;               /* 🔥 jednotný odsazení (L/R/T) */
 
-    /* ===== orbit / glow ===== */
-    --orbSz: 64px;
-    --orbRing: 2px;
-    --orbGlow: 26px;
-    --orbRingA: .32;
+    /* ===== původní sklo proměnné ===== */
+    --glassClearA: rgba(255,255,255,.14);
+    --glassClearB: rgba(255,255,255,.08);
+    --glassMilkA:  rgba(255,255,255,.10);
+    --glassMilkB:  rgba(255,255,255,.12);
 
-    /* ===== sheet ===== */
-    --sheetPadX: 16px;
-    --sheetPadTop: 18px;
-    --sheetPadBot: 18px;
-    --sheetGap: 10px;
+    --glassRingThickness: 13px;
+    --glassRimBlur: 1.05px;
 
-    /* ===== typography ===== */
-    --label: 12px;
-    --title: 16px;
+    --topRimFade: 30%;
 
-    /* ===== colors ===== */
-    --glassA: .10;
-    --glassB: .18;
+    --botRim1: rgba(255,255,255,.74);
+    --botRim2: rgba(255,255,255,.30);
 
-    --ink: rgba(255,255,255,.90);
-    --ink2: rgba(255,255,255,.62);
+    --bleedA: .085;
+    --bleedB: .040;
 
-    /* ===== animation ===== */
-    --ease: cubic-bezier(.2,.9,.2,1);
-    --t: 320ms;
+    --pressTimeIn: 110ms;
+    --pressTimeOut: 190ms;
+
+    --rimTint: 170, 190, 255;
+    --bleedX: 78%;
+    --bleedY: 86%;
   }
 
-  html,body{
-    height:100%;
-    margin:0;
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
     background: var(--pageBg);
-    color: var(--ink);
-    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    overflow-x:hidden;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:#fff;
+    overscroll-behavior-y:contain;
   }
 
-  /* ===== VIDEO BACKGROUND (GitHub Pages) ===== */
-  #video-layer{
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    background: #000;
-  }
-  #video-layer video{
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: 50% 50%;
-  }
-  /* vše ostatní nad videem */
-  body > *:not(#video-layer){
-    position: relative;
-    z-index: 1;
-  }
-
-  /* ===== LAYOUT ===== */
+  /* =========================
+     CONTENT PLACEHOLDER
+  ========================= */
   .main{
     min-height:200vh;
-    display:block;
+    background:
+      radial-gradient(circle at 30% 20%, #ff0080, transparent 40%),
+      radial-gradient(circle at 70% 40%, #00ffd5, transparent 45%),
+      radial-gradient(circle at 50% 70%, #6b00ff, transparent 50%),
+      #000;
   }
 
-  /* ===== orb ===== */
-  #shareOrb{
-    position: fixed;
-    left: 16px;
-    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-    width: var(--orbSz);
-    height: var(--orbSz);
-    z-index: 30000;
-    border-radius: 999px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
+  /* =========================
+     BACKDROP
+  ========================= */
+  #wtSheetBackdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.28);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease;
+    z-index:20000;
+  }
+  #wtSheetBackdrop.show{ opacity:1; pointer-events:auto; }
+
+  /* =========================
+     ACTION SHEET (chování stejné)
+  ========================= */
+  #wtActionSheet{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+
+    transform:translateY(120%);
+    transition:transform .3s cubic-bezier(.2,.9,.2,1);
+
+    z-index:21000;
+
+    padding:0;          /* edge-to-edge */
+    overflow: visible;    /* flat bottom: no cut */
+    pointer-events:none;
+  }
+  #wtActionSheet.show{ transform:translateY(0); pointer-events:auto; }
+
+  /* v3.1 — výraznější „pop“ při otevření panelu */
+  .glassPlate{
+    transition: transform .22s cubic-bezier(.2,.85,.2,1);
+  }
+  #wtActionSheet.show .glassPlate{
+    transform: translateY(0);
   }
 
-  .glassBase{
-    position: relative;
-    width:100%;
-    height:100%;
-    border-radius:999px;
-    background: rgba(255,255,255,var(--glassA));
-    border: 1px solid rgba(255,255,255,.18);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 18px 70px rgba(0,0,0,.55);
+
+  /* =========================================================
+     GLASS PLATE — edge-to-edge, tight top spacing
+     ========================================================= */
+  .glassPlate{
+    position:relative;
+    width:100vw;
+    border-radius: var(--sheetR) var(--sheetR) 0 0;
+    transform: translateY(0);
+    isolation:isolate;
+
+    padding:
+      var(--platePad)
+      calc(var(--platePad) + env(safe-area-inset-left))
+      calc(var(--platePad) + env(safe-area-inset-bottom))
+      calc(var(--platePad) + env(safe-area-inset-right));
+
+    background:
+      radial-gradient(120% 140% at 50% 62%, var(--glassMilkA), transparent 62%),
+      radial-gradient(120% 160% at 50% 92%, var(--glassMilkB), transparent 58%),
+      radial-gradient(120% 140% at 28% 20%, var(--glassClearA), transparent 55%),
+      radial-gradient(140% 160% at 70% 74%, var(--glassClearB), transparent 60%),
+      rgba(255,255,255,.08);
+
+    box-shadow:
+      inset 0 18px 26px rgba(0,0,0,.24),
+      inset 0 -22px 30px rgba(255,255,255,.22),
+      0 26px 54px rgba(0,0,0,.20);
+
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: filter var(--pressTimeOut) ease;
+  }
+
+  .glassPlate::before{
+    content:"";
+    position:absolute;
+    inset: 12px;
+    border-radius: calc(var(--sheetR) - 6px) calc(var(--sheetR) - 6px) 0 0;
+    pointer-events:none;
+    z-index:1;
+
+    background:
+      radial-gradient(70% 90% at 16% 18%,
+        rgba(255,255,255,.42) 0%,
+        rgba(255,255,255,.18) 35%,
+        transparent 72%),
+      radial-gradient(44% 60% at 26% 30%,
+        rgba(255,255,255,.18) 0%,
+        transparent 72%);
+
+    filter: blur(1.35px);
+    opacity:.95;
+  }
+
+  .glassPlate::after{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: var(--sheetR) var(--sheetR) 0 0;
+    pointer-events:none;
+    z-index:2;
+
+    background:
+      radial-gradient(72% 120% at var(--bleedX) var(--bleedY),
+        rgba(var(--rimTint), var(--bleedA)) 0%,
+        rgba(var(--rimTint), var(--bleedB)) 28%,
+        transparent 68%),
+
+      conic-gradient(from 210deg,
+        transparent 0 18%,
+        rgba(var(--rimTint), .09) 22%,
+        transparent 36%,
+        rgba(var(--rimTint), .045) 46%,
+        transparent 62%,
+        rgba(var(--rimTint), .032) 70%,
+        transparent 100%),
+
+      linear-gradient(90deg,
+        transparent 0%,
+        rgba(var(--rimTint), .00) 58%,
+        rgba(var(--rimTint), .055) 78%,
+        rgba(var(--rimTint), .085) 92%,
+        transparent 100%),
+
+      /* bottom rim removed (flat bottom) */
+
+
+      radial-gradient(170% 120% at 50% -38%,
+        rgba(0,0,0,.30) 0%,
+        rgba(0,0,0,.12) 14%,
+        transparent var(--topRimFade));
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: 13px;
+    filter: blur(1.05px);
+    opacity:.95;
   }
 
   .pressGlow{
     position:absolute;
-    inset:-12px;
-    border-radius:999px;
-    background: radial-gradient(circle at 50% 50%,
-      rgba(255,255,255,.16),
-      rgba(255,255,255,0) 65%);
-    opacity:.0;
-    transition: opacity 220ms var(--ease);
+    inset:-28px;
+    border-radius: calc(var(--sheetR) + 14px);
     pointer-events:none;
+    opacity:0;
+    filter: blur(12px);
+    transform: scale(.995);
+    transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
+    z-index:0;
+
+    background:
+      radial-gradient(86% 86% at 70% 74%,
+        rgba(255,255,255,.18) 0%,
+        rgba(255,255,255,.10) 30%,
+        transparent 65%),
+      radial-gradient(120% 100% at 50% 120%,
+        rgba(255,255,255,.16) 0%,
+        transparent 55%);
   }
 
-  #shareOrb:active .pressGlow{ opacity: .9; }
+  /* =========================================================
+     WHITE CORE — top gap = stejné jako L/R padding (platePad)
+     ========================================================= */
+  .coreSquare{
+    position:relative;
+    z-index:3;
 
-  .coreBtn{
+    width: 100%;           /* 🔥 sedí přesně do plate paddingu */
+    margin: 0;             /* 🔥 žádná extra mezera navíc */
+
+    border-radius: calc(var(--sheetR) - 6px);
+    clip-path: inset(0 round calc(var(--sheetR) - 6px));
+    backface-visibility: hidden;
+    border:0;
+    padding: 0;
+
+    --c1:#ffffff;
+    --c2:#f1f1f6;
+    --c3:#d9d9e2;
+
+    background:
+      radial-gradient(120% 140% at 28% 18%, rgba(255,255,255,.20), transparent 55%),
+      linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
+
+    box-shadow:
+      0 18px 26px rgba(0,0,0,.18),
+      inset 0 16px 22px rgba(0,0,0,.16),
+      inset 0 -14px 20px rgba(255,255,255,.18),
+      inset 0 0 0 1px rgba(0,0,0,.16);
+
+    overflow:hidden;
+  }
+
+  .coreSquare::before{
+    content:"";
     position:absolute;
     inset:0;
-    width:100%;
-    height:100%;
+    border-radius: inherit;
+    pointer-events:none;
+    background:
+      radial-gradient(120% 140% at 50% 50%,
+        transparent 60%,
+        rgba(0,0,0,.32) 100%);
+    mix-blend-mode: soft-light;
+    opacity:.96;
+  }
+
+  .coreSquare::after{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: inherit;
+    pointer-events:none;
+
+    background:
+      radial-gradient(140% 120% at 50% 120%,
+        rgba(255,255,255,.70) 0%,
+        rgba(255,255,255,.30) 26%,
+        transparent 56%),
+      radial-gradient(170% 120% at 50% -38%,
+        rgba(0,0,0,.34) 0%,
+        rgba(0,0,0,.14) 16%,
+        transparent 34%);
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: 6px;
+    filter: blur(.78px);
+    opacity:.95;
+  }
+
+  /* 3 řádky uvnitř core */
+  .shareCore{ display:flex; flex-direction:column; }
+  .shareRow{
+    appearance:none;
     border:0;
     background:transparent;
-    color:inherit;
-    border-radius:999px;
+
+    font-family: inherit;
+    font-size:18px;
+    font-weight:850;
+    letter-spacing:.2px;
+    text-align:center;
+
+    color: rgba(18,18,22,.88);
     cursor:pointer;
+
+    padding: 18px 16px;
+  }
+  .shareRow + .shareRow{ border-top: 1px solid rgba(0,0,0,.12); }
+  .shareRow:active{ transform: translateY(1px); opacity:.9; }
+
+  /* press glow trigger */
+  .glassPlate:has(.shareRow:active){
+    filter: brightness(.985);
+    transition: filter var(--pressTimeIn) ease;
+  }
+  .glassPlate:has(.shareRow:active) .pressGlow{
+    opacity:1;
+    transform: scale(1.01);
+    transition: opacity var(--pressTimeIn) ease, transform var(--pressTimeIn) ease;
   }
 
-  .shareIc{
-    width: 22px;
-    height: 22px;
-    fill: rgba(255,255,255,.92);
+/* ===== FIX: disable browser blue tap highlight / focus paint on rows ===== */
+.shareRow{
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+}
+.shareRow:focus,
+.shareRow:focus-visible{
+  outline: none !important;
+  box-shadow: none !important;
+}
+.shareRow::-moz-focus-inner{ border:0; }
+
+
+
+/* =========================================================
+   SHARE ORB — glass button (based on sharebtn.html)
+   Replaces the old WTStickerFlip #shareOrb (no duplication)
+   ========================================================= */
+/* outer glass */
+/* press glow (scoped to orb to avoid collision with sheet .pressGlow) */
+/* inner clickable core */
+#shareOrb .wtShareIcon{ width:22px; height:22px; }
+#shareOrb .wtShareIcon circle{ fill:#111; }
+#shareOrb .wtShareIcon path{
+  stroke:#111; stroke-width:2; fill:none;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+
+/* harden fixed positioning + kill tap highlight / focus glow */
+#shareOrb{ position:fixed !important; }
+#shareOrb, #shareOrb *{
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+#shareOrb button{ outline:none !important; }
+#shareOrb button::-moz-focus-inner{ border:0; }
+
+/* === share orb: exact engine from sharebtn.html (scoped) === */
+#shareOrb{
+  --outer: 86px;
+  --innerRatio: .65;
+
+  --glassClearA: rgba(255,255,255,.14);
+  --glassClearB: rgba(255,255,255,.08);
+  --glassMilkA:  rgba(255,255,255,.10);
+  --glassMilkB:  rgba(255,255,255,.12);
+
+  --glassRingThickness: calc(var(--outer) * 0.068421); /* 13/190 */
+  --glassRimBlur: 1.05px;
+
+  /* ratio locks (from reference 190px) */
+  --smearInset: calc(var(--outer) * 0.052632); /* 10/190 */
+
+  --topRim1: rgba(0,0,0,.28);
+  --topRim2: rgba(0,0,0,.12);
+  --topRimFade: 30%;
+
+  --botRim1: rgba(255,255,255,.74);
+  --botRim2: rgba(255,255,255,.30);
+
+  --bleedA: .14;
+  --bleedB: .07;
+
+  --pressY: 3px;
+  --pressTimeIn: 110ms;
+  --pressTimeOut: 190ms;
+
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 16px);
+  left: calc(env(safe-area-inset-left) + 16px);
+  z-index: 30000;
+}
+#shareOrb, #shareOrb *{
+  -webkit-tap-highlight-color: transparent;
+}
+#shareOrb .shareIcon{ width: clamp(22px, calc(var(--outer) * 0.210526), 40px); height: clamp(22px, calc(var(--outer) * 0.210526), 40px); } /* ref 40/190 */ /* 40/190 */
+
+/* jen čisté plátno */
+  /* =========================================================
+     SPOLEČNÝ ENGINE — sklo + core
+     ========================================================= */
+  .glassBase {
+--w: var(--outer);
+    --h: var(--outer);
+    --r: 50%;
+    --smearInset: 10px;
+
+    --rimTint: 120, 155, 255;
+    --bleedX: 76%;
+    --bleedY: 84%;
+
+    width: var(--w);
+    height: var(--h);
+    border-radius: var(--r);
+    position: relative;
+    display:grid;
+    place-items:center;
+    isolation:isolate;
+
+    background:
+      radial-gradient(120% 120% at 50% 60%, var(--glassMilkA), transparent 62%), radial-gradient(120% 120% at 50% 92%, var(--glassMilkB), transparent 58%), radial-gradient(120% 120% at 35% 25%, var(--glassClearA), transparent 55%), radial-gradient(140% 140% at 65% 70%, var(--glassClearB), transparent 60%), rgba(255, 255, 255, .08);
+
+    box-shadow:
+      inset 0 18px 26px rgba(0, 0, 0, .24), inset 0 -22px 30px rgba(255, 255, 255, .22), 0 22px 44px rgba(0, 0, 0, .18);
+
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    transition: filter var(--pressTimeOut) ease;
   }
 
-  /* ===== backdrop ===== */
-  #wtSheetBackdrop{
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.42);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 240ms var(--ease);
-    z-index: 29999;
-  }
-  #wtSheetBackdrop.open{
-    opacity: 1;
-    pointer-events: auto;
+  .glassBase::before {
+content:"";
+    position:absolute;
+    inset: var(--smearInset);
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:1;
+
+    background:
+      radial-gradient(75% 60% at 18% 22%, rgba(255, 255, 255, .42) 0%, rgba(255, 255, 255, .18) 35%, transparent 72%), radial-gradient(55% 45% at 28% 32%, rgba(255, 255, 255, .18) 0%, transparent 72%);
+
+    filter: blur(1.35px);
+    opacity:.95;
   }
 
-  /* ===== action sheet ===== */
-  #wtActionSheet{
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    transform: translateY(100%);
-    transition: transform var(--t) var(--ease);
-    z-index: 30000;
-    border-top-left-radius: var(--sheetR);
-    border-top-right-radius: var(--sheetR);
-    background: rgba(15,15,15,.86);
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
-    border-top: 1px solid rgba(255,255,255,.12);
-    padding: var(--sheetPadTop) var(--sheetPadX) calc(var(--sheetPadBot) + env(safe-area-inset-bottom, 0px));
-    box-shadow: 0 -24px 80px rgba(0,0,0,.72);
+  .glassBase::after {
+content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:2;
+
+    background:
+      radial-gradient(72% 60% at var(--bleedX) var(--bleedY), rgba(var(--rimTint), var(--bleedA)) 0%, rgba(var(--rimTint), var(--bleedB)) 28%, transparent 68%), conic-gradient(from 210deg, transparent 0 18%, rgba(var(--rimTint), .12) 22%, transparent 36%, rgba(var(--rimTint), .06) 46%, transparent 62%, rgba(var(--rimTint), .045) 70%, transparent 100%), radial-gradient(140% 120% at 50% 120%, var(--botRim1) 0%, var(--botRim2) 22%, transparent 52%), radial-gradient(170% 120% at 50% -38%, var(--topRim1) 0%, var(--topRim2) 14%, transparent var(--topRimFade));
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: var(--glassRingThickness);
+    filter: blur(var(--glassRimBlur));
+    opacity:.95;
   }
 
-  #wtActionSheet.open{
-    transform: translateY(var(--sinkY));
+  /* press glow mimo sklo */
+  .glassBase .pressGlow {
+position:absolute;
+    inset:-22px;
+    border-radius: var(--r);
+    pointer-events:none;
+    opacity:0;
+    filter: blur(10px);
+    transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
+    transform: scale(0.995);
+    z-index:0;
+    background:
+      radial-gradient(80% 80% at 70% 70%, rgba(var(--rimTint), .18) 0%, rgba(var(--rimTint), .10) 26%, transparent 62%), radial-gradient(100% 90% at 50% 110%, rgba(255, 255, 255, .20) 0%, transparent 55%);
   }
 
-  .sheetTitle{
-    font-size: var(--title);
-    margin: 0 0 12px;
-    letter-spacing: .2px;
+  
+
+  /* ratio fix for small orbs: keep the same look as reference */
+  #shareOrb .pressGlow{
+    inset: calc(var(--outer) * -0.115789); /* -22/190 */
+    filter: blur(calc(var(--outer) * 0.052632)); /* 10/190 */
+  }
+.coreBtn {
+--cw: calc(var(--outer) * var(--innerRatio));
+    --ch: calc(var(--outer) * var(--innerRatio));
+    --cr: 50%;
+
+    width: var(--cw);
+    height: var(--ch);
+    border-radius: var(--cr);
+
+    position:relative;
+    z-index:3;
+    border:0;
+    padding:0;
+    cursor:pointer;
+
+    /* zabít modrý focus overlay */
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+    user-select:none;
+
+    background:
+      radial-gradient(120% 120% at 35% 25%, rgba(255, 255, 255, .16), transparent 55%), linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
+
+    box-shadow:
+      0 18px 26px rgba(0, 0, 0, .18), inset 0 16px 22px rgba(0, 0, 0, .13), inset 0 -14px 20px rgba(255, 255, 255, .14);
+
+    transform: translateY(0);
+    transition:
+      transform var(--pressTimeOut) cubic-bezier(.2, .8, .2, 1), box-shadow var(--pressTimeOut) ease, filter var(--pressTimeOut) ease;
+
+    display:grid;
+    place-items:center; /* NOVÉ: jen aby se SVG vycentrovalo */
   }
 
-  .sheetItem{
-    display:block;
-    width:100%;
-    padding: 14px 14px;
-    margin: 0 0 var(--sheetGap);
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,.10);
-    background: rgba(255,255,255,.06);
-    color: var(--ink);
-    text-align:left;
-    font-size: 15px;
+  .coreBtn:focus, #shareOrb .coreBtn:focus-visible { outline:none !important; }
+#shareOrb .coreBtn::before {
+content:"";
+    position:absolute;
+    inset:0;
+    border-radius: inherit;
+    pointer-events:none;
+    background:
+      radial-gradient(120% 120% at 50% 50%, transparent 62%, rgba(0, 0, 0, .26) 100%);
+    mix-blend-mode: soft-light;
+    opacity:.95;
   }
-  .sheetItem:last-child{ margin-bottom: 0; }
 
-  /* sentinel (auto open u dna) */
-  #wtBottomSentinel{ height:1px; }
+  .coreBtn::after {
+content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: inherit;
+    pointer-events:none;
+
+    background:
+      radial-gradient(140% 120% at 50% 120%, rgba(255, 255, 255, .52) 0%, rgba(255, 255, 255, .20) 24%, transparent 52%), radial-gradient(170% 120% at 50% -38%, rgba(0, 0, 0, .30) 0%, rgba(0, 0, 0, .12) 14%, transparent 30%);
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: 6px;
+    filter: blur(.78px);
+    opacity:.95;
+    mix-blend-mode: screen;
+  }
+
+  
+  #shareOrb .coreBtn::after{ padding: calc(var(--outer) * 0.031579); /* 6/190 */ }
+.coreBtn:hover {
+transform: translateY(-1px);
+    box-shadow:
+      0 22px 30px rgba(0, 0, 0, .20), inset 0 14px 20px rgba(0, 0, 0, .12), inset 0 -14px 20px rgba(255, 255, 255, .14);
+  }
+
+  .glassBase:has(.coreBtn:active) {
+filter: brightness(.985);
+    transition: filter var(--pressTimeIn) ease;
+  }
+  .glassBase:has(.coreBtn:active) .pressGlow {
+opacity:1;
+    transform: scale(1.01);
+    transition: opacity var(--pressTimeIn) ease, transform var(--pressTimeIn) ease;
+  }
+  .coreBtn:active {
+transform: translateY(var(--pressY));
+    transition:
+      transform var(--pressTimeIn) cubic-bezier(.2, .8, .2, 1), box-shadow var(--pressTimeIn) ease, filter var(--pressTimeIn) ease;
+
+    box-shadow:
+      0 10px 18px rgba(0, 0, 0, .16), inset 0 20px 26px rgba(0, 0, 0, .18), inset 0 -10px 16px rgba(255, 255, 255, .10);
+    filter: brightness(.99) saturate(.98);
+  }
+
+  /* kruh */
+  .circle {
+--w: var(--outer);
+    --h: var(--outer);
+    --r: 50%;
+  }
+  .circle .coreBtn {
+--cw: calc(var(--outer) * var(--innerRatio));
+    --ch: calc(var(--outer) * var(--innerRatio));
+    --cr: 50%;
+  }
+
+  /* modrá varianta (původní) */
+  .v-blue {
+--c1:#6f7ed0; --c2:#5462bb; --c3:#4a57ae;
+    --rimTint: 120, 155, 255;
+    --bleedX: 74%; --bleedY: 86%;
+  }
+
+  /* NOVÉ: bílá varianta */
+  .v-white {
+--c1:#ffffff; --c2:#f1f1f6; --c3:#d9d9e2;
+    --rimTint: 210, 210, 210;
+    --bleedX: 74%; --bleedY: 86%;
+  }
+
+  /* NOVÉ: ikona */
+  .shareIcon { width:40px; height:40px; }
+#shareOrb .shareIcon circle { fill:#111; }
+#shareOrb .shareIcon path {
+    stroke:#111; stroke-width:2; fill:none;
+    stroke-linecap:round; stroke-linejoin:round;
+  }
 </style>
 </head>
 
 <body>
-
-<!-- VIDEO BACKGROUND -->
-<div id="video-layer" aria-hidden="true">
-  <video id="bgVideo" autoplay muted loop playsinline preload="auto">
-    <source src="./assets/video/wave.mp4" type="video/mp4">
-  </video>
-</div>
-
   <div id="shareOrb" class="glassBase circle v-white" aria-label="Share">
   <div class="pressGlow"></div>
   <button class="coreBtn" aria-label="Share">
-    <svg class="shareIc" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M18 16a3 3 0 0 0-2.24 1.03L8.91 13.7a3.06 3.06 0 0 0 0-3.4l6.85-3.33A3 3 0 1 0 15 5a2.99 2.99 0 0 0 .09.7L8.24 9.03A3 3 0 1 0 9 14a2.99 2.99 0 0 0-.76-.97l6.85 3.33A3 3 0 1 0 18 16z"/>
+    <svg class="shareIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="18" cy="5" r="3"></circle>
+      <circle cx="6" cy="12" r="3"></circle>
+      <circle cx="18" cy="19" r="3"></circle>
+      <path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"></path>
     </svg>
   </button>
 </div>
 
-<div class="main"></div>
-<div id="wtBottomSentinel"></div>
+  <div class="main"></div>
 
-<div id="wtSheetBackdrop"></div>
+  <!-- přesný konec stránky -->
+  <div id="wtBottomSentinel" aria-hidden="true"></div>
 
-<div id="wtActionSheet" role="dialog" aria-modal="true" aria-label="Share">
-  <h3 class="sheetTitle">Share</h3>
-  <button class="sheetItem" type="button">Share link</button>
-  <button class="sheetItem" type="button">Copy URL</button>
-</div>
+  <div id="wtSheetBackdrop"></div>
+
+  <div id="wtActionSheet" role="dialog" aria-modal="true" aria-label="Share">
+    <div class="glassPlate" aria-label="glass plate">
+      <div class="pressGlow"></div>
+
+      <div class="coreSquare shareCore" role="menu" aria-label="share options">
+        <button class="shareRow" type="button" data-action="share">Share</button>
+        <button class="shareRow" type="button" data-action="instagram">Instagram</button>
+        <button class="shareRow" type="button" data-action="mail">Mail</button>
+      </div>
+    </div>
+  </div>
+
 
 <script>
-  // video autoplay pojistka (některé prohlížeče to blokují bez interakce)
-  const bgVideo = document.getElementById("bgVideo");
-  if (bgVideo) bgVideo.play().catch(()=>{});
-
   const orb      = document.getElementById("shareOrb");
   const sheet    = document.getElementById("wtActionSheet");
   const back     = document.getElementById("wtSheetBackdrop");
@@ -241,38 +676,117 @@
   let openedManually = false;
   let openedByBottom = false;
 
-  function openSheet(){
-    sheet.classList.add("open");
-    back.classList.add("open");
+  // === scroll heuristika pro auto-hide při jízdě nahoru ===
+  let lastScrollY = window.scrollY || 0;
+  let maxYSinceOpen = lastScrollY;   // nejnižší místo (největší Y), kam se uživatel po otevření dostal
+  let hideArmed = false;
+
+  function resetScrollHeuristics(){
+    lastScrollY = window.scrollY || 0;
+    maxYSinceOpen = lastScrollY;
+    hideArmed = false;
   }
+
+  function openSheet({manual=false, byBottom=false}={}){
+    openedManually = !!manual;
+    openedByBottom = !!byBottom;
+
+    sheet.classList.add("show");
+    back.classList.add("show");
+
+    resetScrollHeuristics();
+  }
+
   function closeSheet(){
-    sheet.classList.remove("open");
-    back.classList.remove("open");
-  }
+    sheet.classList.remove("show");
+    back.classList.remove("show");
 
-  orb.addEventListener("click", ()=>{
-    openedManually = true;
-    sheet.classList.contains("open") ? closeSheet() : openSheet();
-  });
-
-  back.addEventListener("click", ()=>{
     openedManually = false;
     openedByBottom = false;
-    closeSheet();
-  });
 
-  // auto-open u dna stránky
-  const obs = new IntersectionObserver((entries)=>{
-    for (const e of entries){
-      if (e.isIntersecting){
-        openedByBottom = true;
-        openSheet();
+    resetScrollHeuristics();
+  }
+
+  // ručně (toggle)
+  orb.addEventListener("click", (e)=>{
+    e.preventDefault();
+    if (sheet.classList.contains("show")) {
+      closeSheet();
+    } else {
+      openSheet({manual:true, byBottom:false});
+    }
+  });
+// zavřít klikem mimo
+  back.addEventListener("click", closeSheet);
+
+  // --- AUTO OPEN u konce stránky (IntersectionObserver + fallback) ---
+  const openByBottomOnce = ()=>{
+    if(sheet.classList.contains("show")) return;
+    openSheet({manual:false, byBottom:true});
+  };
+
+  if("IntersectionObserver" in window){
+    const io = new IntersectionObserver((entries)=>{
+      const hit = entries.some(e=>e.isIntersecting);
+      if(hit){
+        openByBottomOnce();
+      }else{
+        // když jsme to otevřeli kvůli dnu a už nejsme u dna, zavři
+        if(openedByBottom){
+          closeSheet();
+        }
+      }
+    },{
+      root: null,
+      // citlivost (px před koncem). Zvýšit = otevře dřív.
+      rootMargin: "0px 0px 220px 0px",
+      threshold: 0
+    });
+    io.observe(sentinel);
+  }else{
+    // fallback: když jsme fakt blízko konce, otevři
+    window.addEventListener("scroll", ()=>{
+      const scrollPos = window.scrollY + window.innerHeight;
+      const docH = document.documentElement.scrollHeight;
+      if(docH - scrollPos < 160){
+        openByBottomOnce();
+      }
+    }, {passive:true});
+  }
+
+  // --- AUTO HIDE při scrollu nahoru (funguje pro ruční i auto otevření) ---
+  window.addEventListener("scroll", ()=>{
+    const y = window.scrollY || 0;
+    const dy = y - lastScrollY;
+    lastScrollY = y;
+
+    if(!sheet.classList.contains("show")) return;
+
+    // aktualizuj nejnižší dosažený bod po otevření
+    if(y > maxYSinceOpen){
+      maxYSinceOpen = y;
+      hideArmed = false; // jdeš dolů -> ne
+      return;
+    }
+
+    // jdeš nahoru -> po určité "trase" schovej
+    if(dy < -2){
+      const upDistance = (maxYSinceOpen - y);
+
+      // „odlep“ od dna: u auto-openu to schovej rychleji
+      const THRESH = openedByBottom ? 36 : 56; // px
+      const HARD   = openedByBottom ? 90 : 120;
+
+      if(upDistance > THRESH) hideArmed = true;
+
+      if(hideArmed && upDistance > HARD){
+        closeSheet();
       }
     }
-  }, { threshold: 1 });
+  }, {passive:true});
 
-  obs.observe(sentinel);
 </script>
+
 
 </body>
 </html>
