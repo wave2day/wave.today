@@ -11,7 +11,6 @@ html, body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  overflow: hidden;
 }
 #video-layer video {
   width: 100%;
