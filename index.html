@@ -1,44 +1,278 @@
 <!doctype html>
 <html lang="cs">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>wave.today</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>wave.today — share panel (edge-to-edge, tight top)</title>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="./css/style.css">
+<style>
+  :root{
+    --pageBg:#000;
+
+    /* ===== edge-to-edge sheet geometry ===== */
+    --sheetR: 32px;                 /* horní radius plochy */
+    --sinkY: 0px;          
+
+    /* ===== orbit / glow ===== */
+    --orbSz: 64px;
+    --orbRing: 2px;
+    --orbGlow: 26px;
+    --orbRingA: .32;
+
+    /* ===== sheet ===== */
+    --sheetPadX: 16px;
+    --sheetPadTop: 18px;
+    --sheetPadBot: 18px;
+    --sheetGap: 10px;
+
+    /* ===== typography ===== */
+    --label: 12px;
+    --title: 16px;
+
+    /* ===== colors ===== */
+    --glassA: .10;
+    --glassB: .18;
+
+    --ink: rgba(255,255,255,.90);
+    --ink2: rgba(255,255,255,.62);
+
+    /* ===== animation ===== */
+    --ease: cubic-bezier(.2,.9,.2,1);
+    --t: 320ms;
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    background: var(--pageBg);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    overflow-x:hidden;
+  }
+
+  /* ===== VIDEO BACKGROUND (GitHub Pages) ===== */
+  #video-layer{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    background: #000;
+  }
+  #video-layer video{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+  }
+  /* vše ostatní nad videem */
+  body > *:not(#video-layer){
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ===== LAYOUT ===== */
+  .main{
+    min-height:200vh;
+    display:block;
+  }
+
+  /* ===== orb ===== */
+  #shareOrb{
+    position: fixed;
+    left: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: var(--orbSz);
+    height: var(--orbSz);
+    z-index: 30000;
+    border-radius: 999px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .glassBase{
+    position: relative;
+    width:100%;
+    height:100%;
+    border-radius:999px;
+    background: rgba(255,255,255,var(--glassA));
+    border: 1px solid rgba(255,255,255,.18);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 18px 70px rgba(0,0,0,.55);
+  }
+
+  .pressGlow{
+    position:absolute;
+    inset:-12px;
+    border-radius:999px;
+    background: radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,.16),
+      rgba(255,255,255,0) 65%);
+    opacity:.0;
+    transition: opacity 220ms var(--ease);
+    pointer-events:none;
+  }
+
+  #shareOrb:active .pressGlow{ opacity: .9; }
+
+  .coreBtn{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:0;
+    background:transparent;
+    color:inherit;
+    border-radius:999px;
+    cursor:pointer;
+  }
+
+  .shareIc{
+    width: 22px;
+    height: 22px;
+    fill: rgba(255,255,255,.92);
+  }
+
+  /* ===== backdrop ===== */
+  #wtSheetBackdrop{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.42);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms var(--ease);
+    z-index: 29999;
+  }
+  #wtSheetBackdrop.open{
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ===== action sheet ===== */
+  #wtActionSheet{
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: translateY(100%);
+    transition: transform var(--t) var(--ease);
+    z-index: 30000;
+    border-top-left-radius: var(--sheetR);
+    border-top-right-radius: var(--sheetR);
+    background: rgba(15,15,15,.86);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border-top: 1px solid rgba(255,255,255,.12);
+    padding: var(--sheetPadTop) var(--sheetPadX) calc(var(--sheetPadBot) + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -24px 80px rgba(0,0,0,.72);
+  }
+
+  #wtActionSheet.open{
+    transform: translateY(var(--sinkY));
+  }
+
+  .sheetTitle{
+    font-size: var(--title);
+    margin: 0 0 12px;
+    letter-spacing: .2px;
+  }
+
+  .sheetItem{
+    display:block;
+    width:100%;
+    padding: 14px 14px;
+    margin: 0 0 var(--sheetGap);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(255,255,255,.06);
+    color: var(--ink);
+    text-align:left;
+    font-size: 15px;
+  }
+  .sheetItem:last-child{ margin-bottom: 0; }
+
+  /* sentinel (auto open u dna) */
+  #wtBottomSentinel{ height:1px; }
+</style>
 </head>
 
 <body>
 
-  <!-- VIDEO BACKGROUND -->
-  <div id="video-layer">
-    <video id="bgVideo" autoplay muted loop playsinline>
-      <source src="./assets/video/wave.mp4" type="video/mp4">
-    </video>
-  </div>
+<!-- VIDEO BACKGROUND -->
+<div id="video-layer" aria-hidden="true">
+  <video id="bgVideo" autoplay muted loop playsinline preload="auto">
+    <source src="./assets/video/wave.mp4" type="video/mp4">
+  </video>
+</div>
 
-  <!-- jen prostor stránky -->
-  <div class="main"></div>
-
-  <!-- SHARE BUTTON -->
-  <div id="shareOrb">
-    <svg viewBox="0 0 24 24">
+  <div id="shareOrb" class="glassBase circle v-white" aria-label="Share">
+  <div class="pressGlow"></div>
+  <button class="coreBtn" aria-label="Share">
+    <svg class="shareIc" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M18 16a3 3 0 0 0-2.24 1.03L8.91 13.7a3.06 3.06 0 0 0 0-3.4l6.85-3.33A3 3 0 1 0 15 5a2.99 2.99 0 0 0 .09.7L8.24 9.03A3 3 0 1 0 9 14a2.99 2.99 0 0 0-.76-.97l6.85 3.33A3 3 0 1 0 18 16z"/>
     </svg>
-  </div>
+  </button>
+</div>
 
-  <!-- BACKDROP -->
-  <div id="wtSheetBackdrop"></div>
+<div class="main"></div>
+<div id="wtBottomSentinel"></div>
 
-  <!-- ACTION SHEET -->
-  <div id="wtActionSheet">
-    <div class="sheetItem">Share link</div>
-    <div class="sheetItem">Copy URL</div>
-  </div>
+<div id="wtSheetBackdrop"></div>
 
-  <!-- JS -->
-  <script src="./js/script.js"></script>
+<div id="wtActionSheet" role="dialog" aria-modal="true" aria-label="Share">
+  <h3 class="sheetTitle">Share</h3>
+  <button class="sheetItem" type="button">Share link</button>
+  <button class="sheetItem" type="button">Copy URL</button>
+</div>
+
+<script>
+  // video autoplay pojistka (některé prohlížeče to blokují bez interakce)
+  const bgVideo = document.getElementById("bgVideo");
+  if (bgVideo) bgVideo.play().catch(()=>{});
+
+  const orb      = document.getElementById("shareOrb");
+  const sheet    = document.getElementById("wtActionSheet");
+  const back     = document.getElementById("wtSheetBackdrop");
+  const sentinel = document.getElementById("wtBottomSentinel");
+
+  let openedManually = false;
+  let openedByBottom = false;
+
+  function openSheet(){
+    sheet.classList.add("open");
+    back.classList.add("open");
+  }
+  function closeSheet(){
+    sheet.classList.remove("open");
+    back.classList.remove("open");
+  }
+
+  orb.addEventListener("click", ()=>{
+    openedManually = true;
+    sheet.classList.contains("open") ? closeSheet() : openSheet();
+  });
+
+  back.addEventListener("click", ()=>{
+    openedManually = false;
+    openedByBottom = false;
+    closeSheet();
+  });
+
+  // auto-open u dna stránky
+  const obs = new IntersectionObserver((entries)=>{
+    for (const e of entries){
+      if (e.isIntersecting){
+        openedByBottom = true;
+        openSheet();
+      }
+    }
+  }, { threshold: 1 });
+
+  obs.observe(sentinel);
+</script>
 
 </body>
 </html>
