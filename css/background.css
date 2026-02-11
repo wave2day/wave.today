@@ -1,26 +1,16 @@
-/* background.css */
 html,body{
   margin:0;
   width:100%;
   height:100%;
   background:#0a0808;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   overflow:hidden;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-/* ===== BACKGROUND SYSTEM ===== */
 :root{
   --glass-blur: 11px;
   --glass-milk: 0.045;
-  --grain-op: 0.14;
 
-  --proj-opacity: 0.48;
-  --proj-blur: 16px;
-  --proj-bright: 1.55;
-  --proj-sat: 2.55;
-  --proj-contrast: 1.28;
-
-  /* LED panel proportions */
   --panelH: 132px;
   --panelPadY: 18px;
   --panelPadX: 44px;
@@ -44,17 +34,8 @@ html,body{
   --led: 86px;
   --ledRing: 12px;
 
-  --haloBoost: 1.65;
-  --coreBoost: 1.25;
-
   --panelInterferenceBase: .18;
   --panelInterferenceStep: .28;
-
-  /* 4 “vybrané” barvy pro posun (můžeš kdykoli změnit) */
-  --p1: 255, 72, 220;  /* magenta */
-  --p2:  30, 210, 255; /* cyan */
-  --p3: 255, 235,  70; /* yellow */
-  --p4: 160, 255, 120; /* acid green */
 }
 
 #video-layer{
@@ -64,20 +45,16 @@ html,body{
   overflow:hidden;
 }
 
-#video-layer video{
+/* test pozadí místo videa */
+#fakeVideo{
   position:absolute;
   inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
+  background:
+    radial-gradient(120% 120% at 30% 35%, rgba(255,255,255,.06), transparent 60%),
+    radial-gradient(120% 120% at 70% 65%, rgba(255,255,255,.04), transparent 55%),
+    linear-gradient(180deg, #050505, #0a0808);
 }
 
-#myVideo{
-  filter: blur(2px);
-  transform: scale(1.03);
-}
-
-/* ===== GLASS 1 – sand ===== */
 .sandGlass{
   position:absolute;
   inset:0;
@@ -86,88 +63,39 @@ html,body{
   background: rgba(255,255,255,var(--glass-milk));
   backdrop-filter: blur(var(--glass-blur));
 }
-.sandGlass::before{
-  content:"";
+
+#bloomLayer{
   position:absolute;
   inset:0;
-  opacity: var(--grain-op);
-  mix-blend-mode: overlay;
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(255,255,255,.25) 0 1px, transparent 2px);
-}
-
-/* ===== PROJECTION (Ambient V2) ===== */
-#bloomVideo{
   z-index:3;
   pointer-events:none;
-  filter:
-    blur(var(--proj-blur))
-    brightness(var(--proj-bright))
-    contrast(var(--proj-contrast))
-    saturate(var(--proj-sat));
-  opacity: var(--proj-opacity);
-  mix-blend-mode: color-dodge;
-  transform: scale(1.06);
-  animation: drift 60s ease-in-out infinite alternate;
-}
-@keyframes drift{
-  0%{ transform: scale(1.05) translate3d(0.5%, -0.3%, 0); }
-  100%{ transform: scale(1.075) translate3d(-0.5%, 0.3%, 0); }
+  background: rgba(255,255,255,.04);
+  filter: blur(18px) brightness(1.4);
+  mix-blend-mode: screen;
 }
 
-/* ===== BOUNCE (stabilní – bez SVG url filtru, typicky konec blikání na PC) ===== */
-#bounceVideo{
+#bounceLayer{
+  position:absolute;
+  inset:0;
   z-index:4;
   pointer-events:none;
-
-  filter: blur(10px) brightness(1.85) contrast(1.55) saturate(3.2);
-  -webkit-filter: blur(10px) brightness(1.85) contrast(1.55) saturate(3.2);
-
-  opacity: 0.42;
+  background: rgba(255,255,255,.03);
+  filter: blur(12px) brightness(1.6) contrast(1.2);
   mix-blend-mode: screen;
-
-  transform: translate3d(1.0%, -0.7%, 0) scale(1.08);
-  transform-origin: 50% 50%;
-
-  will-change: transform, opacity, filter;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-
-  animation: wtGapDrift 64s ease-in-out infinite alternate;
-}
-@keyframes wtGapDrift{
-  0%{ transform: translate3d(1.0%, -0.7%, 0) scale(1.075); opacity: 0.36; }
-  100%{ transform: translate3d(-1.0%, 0.7%, 0) scale(1.095); opacity: 0.46; }
 }
 
-/* ===== PRISM (barevný posun + jemný hue drift) ===== */
+/* prism bez barevné mlhy: jen textura */
 .prismGlass{
   position:absolute;
   inset:0;
   z-index:5;
   pointer-events:none;
-
-  background:
-    radial-gradient(120% 120% at 20% 30%, rgba(var(--p1), .22), transparent 55%),
-    radial-gradient(120% 120% at 80% 40%, rgba(var(--p2), .20), transparent 58%),
-    radial-gradient(120% 120% at 30% 80%, rgba(var(--p3), .18), transparent 60%),
-    radial-gradient(120% 120% at 70% 90%, rgba(var(--p4), .16), transparent 62%);
-
-  mix-blend-mode: color-dodge;
-  opacity: 0.95;
-
-  /* pořád necháváme tvůj prism displacement, ale je to na “skle”, ne na videu */
-  filter: url(#wtPrismStrong) saturate(1.35) contrast(1.12) brightness(1.05);
-  animation: prismHueShift 18s linear infinite;
-  will-change: filter, opacity;
+  background: rgba(255,255,255,.01);
+  mix-blend-mode: overlay;
+  opacity: .92;
 }
 
-@keyframes prismHueShift{
-  0%   { filter: url(#wtPrismStrong) hue-rotate(0deg)   saturate(1.35) contrast(1.12) brightness(1.05); }
-  100% { filter: url(#wtPrismStrong) hue-rotate(360deg) saturate(1.35) contrast(1.12) brightness(1.05); }
-}
-
-/* ===== LED PANEL – beze změny vzhledu ===== */
+/* LED panel */
 *{box-sizing:border-box}
 
 .panel{
@@ -196,59 +124,6 @@ html,body{
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
-.panel::before{
-  content:"";
-  position:absolute;
-  inset: 12px;
-  border-radius: inherit;
-  pointer-events:none;
-  z-index: 1;
-  background:
-    radial-gradient(75% 60% at 18% 22%,
-      rgba(255,255,255,.40) 0%,
-      rgba(255,255,255,.16) 35%,
-      transparent 72%),
-    radial-gradient(55% 45% at 28% 32%,
-      rgba(255,255,255,.16) 0%,
-      transparent 72%);
-  filter: blur(1.35px);
-  opacity:.95;
-}
-.panel::after{
-  content:"";
-  position:absolute;
-  inset:-1px;
-  border-radius: inherit;
-  pointer-events:none;
-  z-index: 6;
-  background:
-    radial-gradient(70% 70% at 92% 18%,
-      rgba(255,255,255,.18) 0%,
-      rgba(255,255,255,.08) 34%,
-      transparent 62%),
-    radial-gradient(85% 75% at 88% 20%,
-      rgba(0,0,0,.14) 0%,
-      transparent 58%),
-
-    radial-gradient(140% 120% at 50% 120%,
-      var(--botRim1) 0%,
-      var(--botRim2) 22%,
-      transparent 52%),
-    radial-gradient(170% 120% at 50% -38%,
-      var(--topRim1) 0%,
-      var(--topRim2) 14%,
-      transparent var(--topRimFade));
-
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-
-  padding: var(--glassRingThickness);
-  filter: blur(var(--glassRimBlur));
-  opacity:.95;
-}
 
 .panelLight{
   position:absolute;
@@ -271,12 +146,7 @@ html,body{
       rgba(var(--L3), .08));
 }
 
-.ledRow{
-  display:flex;
-  gap: var(--gap);
-  z-index: 7;
-  position:relative;
-}
+.ledRow{ display:flex; gap: var(--gap); z-index:7; position:relative; }
 
 .led{
   --rimTint: 0, 255, 255;
@@ -293,21 +163,41 @@ html,body{
   isolation:isolate;
 }
 
-/* (LED vnitřnosti jsou stejné jako dřív – nechávám je beze změny) */
-.led .halo{position:absolute;inset:-72px;border-radius:50%;pointer-events:none;z-index:0;background:radial-gradient(62% 62% at 50% 58%,rgba(var(--rimTint),calc((.10 + .95*var(--on)) * 1.65)) 0%,rgba(255,255,255,calc(.08 * var(--on))) 18%,rgba(var(--rimTint),0) 78%);filter:blur(calc(16px + 30px*var(--on)));opacity:calc(.06 + .94*var(--on));mix-blend-mode:screen;transition:opacity .18s ease,filter .18s ease}
-.led .seat{position:absolute;inset:-4px;border-radius:50%;z-index:1;background:radial-gradient(closest-side at 50% 52%,rgba(255,255,255,.34) 0%,rgba(255,255,255,.16) 60%,rgba(255,255,255,0) 72%),radial-gradient(110% 90% at 48% 66%,rgba(var(--rimTint),calc(.035 + .18*var(--on))) 0%,rgba(var(--rimTint),calc(.015 + .10*var(--on))) 42%,transparent 76%),radial-gradient(100% 80% at 60% 72%,rgba(var(--rimTint),calc(.020 + .14*var(--on))) 0%,rgba(var(--rimTint),0) 60%),radial-gradient(110% 110% at 50% 60%,rgba(255,255,255,.14) 0%,rgba(255,255,255,.06) 34%,rgba(0,0,0,.12) 58%,rgba(0,0,0,.28) 76%,rgba(0,0,0,0) 88%),radial-gradient(92% 92% at 50% 92%,rgba(0,0,0,.20),rgba(0,0,0,0) 72%);box-shadow:inset 0 12px 14px rgba(255,255,255,.22),inset 0 -20px 24px rgba(0,0,0,.32),0 8px 12px rgba(0,0,0,.26);opacity:.96}
-.led .seat::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(85% 75% at 50% 60%,rgba(0,0,0,.18),rgba(0,0,0,0) 70%);opacity:calc(.55 * (1 - var(--on)));filter:blur(1.1px)}
-.led .fuga{position:absolute;left:calc(12px - 1px);top:calc(12px - 1px);width:calc(86px - (12px - 1px)*2);height:calc(86px - (12px - 1px)*2);border-radius:50%;z-index:2;pointer-events:none;background:radial-gradient(closest-side at 50% 55%,rgba(0,0,0,.24) 64%,rgba(0,0,0,.12) 74%,rgba(0,0,0,0) 86%);filter:blur(.35px);opacity:.9}
-.led .rim{position:absolute;inset:0;border-radius:50%;z-index:3;pointer-events:none;background:radial-gradient(72% 60% at 76% 84%,rgba(var(--rimTint),calc(.05 * (0.20 + 0.90*var(--on)))) 0%,rgba(var(--rimTint),calc(.03 * (0.20 + 0.90*var(--on)))) 30%,transparent 70%),radial-gradient(140% 120% at 50% 120%,rgba(255,255,255,.70) 0%,rgba(255,255,255,.24) 22%,transparent 52%),radial-gradient(170% 120% at 50% -38%,rgba(0,0,0,.24) 0%,rgba(0,0,0,.09) 14%,transparent 30%),radial-gradient(110% 110% at 50% 60%,rgba(var(--rimTint),calc(.30 * (0.12 + 0.88*var(--on)))) 0%,rgba(var(--rimTint),calc(.16 * (0.12 + 0.88*var(--on)))) 44%,rgba(var(--rimTint),calc(.07 * (0.12 + 0.88*var(--on)))) 64%,transparent 74%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;padding:12px;filter:blur(1px);opacity:.98}
-.led .lens{position:absolute;left:12px;top:12px;width:calc(86px - 12px*2);height:calc(86px - 12px*2);border-radius:50%;z-index:4;overflow:hidden;background:radial-gradient(18px 18px at 28% 22%,rgba(255,255,255,.68),rgba(255,255,255,0) 65%),linear-gradient(180deg,rgba(255,255,255,.58) 0%,rgba(255,255,255,.14) 26%,rgba(255,255,255,.06) 48%,rgba(0,0,0,.10) 100%),linear-gradient(180deg,var(--c1),var(--c2) 55%,var(--c3));box-shadow:inset 0 -18px 22px rgba(0,0,0,.34),inset 0 10px 14px rgba(255,255,255,.12),0 10px 16px rgba(0,0,0,.18);transition:filter .18s ease,transform .18s ease}
-.led .innerGlow{position:absolute;inset:-14px;border-radius:50%;pointer-events:none;z-index:5;background:radial-gradient(42% 38% at 52% 60%,rgba(255,255,255,calc((.12 + .86*var(--on)) * 1.25)) 0%,rgba(255,255,255,0) 62%),radial-gradient(58% 56% at 50% 66%,rgba(var(--rimTint),calc(.10 + .98*var(--on))) 0%,rgba(var(--rimTint),0) 70%);opacity:calc(.10 + .90*var(--on));filter:blur(calc(2px + 8px*var(--on)));mix-blend-mode:screen;transition:opacity .18s ease,filter .18s ease}
-.led .shine1,.led .shine2{position:absolute;left:12%;right:12%;border-radius:999px;transform:rotate(-6deg);pointer-events:none;mix-blend-mode:screen}
-.led .shine1{top:10%;height:46%;background:radial-gradient(76% 90% at 50% 0%,rgba(255,255,255,.88),rgba(255,255,255,0) 74%);opacity:.56;filter:blur(1.05px)}
-.led .shine2{top:27%;left:18%;right:18%;height:28%;background:radial-gradient(82% 110% at 50% 0%,rgba(255,255,255,.78),rgba(255,255,255,0) 76%);opacity:.46;filter:blur(1.15px)}
+.led .halo, .led .seat, .led .fuga, .led .rim, .led .lens, .led .innerGlow, .led .shine1, .led .shine2{ position:absolute; border-radius:50%; }
+
+.led .halo{
+  inset:-72px;
+  background: radial-gradient(62% 62% at 50% 58%, rgba(var(--rimTint), calc(.10 + .95*var(--on))) 0%, rgba(var(--rimTint),0) 78%);
+  filter: blur(calc(16px + 30px*var(--on)));
+  opacity: calc(.06 + .94*var(--on));
+  mix-blend-mode: screen;
+}
+
+.led .seat{ inset:-4px; background: radial-gradient(closest-side at 50% 60%, rgba(255,255,255,.16), rgba(0,0,0,.18)); opacity:.96; }
+.led .fuga{ inset: 11px; background: radial-gradient(closest-side at 50% 55%, rgba(0,0,0,.24), rgba(0,0,0,0) 86%); opacity:.9; }
+.led .rim{ inset:0; padding: 12px; -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; background: radial-gradient(140% 120% at 50% 120%, rgba(255,255,255,.70), transparent 52%); filter: blur(1px); opacity:.98; }
+
+.led .lens{
+  left:12px; top:12px;
+  width: calc(86px - 24px);
+  height: calc(86px - 24px);
+  overflow:hidden;
+  background: linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
+  box-shadow: inset 0 -18px 22px rgba(0,0,0,.34), 0 10px 16px rgba(0,0,0,.18);
+}
+
+.led .innerGlow{
+  inset:-14px;
+  background: radial-gradient(58% 56% at 50% 66%, rgba(var(--rimTint), calc(.10 + .98*var(--on))) 0%, rgba(var(--rimTint),0) 70%);
+  opacity: calc(.10 + .90*var(--on));
+  filter: blur(calc(2px + 8px*var(--on)));
+  mix-blend-mode: screen;
+}
+
+.led .shine1{ left:12%; right:12%; top:10%; height:46%; border-radius:999px; background: radial-gradient(76% 90% at 50% 0%, rgba(255,255,255,.70), rgba(255,255,255,0) 74%); opacity:.45; }
+.led .shine2{ left:18%; right:18%; top:27%; height:28%; border-radius:999px; background: radial-gradient(82% 110% at 50% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 76%); opacity:.35; }
 
 .led[data-on="1"]{ --on:1; }
-.led[data-on="1"] .lens{ filter: saturate(1.28) brightness(1.14); transform: translateY(-1px); }
-.led[data-on="0"]{ --on:0; }
 
 .y{ --rimTint: 255, 235,  70; --c1:#fffbe6; --c2:#fff06a; --c3:#c7a800; }
 .m{ --rimTint: 255,  60, 220; --c1:#ffe9fd; --c2:#ff62e9; --c3:#b0008f; }
