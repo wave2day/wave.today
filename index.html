@@ -1,58 +1,36 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wave Background</title>
-
-<!-- CSS (ABSOLUTNÍ cesta pro GitHub Pages) -->
-<link rel="stylesheet" href="/wave.today/css/background.css?v=2">
-</head>
-
-<body>
-
-<div id="video-layer">
-
-  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <filter id="wtPrismStrong" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.02 0.035" numOctaves="2" seed="5" result="n"></feTurbulence>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="22" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
-      </filter>
-    </defs>
-  </svg>
-
-  <video id="myVideo" autoplay muted loop playsinline preload="auto">
-    <source src="/wave.today/assets/video/wave.mp4?v=2" type="video/mp4">
-  </video>
-
-  <div class="sandGlass" style="display:none"></div>
-
-  <video id="bloomVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
-    <source src="/wave.today/assets/video/wave.mp4?v=2" type="video/mp4">
-  </video>
-
-  <video id="bounceVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
-    <source src="/wave.today/assets/video/wave.mp4?v=2" type="video/mp4">
-  </video>
-
-  <div class="prismGlass" style="display:none"></div>
-
-</div>
-
 <div id="ledWrapper">
   <div class="panel" id="panel">
     <div class="panelLight" id="panelLight"></div>
+
     <div class="ledRow">
-      <div class="led y" data-on="0"><div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div><div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div></div>
-      <div class="led m" data-on="0"><div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div><div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div></div>
-      <div class="led c" data-on="0"><div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div><div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div></div>
+      <div class="led y" data-on="0" aria-label="Yellow">
+        <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
+        <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
+      </div>
+
+      <div class="led m" data-on="0" aria-label="Magenta">
+        <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
+        <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
+      </div>
+
+      <div class="led c" data-on="0" aria-label="Cyan">
+        <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
+        <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- JS (ABSOLUTNÍ cesta pro GitHub Pages) -->
-<script src="/wave.today/js/background.js?v=2"></script>
+<div id="video-layer">
+  <!-- místo videa jen test pozadí -->
+  <div id="fakeVideo"></div>
 
-</body>
-</html>
+  <div class="sandGlass" id="glass1" style="display:none"></div>
+
+  <!-- místo bloom/bounce videí jen vrstvy -->
+  <div id="bloomLayer" style="visibility:hidden;opacity:0"></div>
+  <div id="bounceLayer" style="visibility:hidden;opacity:0"></div>
+
+  <!-- prism je jen textura (bez barevné mlhy) -->
+  <div class="prismGlass" id="glass2" style="display:none"></div>
+</div>
