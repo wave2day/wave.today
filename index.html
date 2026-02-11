@@ -605,13 +605,13 @@ html,body{
 
   <div class="sandGlass" id="glass1"></div>
 
-  <!-- AMBIENT -->
-  <video id="bloomVideo" autoplay muted loop playsinline preload="auto">
+  <!-- AMBIENT (start hidden) -->
+  <video id="bloomVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
     <source src="assets/video/wave.mp4" type="video/mp4">
   </video>
 
-  <!-- BOUNCE -->
-  <video id="bounceVideo" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+  <!-- BOUNCE (start hidden) -->
+  <video id="bounceVideo" autoplay muted loop playsinline preload="auto" aria-hidden="true" style="visibility:hidden;opacity:0">
     <source src="assets/video/wave.mp4" type="video/mp4">
   </video>
 
@@ -626,13 +626,15 @@ const bounce = document.getElementById("bounceVideo");
 
 function syncOnce(){
   if(base.readyState < 2) return;
-  if(bloom && bloom.style.display !== "none" && bloom.readyState >= 2){
+
+  if(bloom && bloom.style.visibility !== "hidden" && bloom.readyState >= 2){
     const d = base.currentTime - bloom.currentTime;
     if(Math.abs(d) > 0.12) bloom.currentTime = base.currentTime;
   }
-  if(bounce && bounce.style.display !== "none" && bounce.readyState >= 2){
+
+  if(bounce && bounce.style.visibility !== "hidden" && bounce.readyState >= 2){
     const d2 = base.currentTime - bounce.currentTime;
-    if(Math.abs(d2) > 0.12) bounce.currentTime = base.currentTime;
+    if(Math.abs(d2) > 0.45) bounce.currentTime = base.currentTime;
   }
 }
 setInterval(syncOnce, 250);
@@ -672,7 +674,7 @@ updatePanelLight();
 </script>
 
 <script>
-/* ===== LED -> BACKGROUND (stejné chování + pauza vrstev při OFF) ===== */
+/* ===== LED -> BACKGROUND (stejné chování + stabilnější přepínání) ===== */
 (function(){
   const sand  = document.querySelector('.sandGlass');
   const prism = document.querySelector('.prismGlass');
@@ -683,11 +685,20 @@ updatePanelLight();
   function setVisible(el, on){
     if(el) el.style.display = on ? "block" : "none";
   }
+
   function setVideoLayer(v, on){
     if(!v) return;
-    v.style.display = on ? "block" : "none";
+
+    // Stabilnější než display none/block (menší šance na "bliknutí" u mix-blend/filter)
+    v.style.visibility = on ? "visible" : "hidden";
+    v.style.opacity = on ? "" : "0";
+
     if(on){
-      if(base.readyState >= 2) v.currentTime = base.currentTime;
+      // srovnat čas jen když je vrstva opravdu mimo (hlavně kvůli bounce)
+      if(base.readyState >= 2 && v.readyState >= 2){
+        const diff = Math.abs(base.currentTime - v.currentTime);
+        if(diff > 0.45) v.currentTime = base.currentTime;
+      }
       v.play().catch(()=>{});
     }else{
       v.pause();
