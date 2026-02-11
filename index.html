@@ -2,32 +2,58 @@
 <html lang="cs">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WT Background – Module</title>
-
-  <!-- DŮLEŽITÉ: GitHub Pages projektový web běží pod /NAZEV-REPA/ -->
-  <base href="/wave.today/">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>wave.today — background + share</title>
   <link rel="stylesheet" href="css/background.css">
 </head>
 <body>
 
-<!-- LED PANEL -->
+<!-- ===== SHARE BUTTON (vložené 1:1) ===== -->
+<div id="shareOrb" class="glassBase circle v-white" aria-label="Share">
+  <div class="pressGlow"></div>
+  <button class="coreBtn" aria-label="Share">
+    <svg class="shareIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="18" cy="5" r="3"></circle>
+      <circle cx="6" cy="12" r="3"></circle>
+      <circle cx="18" cy="19" r="3"></circle>
+      <path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"></path>
+    </svg>
+  </button>
+</div>
+
+  <div class="main"></div>
+
+  <!-- přesný konec stránky -->
+  <div id="wtBottomSentinel" aria-hidden="true"></div>
+
+  <div id="wtSheetBackdrop"></div>
+
+  <div id="wtActionSheet" role="dialog" aria-modal="true" aria-label="Share">
+    <div class="glassPlate" aria-label="glass plate">
+      <div class="pressGlow"></div>
+
+      <div class="coreSquare shareCore" role="menu" aria-label="share options">
+        <button class="shareRow" type="button" data-action="share">Share</button>
+        <button class="shareRow" type="button" data-action="instagram">Instagram</button>
+        <button class="shareRow" type="button" data-action="mail">Mail</button>
+      </div>
+    </div>
+  </div>
+
+<!-- ===== BACKGROUND MODULE ===== -->
+<!-- LED PANEL (vpravo) -->
 <div id="ledWrapper">
   <div class="panel" id="panel">
     <div class="panelLight" id="panelLight"></div>
-
     <div class="ledRow">
       <div class="led y" data-on="0" aria-label="Yellow">
         <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
         <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
       </div>
-
       <div class="led m" data-on="0" aria-label="Magenta">
         <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
         <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
       </div>
-
       <div class="led c" data-on="0" aria-label="Cyan">
         <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
         <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
@@ -36,9 +62,10 @@
   </div>
 </div>
 
-<!-- BACKGROUND -->
+<!-- BACKGROUND LAYERS -->
 <div id="video-layer">
 
+  <!-- WT_BG: strong prism + hot color extract -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <filter id="wtHotExtract" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
@@ -79,21 +106,24 @@
     </defs>
   </svg>
 
+  <!-- BASE VIDEO -->
   <video id="myVideo" autoplay muted loop playsinline preload="auto">
     <source src="assets/video/wave.mp4" type="video/mp4">
   </video>
 
-  <div class="sandGlass"></div>
+  <div class="sandGlass" id="glass1"></div>
 
+  <!-- AMBIENT -->
   <video id="bloomVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
     <source src="assets/video/wave.mp4" type="video/mp4">
   </video>
 
+  <!-- BOUNCE -->
   <video id="bounceVideo" autoplay muted loop playsinline preload="auto" aria-hidden="true" style="visibility:hidden;opacity:0">
     <source src="assets/video/wave.mp4" type="video/mp4">
   </video>
 
-  <div class="prismGlass"></div>
+  <div class="prismGlass" id="glass2"></div>
 </div>
 
 <script src="js/background.js"></script>
