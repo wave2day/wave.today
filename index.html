@@ -3,103 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Wave Background</title>
 
-<!-- CSS -->
-<link rel="stylesheet" href="css/background.css">
-
+<!-- CSS (ABSOLUTNÍ cesta pro GitHub Pages) -->
+<link rel="stylesheet" href="/wave.today/css/background.css?v=2">
 </head>
+
 <body>
 
-<!-- ===== VIDEO BACKGROUND ===== -->
 <div id="video-layer">
 
-  <!-- Prism SVG filtr -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <filter id="wtPrismStrong" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
         <feTurbulence type="fractalNoise" baseFrequency="0.02 0.035" numOctaves="2" seed="5" result="n"></feTurbulence>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="22"
-          xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="22" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
       </filter>
     </defs>
   </svg>
 
-  <!-- Base video -->
   <video id="myVideo" autoplay muted loop playsinline preload="auto">
-    <source src="assets/video/wave.mp4" type="video/mp4">
+    <source src="/wave.today/assets/video/wave.mp4?v=2" type="video/mp4">
   </video>
 
-  <!-- Sand layer -->
   <div class="sandGlass" style="display:none"></div>
 
-  <!-- Ambient bloom -->
   <video id="bloomVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
-    <source src="assets/video/wave.mp4" type="video/mp4">
+    <source src="/wave.today/assets/video/wave.mp4?v=2" type="video/mp4">
   </video>
 
-  <!-- Prism bounce -->
   <video id="bounceVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
-    <source src="assets/video/wave.mp4" type="video/mp4">
+    <source src="/wave.today/assets/video/wave.mp4?v=2" type="video/mp4">
   </video>
 
-  <!-- Prism color layer -->
   <div class="prismGlass" style="display:none"></div>
 
 </div>
 
-
-<!-- ===== LED PANEL ===== -->
 <div id="ledWrapper">
   <div class="panel" id="panel">
     <div class="panelLight" id="panelLight"></div>
-
     <div class="ledRow">
-
-      <div class="led y" data-on="0">
-        <div class="halo"></div>
-        <div class="seat"></div>
-        <div class="fuga"></div>
-        <div class="rim"></div>
-        <div class="lens">
-          <div class="innerGlow"></div>
-          <div class="shine1"></div>
-          <div class="shine2"></div>
-        </div>
-      </div>
-
-      <div class="led m" data-on="0">
-        <div class="halo"></div>
-        <div class="seat"></div>
-        <div class="fuga"></div>
-        <div class="rim"></div>
-        <div class="lens">
-          <div class="innerGlow"></div>
-          <div class="shine1"></div>
-          <div class="shine2"></div>
-        </div>
-      </div>
-
-      <div class="led c" data-on="0">
-        <div class="halo"></div>
-        <div class="seat"></div>
-        <div class="fuga"></div>
-        <div class="rim"></div>
-        <div class="lens">
-          <div class="innerGlow"></div>
-          <div class="shine1"></div>
-          <div class="shine2"></div>
-        </div>
-      </div>
-
+      <div class="led y" data-on="0"><div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div><div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div></div>
+      <div class="led m" data-on="0"><div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div><div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div></div>
+      <div class="led c" data-on="0"><div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div><div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div></div>
     </div>
   </div>
 </div>
 
-
-<!-- JS -->
-<script src="js/background.js"></script>
+<!-- JS (ABSOLUTNÍ cesta pro GitHub Pages) -->
+<script src="/wave.today/js/background.js?v=2"></script>
 
 </body>
 </html>
