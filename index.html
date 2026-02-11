@@ -4,23 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WT Background – Module</title>
+
+  <!-- DŮLEŽITÉ: GitHub Pages projektový web běží pod /NAZEV-REPA/ -->
+  <base href="/wave.today/">
+
   <link rel="stylesheet" href="css/background.css">
 </head>
 <body>
 
-<!-- LED PANEL (vpravo) -->
+<!-- LED PANEL -->
 <div id="ledWrapper">
   <div class="panel" id="panel">
     <div class="panelLight" id="panelLight"></div>
+
     <div class="ledRow">
       <div class="led y" data-on="0" aria-label="Yellow">
         <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
         <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
       </div>
+
       <div class="led m" data-on="0" aria-label="Magenta">
         <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
         <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
       </div>
+
       <div class="led c" data-on="0" aria-label="Cyan">
         <div class="halo"></div><div class="seat"></div><div class="fuga"></div><div class="rim"></div>
         <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
@@ -29,10 +36,9 @@
   </div>
 </div>
 
-<!-- BACKGROUND LAYERS -->
+<!-- BACKGROUND -->
 <div id="video-layer">
 
-  <!-- WT_BG: strong prism + hot color extract -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <filter id="wtHotExtract" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
@@ -73,24 +79,21 @@
     </defs>
   </svg>
 
-  <!-- BASE VIDEO -->
   <video id="myVideo" autoplay muted loop playsinline preload="auto">
     <source src="assets/video/wave.mp4" type="video/mp4">
   </video>
 
-  <div class="sandGlass" id="glass1"></div>
+  <div class="sandGlass"></div>
 
-  <!-- AMBIENT -->
   <video id="bloomVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
     <source src="assets/video/wave.mp4" type="video/mp4">
   </video>
 
-  <!-- BOUNCE -->
   <video id="bounceVideo" autoplay muted loop playsinline preload="auto" aria-hidden="true" style="visibility:hidden;opacity:0">
     <source src="assets/video/wave.mp4" type="video/mp4">
   </video>
 
-  <div class="prismGlass" id="glass2"></div>
+  <div class="prismGlass"></div>
 </div>
 
 <script src="js/background.js"></script>
