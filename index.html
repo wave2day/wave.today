@@ -4,8 +4,6 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WT Background</title>
-
-  <!-- TADY se "napojuje" CSS -->
   <link rel="stylesheet" href="background.css">
 </head>
 <body>
@@ -34,7 +32,7 @@
 <!-- BACKGROUND -->
 <div id="video-layer">
 
-  <!-- SVG filtr pro prism displacement -->
+  <!-- prism displacement (SVG) -->
   <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <filter id="wtPrismStrong" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
@@ -68,7 +66,6 @@
   <div class="prismGlass" style="display:none"></div>
 </div>
 
-<!-- TADY se "napojuje" JavaScript -->
 <script src="background.js"></script>
 </body>
 </html>
