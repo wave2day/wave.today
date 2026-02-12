@@ -1274,7 +1274,7 @@ transform: translateY(var(--pressY));
     stopReturn();
     returning = true;
 
-    const k = 0.018, c = 0.14, R = 0.62;
+    const k = 0.010, c = 0.22, R = 0.45; // tuned slower + less bouncy
     vx = 0; vy = 0;
     let last = performance.now();
 
@@ -1290,8 +1290,8 @@ transform: translateY(var(--pressY));
       vx += ax * dt;
       vy += ay * dt;
 
-      curX += vx * (dt*60);
-      curY += vy * (dt*60);
+      curX += vx * (dt*40);
+      curY += vy * (dt*40);
 
       if(curX < bounds.minX){ curX = bounds.minX; vx = -vx * R; }
       else if(curX > bounds.maxX){ curX = bounds.maxX; vx = -vx * R; }
