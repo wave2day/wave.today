@@ -13,8 +13,18 @@
   <style>
     #wtOrb img, #wtOverlay img { opacity: 1 !important; display: block !important; visibility: visible !important; }
   </style>
+
+<style>
+  /* UI nad backgroundem */
+  #shareOrb, #wtOrb, #wtOverlay { position: relative; z-index: 1000; }
+</style>
+
 </head>
 <body>
+<!-- BACKGROUND (oddělený soubor, žádná kolize CSS/JS) -->
+<iframe id="bgFrame" src="background.html?v=1" title="background"
+  style="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:0;pointer-events:none;"></iframe>
+
 <!-- ===== SHARE MODULE (původní) ===== -->
 <div id="shareOrb" class="glassBase circle v-white" aria-label="Share">
   <div class="pressGlow"></div>
