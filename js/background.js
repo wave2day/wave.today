@@ -147,3 +147,29 @@ function applyBG(){
   softSync();
 }
 applyBG();
+
+
+// === SCROLL-AWAY: LED panel mizí, když sjedeš pod první obrazovku ===
+(() => {
+  const led = document.getElementById('ledWrapper');
+  if (!led) return;
+
+  const update = () => {
+    const limit = Math.floor(window.innerHeight * 0.9);
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    if (y > limit){
+      led.style.opacity = '0';
+      led.style.pointerEvents = 'none';
+      led.style.transform = 'translateY(-16px)';
+    } else {
+      led.style.opacity = '1';
+      led.style.pointerEvents = 'auto';
+      led.style.transform = 'translateY(0)';
+    }
+  };
+
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
+
