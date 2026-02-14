@@ -1,15 +1,19 @@
-/* ===== BASE (module-friendly: žádné centrování body) ===== */
-html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  background:#0a0808;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+#wtBackground{
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100vh;
   overflow:hidden;
+  background:#0a0808;
+  z-index:0;
 }
 
+#wtBackground /* ===== BASE (module-friendly: žádné centrování body) ===== */
+
+
 /* ===== BACKGROUND SYSTEM ===== */
-:root{
+#wtBackground{
   --glass-blur: 11px;
   --glass-milk: 0.045;
   --grain-op: 0.14;
@@ -49,29 +53,21 @@ html,body{
 
   --panelInterferenceBase: .18;
   --panelInterferenceStep: .28;
-}
-
-#video-layer{
+}#wtBackground #video-layer{
   position:fixed;
   inset:0;
   z-index:0;
   overflow:hidden;
-}
-
-#video-layer video{
+}#wtBackground #video-layer video{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
   object-fit:cover;
-}
-
-#myVideo{
+}#wtBackground #myVideo{
   filter: blur(2px);
   transform: scale(1.03);
-}
-
-/* ===== GLASS 1 – sand ===== */
+}#wtBackground /* ===== GLASS 1 – sand ===== */
 .sandGlass{
   position:absolute;
   inset:0;
@@ -79,8 +75,7 @@ html,body{
   pointer-events:none;
   background: rgba(255,255,255,var(--glass-milk));
   backdrop-filter: blur(var(--glass-blur));
-}
-.sandGlass::before{
+}#wtBackground .sandGlass::before{
   content:"";
   position:absolute;
   inset:0;
@@ -88,9 +83,7 @@ html,body{
   mix-blend-mode: overlay;
   background-image:
     radial-gradient(circle at 20% 30%, rgba(255,255,255,.25) 0 1px, transparent 2px);
-}
-
-/* ===== PROJECTION (Ambient V2) ===== */
+}#wtBackground /* ===== PROJECTION (Ambient V2) ===== */
 #bloomVideo{
   z-index:3;
   pointer-events:none;
@@ -104,14 +97,9 @@ html,body{
   transform: scale(1.06);
   animation: drift 60s ease-in-out infinite alternate;
 }
-@keyframes drift{
-  0%{ transform: scale(1.05) translate3d(0.5%, -0.3%, 0); }
-  100%{ transform: scale(1.075) translate3d(-0.5%, 0.3%, 0); }
-}
-/* ===== LED PANEL (beze změny vzhledu) ===== */
-*{box-sizing:border-box}
-
-.panel{
+@keyframes drift{#wtBackground 0%{ transform: scale(1.05) translate3d(0.5%, -0.3%, 0); }#wtBackground 100%{ transform: scale(1.075) translate3d(-0.5%, 0.3%, 0); }
+}#wtBackground /* ===== LED PANEL (beze změny vzhledu) ===== */
+*{box-sizing:border-box}#wtBackground .panel{
   height: var(--panelH);
   width: fit-content;
   padding: var(--panelPadY) var(--panelPadX);
@@ -136,8 +124,7 @@ html,body{
 
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-}
-.panel::before{
+}#wtBackground .panel::before{
   content:"";
   position:absolute;
   inset: 12px;
@@ -154,8 +141,7 @@ html,body{
       transparent 72%);
   filter: blur(1.35px);
   opacity:.95;
-}
-.panel::after{
+}#wtBackground .panel::after{
   content:"";
   position:absolute;
   inset:-1px;
@@ -189,9 +175,7 @@ html,body{
   padding: var(--glassRingThickness);
   filter: blur(var(--glassRimBlur));
   opacity:.95;
-}
-
-.panelLight{
+}#wtBackground .panelLight{
   position:absolute;
   inset: 14px;
   border-radius: inherit;
@@ -210,16 +194,12 @@ html,body{
       rgba(var(--L1), .08),
       rgba(var(--L2), .10),
       rgba(var(--L3), .08));
-}
-
-.ledRow{
+}#wtBackground .ledRow{
   display:flex;
   gap: var(--gap);
   z-index: 7;
   position:relative;
-}
-
-.led{
+}#wtBackground .led{
   --rimTint: 0, 255, 255;
   --c1:#e9ffff; --c2:#72f6ff; --c3:#00a7b8;
   --on:0;
@@ -232,9 +212,7 @@ html,body{
   user-select:none;
   -webkit-tap-highlight-color: transparent;
   isolation:isolate;
-}
-
-.led .halo{
+}#wtBackground .led .halo{
   position:absolute;
   inset:-72px;
   border-radius:50%;
@@ -251,9 +229,7 @@ html,body{
   opacity: calc(.06 + .94*var(--on));
   mix-blend-mode: screen;
   transition: opacity .18s ease, filter .18s ease;
-}
-
-.led .seat{
+}#wtBackground .led .seat{
   position:absolute;
   inset:-4px;
   border-radius:50%;
@@ -291,8 +267,7 @@ html,body{
     0 8px 12px rgba(0,0,0,.26);
 
   opacity:.96;
-}
-.led .seat::after{
+}#wtBackground .led .seat::after{
   content:"";
   position:absolute;
   inset:0;
@@ -306,9 +281,7 @@ html,body{
 
   opacity: calc(.55 * (1 - var(--on)));
   filter: blur(1.1px);
-}
-
-.led .fuga{
+}#wtBackground .led .fuga{
   position:absolute;
   left: calc(var(--ledRing) - 1px);
   top:  calc(var(--ledRing) - 1px);
@@ -326,9 +299,7 @@ html,body{
 
   filter: blur(.35px);
   opacity:.9;
-}
-
-.led .rim{
+}#wtBackground .led .rim{
   position:absolute;
   inset:0;
   border-radius:50%;
@@ -366,9 +337,7 @@ html,body{
   padding: var(--ledRing);
   filter: blur(1px);
   opacity:.98;
-}
-
-.led .lens{
+}#wtBackground .led .lens{
   position:absolute;
   left: var(--ledRing);
   top:  var(--ledRing);
@@ -397,9 +366,7 @@ html,body{
     0 10px 16px rgba(0,0,0,.18);
 
   transition: filter .18s ease, transform .18s ease;
-}
-
-.led .lens::before{
+}#wtBackground .led .lens::before{
   content:"";
   position:absolute;
   inset:0;
@@ -413,9 +380,7 @@ html,body{
       rgba(0,0,0,0) 90%);
   filter: blur(1.0px);
   opacity:.85;
-}
-
-.led .shine1,.led .shine2{
+}#wtBackground .led .shine1, #wtBackground .led .shine2{
   position:absolute;
   left: 12%;
   right:12%;
@@ -423,8 +388,7 @@ html,body{
   transform: rotate(-6deg);
   pointer-events:none;
   mix-blend-mode: screen;
-}
-.led .shine1{
+}#wtBackground .led .shine1{
   top: 10%;
   height: 46%;
   background: radial-gradient(76% 90% at 50% 0%,
@@ -432,8 +396,7 @@ html,body{
     rgba(255,255,255,0) 74%);
   opacity:.56;
   filter: blur(1.05px);
-}
-.led .shine2{
+}#wtBackground .led .shine2{
   top: 27%;
   left: 18%;
   right:18%;
@@ -443,9 +406,7 @@ html,body{
     rgba(255,255,255,0) 76%);
   opacity:.46;
   filter: blur(1.15px);
-}
-
-.led .innerGlow{
+}#wtBackground .led .innerGlow{
   position:absolute;
   inset:-14px;
   border-radius:50%;
@@ -464,30 +425,18 @@ html,body{
   filter: blur(calc(2px + 8px*var(--on)));
   mix-blend-mode: screen;
   transition: opacity .18s ease, filter .18s ease;
-}
-
-.led[data-on="1"]{ --on:1; }
-.led[data-on="1"] .lens{
+}#wtBackground .led[data-on="1"]{ --on:1; }#wtBackground .led[data-on="1"] .lens{
   filter: saturate(1.28) brightness(1.14);
   transform: translateY(-1px);
-}
-.led[data-on="0"]{ --on:0; }
-
-.y{ --rimTint: 255, 235,  70; --c1:#fffbe6; --c2:#fff06a; --c3:#c7a800; }
-.m{ --rimTint: 255,  60, 220; --c1:#ffe9fd; --c2:#ff62e9; --c3:#b0008f; }
-.c{ --rimTint:  40, 210, 255; --c1:#ecfdff; --c2:#7eefff; --c3:#00a8c7; }
-
-#ledWrapper{
+}#wtBackground .led[data-on="0"]{ --on:0; }#wtBackground .y{ --rimTint: 255, 235,  70; --c1:#fffbe6; --c2:#fff06a; --c3:#c7a800; }#wtBackground .m{ --rimTint: 255,  60, 220; --c1:#ffe9fd; --c2:#ff62e9; --c3:#b0008f; }#wtBackground .c{ --rimTint:  40, 210, 255; --c1:#ecfdff; --c2:#7eefff; --c3:#00a8c7; }#wtBackground #ledWrapper{
   position: fixed;
   top: 14px;
   right: 14px;
   z-index: 9999;
   transform: scale(0.45);
   transform-origin: top right;
-}
-
-/* ===== LAYERS (LED2 spray + LED3 bloom) ===== */
-#vMilk, #vM, #vC, #vY, #bloomOverlay{
+}#wtBackground /* ===== LAYERS (LED2 spray + LED3 bloom) ===== */
+#vMilk, #wtBackground #vM, #wtBackground #vC, #wtBackground #vY, #wtBackground #bloomOverlay{
   position:absolute;
   inset:0;
   width:100%;
@@ -497,54 +446,43 @@ html,body{
   pointer-events:none;
   visibility:hidden; /* řízeno JS */
   opacity:0;
-}
-
-#vMilk{ z-index:6; filter:url(#milkyPaper); opacity:1; }
-#vM{ z-index:7; filter:url(#sprayMagenta); mix-blend-mode:screen; opacity:.95;
+}#wtBackground #vMilk{ z-index:6; filter:url(#milkyPaper); opacity:1; }#wtBackground #vM{ z-index:7; filter:url(#sprayMagenta); mix-blend-mode:screen; opacity:.95;
      transform:scale(1.04);
      filter:url(#sprayMagenta) drop-shadow(0 0 18px rgba(255,16,200,.40)) drop-shadow(0 0 42px rgba(255,16,200,.22));
-}
-#vC{ z-index:7; filter:url(#sprayCyan); mix-blend-mode:screen; opacity:.55; transform:scale(1.04); }
-#vY{ z-index:7; filter:url(#sprayYellow); mix-blend-mode:screen; opacity:.45; transform:scale(1.04); }
-
-/* Bloom overlay (jen LED3) */
+}#wtBackground #vC{ z-index:7; filter:url(#sprayCyan); mix-blend-mode:screen; opacity:.55; transform:scale(1.04); }#wtBackground #vY{ z-index:7; filter:url(#sprayYellow); mix-blend-mode:screen; opacity:.45; transform:scale(1.04); }#wtBackground /* Bloom overlay (jen LED3) */
 #bloomOverlay{
   z-index:9;
   mix-blend-mode:screen;
   filter: blur(10px) brightness(1.55) contrast(1.18) saturate(2.2);
   opacity:.40;
   transform: scale(1.06);
-}
-
-/* Sand musí být NAD stackem, aby backdrop-blur fungoval i s LED2/LED3 */
-.sandGlass{ z-index:50; -webkit-backdrop-filter: blur(var(--glass-blur)); }
-
-/* ===== SAFARI FALLBACK (SVG filtry na <video> bývají v Safari nespolehlivé) ===== */
-html.is-safari #vM, html.is-safari #vC, html.is-safari #vY{
+}#wtBackground /* Sand musí být NAD stackem, #wtBackground aby backdrop-blur fungoval i s LED2/LED3 */
+.sandGlass{ z-index:50; -webkit-backdrop-filter: blur(var(--glass-blur)); }#wtBackground /* ===== SAFARI FALLBACK (SVG filtry na <video> bývají v Safari nespolehlivé) ===== */
+html.is-safari #vM, #wtBackground html.is-safari #vC, #wtBackground html.is-safari #vY{
   filter:none !important;
   -webkit-filter:none !important;
-}
-html.is-safari #vMilk{
+}#wtBackground html.is-safari #vMilk{
   filter:none !important;
   -webkit-filter:none !important;
   mix-blend-mode:screen !important;
   opacity:.85 !important;
-}
-html.is-safari #vM{
+}#wtBackground html.is-safari #vM{
   mix-blend-mode:screen !important;
   opacity:.90 !important;
   filter: saturate(4) contrast(1.55) brightness(1.12) hue-rotate(305deg) !important;
   -webkit-filter: saturate(4) contrast(1.55) brightness(1.12) hue-rotate(305deg) !important;
-}
-html.is-safari #vC{
+}#wtBackground html.is-safari #vC{
   mix-blend-mode:screen !important;
   opacity:.55 !important;
   filter: saturate(4) contrast(1.45) brightness(1.08) hue-rotate(175deg) !important;
   -webkit-filter: saturate(4) contrast(1.45) brightness(1.08) hue-rotate(175deg) !important;
-}
-html.is-safari #vY{
+}#wtBackground html.is-safari #vY{
   mix-blend-mode:screen !important;
   opacity:.40 !important;
   filter: saturate(3.2) contrast(1.35) brightness(1.06) hue-rotate(45deg) !important;
   -webkit-filter: saturate(3.2) contrast(1.35) brightness(1.06) hue-rotate(45deg) !important;
 }
+
+#wtBackground #ledWrapper{ position:fixed; top:14px; right:14px; z-index:9999; }
+#wtBackground #video-layer{ pointer-events:none; }
+#wtBackground #ledWrapper{ pointer-events:auto; }
