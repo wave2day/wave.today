@@ -486,3 +486,18 @@ html.is-safari #vM, #wtBackground html.is-safari #vC, #wtBackground html.is-safa
 #wtBackground #ledWrapper{ position:fixed; top:14px; right:14px; z-index:9999; }
 #wtBackground #video-layer{ pointer-events:none; }
 #wtBackground #ledWrapper{ pointer-events:auto; }
+
+
+/* === BG LAYER ONLY (nesahat na UI) === */
+#video-layer, #wtBackground, #bgRoot { position: fixed; inset:0; z-index:0; }
+
+
+/* LED panel: fixed vpravo nahoře (klikatelné) */
+#ledWrapper{
+  position: fixed !important;
+  top: 12px !important;
+  right: 12px !important;
+  left: auto !important;
+  z-index: 999999 !important;
+}
+
