@@ -13,17 +13,158 @@
   <style>
     #wtOrb img, #wtOverlay img { opacity: 1 !important; display: block !important; visibility: visible !important; }
   </style>
-<style>
-/* Background + vrstvy UI */
-#bgFrame{position:fixed;inset:0;width:100vw;height:100vh;border:0;z-index:0;}
-#shareOrb,#wtOrb,#wtOverlay{position:relative;z-index:1000;}
-</style>
+  <link rel="stylesheet" href="css/background.css?v=1">
+
+  <style>
+    /* UI nad backgroundem */
+    #shareOrb, #wtOrb, #wtOverlay { position: relative; z-index: 20000; }
+  </style>
+
 </head>
 <body>
-<!-- BACKGROUND -->
-<iframe id="bgFrame" src="background.html?v=1" title="background"
-  allow="autoplay; fullscreen" loading="eager"
-  style="position:fixed;inset:0;width:100vw;height:100vh;border:0;z-index:0;pointer-events:auto;"></iframe>
+<!-- ===== BACKGROUND MODULE ===== -->
+<div id="wtBackground">
+<!-- ===== SVG filtry pro LED2 spray (milky + 2–3 barvy) ===== -->
+<svg width="0" height="0" style="position:absolute;left:-9999px;top:-9999px" aria-hidden="true" focusable="false">
+  <filter id="milkyPaper" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      0.2126 0.7152 0.0722 0 0
+      0.2126 0.7152 0.0722 0 0
+      0.2126 0.7152 0.0722 0 0
+      0      0      0      1 0" result="g"/>
+    <feComponentTransfer in="g" result="w">
+      <feFuncR type="linear" slope="1.02" intercept="0.30"/>
+      <feFuncG type="linear" slope="1.02" intercept="0.30"/>
+      <feFuncB type="linear" slope="1.02" intercept="0.32"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="w" result="m">
+      <feFuncR type="gamma" amplitude="1" exponent="0.82" offset="0"/>
+      <feFuncG type="gamma" amplitude="1" exponent="0.82" offset="0"/>
+      <feFuncB type="gamma" amplitude="1" exponent="0.82" offset="0"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="m">
+      <feFuncR type="table" tableValues="0.20 0.34 0.50 0.66 0.80 0.92 1"/>
+      <feFuncG type="table" tableValues="0.20 0.34 0.50 0.66 0.80 0.92 1"/>
+      <feFuncB type="table" tableValues="0.22 0.35 0.50 0.66 0.81 0.93 1"/>
+    </feComponentTransfer>
+  </filter>
+
+  <!-- MAGENTA: alpha = 1.25*R + 1.25*B - 1.55*G - 0.25 -->
+  <filter id="sprayMagenta" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+      1.25 -1.55 1.25 0 -0.25" result="a"/>
+    <feComponentTransfer in="a" result="t">
+      <feFuncA type="gamma" amplitude="1" exponent="2.20" offset="0"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="t" result="h">
+      <feFuncA type="linear" slope="4.4" intercept="-1.18"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="h" stdDeviation="1.9" result="b"/>
+    <feColorMatrix in="b" type="matrix" values="
+      0 0 0 0 1.00
+      0 0 0 0 0.06
+      0 0 0 0 0.82
+      0 0 0 1 0" result="c"/>
+    <feComponentTransfer in="c">
+      <feFuncA type="linear" slope="1.30" intercept="0"/>
+    </feComponentTransfer>
+  </filter>
+
+  <!-- CYAN: alpha = 1.20*G + 1.20*B - 1.35*R - 0.20 -->
+  <filter id="sprayCyan" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+      -1.35 1.20 1.20 0 -0.20" result="a"/>
+    <feComponentTransfer in="a" result="t">
+      <feFuncA type="gamma" amplitude="1" exponent="2.10" offset="0"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="t" result="h">
+      <feFuncA type="linear" slope="4.0" intercept="-1.10"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="h" stdDeviation="1.8" result="b"/>
+    <feColorMatrix in="b" type="matrix" values="
+      0 0 0 0 0.05
+      0 0 0 0 0.92
+      0 0 0 0 1.00
+      0 0 0 1 0" result="c"/>
+    <feComponentTransfer in="c">
+      <feFuncA type="linear" slope="1.15" intercept="0"/>
+    </feComponentTransfer>
+  </filter>
+
+  <!-- YELLOW: alpha = 1.25*R + 1.10*G - 1.35*B - 0.18 -->
+  <filter id="sprayYellow" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+      1.25 1.10 -1.35 0 -0.18" result="a"/>
+    <feComponentTransfer in="a" result="t">
+      <feFuncA type="gamma" amplitude="1" exponent="2.05" offset="0"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="t" result="h">
+      <feFuncA type="linear" slope="3.6" intercept="-1.00"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="h" stdDeviation="1.7" result="b"/>
+    <feColorMatrix in="b" type="matrix" values="
+      0 0 0 0 1.00
+      0 0 0 0 0.95
+      0 0 0 0 0.10
+      0 0 0 1 0" result="c"/>
+    <feComponentTransfer in="c">
+      <feFuncA type="linear" slope="1.10" intercept="0"/>
+    </feComponentTransfer>
+  </filter>
+</svg>
+
+
+
+<!-- LED PANEL (vpravo) -->
+<div id="ledWrapper"></div>
+
+<!-- BACKGROUND LAYERS -->
+<div id="video-layer">
+
+  <!-- BASE VIDEO -->
+  <video id="myVideo" autoplay muted loop playsinline preload="auto">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+
+  <!-- LED2: milky + spray barvy -->
+  <video id="vMilk" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+  <video id="vM" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+  <video id="vC" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+  <video id="vY" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+
+  <!-- LED3: Bloom overlay (Ambient V2 zůstává jako #bloomVideo) -->
+  <video id="bloomOverlay" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+
+
+  <div class="sandGlass" id="glass1"></div>
+
+  <!-- AMBIENT -->
+  <video id="bloomVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+
+  <!-- BOUNCE -->
+</div>
+</div>
 
 <!-- ===== SHARE MODULE (původní) ===== -->
 <div id="shareOrb" class="glassBase circle v-white" aria-label="Share">
@@ -93,5 +234,6 @@
 
   <script src="js/share.js?v=1"></script>
   <script src="js/qr.js?v=1"></script>
+  <script src="js/background.js?v=1"></script>
 </body>
 </html>
