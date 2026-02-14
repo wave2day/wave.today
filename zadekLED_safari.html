@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WT Background – Module</title>
+
+<style>
+/* ===== BASE (module-friendly: žádné centrování body) ===== */
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:#0a0808;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  overflow:hidden;
+}
+
+/* ===== BACKGROUND SYSTEM ===== */
+:root{
+  --glass-blur: 11px;
+  --glass-milk: 0.045;
+  --grain-op: 0.14;
+
+  --proj-opacity: 0.48;
+  --proj-blur: 16px;
+  --proj-bright: 1.55;
+  --proj-sat: 2.55;
+  --proj-contrast: 1.28;
+
+  /* LED panel proportions */
+  --panelH: 132px;
+  --panelPadY: 18px;
+  --panelPadX: 44px;
+  --gap: 20px;
+
+  --glassClearA: rgba(255,255,255,.14);
+  --glassClearB: rgba(255,255,255,.08);
+  --glassMilkA:  rgba(255,255,255,.10);
+  --glassMilkB:  rgba(255,255,255,.12);
+
+  --glassRingThickness: 13px;
+  --glassRimBlur: 1.05px;
+
+  --topRim1: rgba(0,0,0,.24);
+  --topRim2: rgba(0,0,0,.09);
+  --topRimFade: 30%;
+
+  --botRim1: rgba(255,255,255,.74);
+  --botRim2: rgba(255,255,255,.30);
+
+  --led: 86px;
+  --ledRing: 12px;
+
+  --haloBoost: 1.65;
+  --coreBoost: 1.25;
+
+  --panelInterferenceBase: .18;
+  --panelInterferenceStep: .28;
+}
+
+#video-layer{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+}
+
+#video-layer video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+#myVideo{
+  filter: blur(2px);
+  transform: scale(1.03);
+}
+
+/* ===== GLASS 1 – sand ===== */
+.sandGlass{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  background: rgba(255,255,255,var(--glass-milk));
+  backdrop-filter: blur(var(--glass-blur));
+}
+.sandGlass::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  opacity: var(--grain-op);
+  mix-blend-mode: overlay;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,.25) 0 1px, transparent 2px);
+}
+
+/* ===== PROJECTION (Ambient V2) ===== */
+#bloomVideo{
+  z-index:3;
+  pointer-events:none;
+  filter:
+    blur(var(--proj-blur))
+    brightness(var(--proj-bright))
+    contrast(var(--proj-contrast))
+    saturate(var(--proj-sat));
+  opacity: var(--proj-opacity);
+  mix-blend-mode: color-dodge;
+  transform: scale(1.06);
+  animation: drift 60s ease-in-out infinite alternate;
+}
+@keyframes drift{
+  0%{ transform: scale(1.05) translate3d(0.5%, -0.3%, 0); }
+  100%{ transform: scale(1.075) translate3d(-0.5%, 0.3%, 0); }
+}
+/* ===== LED PANEL (beze změny vzhledu) ===== */
+*{box-sizing:border-box}
+
+.panel{
+  height: var(--panelH);
+  width: fit-content;
+  padding: var(--panelPadY) var(--panelPadX);
+  border-radius: calc(var(--panelH) / 2);
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  isolation:isolate;
+
+  background:
+    radial-gradient(120% 120% at 50% 60%, var(--glassMilkA), transparent 62%),
+    radial-gradient(120% 120% at 50% 92%, var(--glassMilkB), transparent 58%),
+    radial-gradient(120% 120% at 35% 25%, var(--glassClearA), transparent 55%),
+    radial-gradient(140% 140% at 65% 70%, var(--glassClearB), transparent 60%),
+    rgba(255,255,255,.08);
+
+  box-shadow:
+    inset 0 18px 26px rgba(0,0,0,.22),
+    inset 0 -22px 30px rgba(255,255,255,.22),
+    0 22px 54px rgba(0,0,0,.28);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.panel::before{
+  content:"";
+  position:absolute;
+  inset: 12px;
+  border-radius: inherit;
+  pointer-events:none;
+  z-index: 1;
+  background:
+    radial-gradient(75% 60% at 18% 22%,
+      rgba(255,255,255,.40) 0%,
+      rgba(255,255,255,.16) 35%,
+      transparent 72%),
+    radial-gradient(55% 45% at 28% 32%,
+      rgba(255,255,255,.16) 0%,
+      transparent 72%);
+  filter: blur(1.35px);
+  opacity:.95;
+}
+.panel::after{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius: inherit;
+  pointer-events:none;
+  z-index: 6;
+  background:
+    radial-gradient(70% 70% at 92% 18%,
+      rgba(255,255,255,.18) 0%,
+      rgba(255,255,255,.08) 34%,
+      transparent 62%),
+    radial-gradient(85% 75% at 88% 20%,
+      rgba(0,0,0,.14) 0%,
+      transparent 58%),
+
+    radial-gradient(140% 120% at 50% 120%,
+      var(--botRim1) 0%,
+      var(--botRim2) 22%,
+      transparent 52%),
+    radial-gradient(170% 120% at 50% -38%,
+      var(--topRim1) 0%,
+      var(--topRim2) 14%,
+      transparent var(--topRimFade));
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+  padding: var(--glassRingThickness);
+  filter: blur(var(--glassRimBlur));
+  opacity:.95;
+}
+
+.panelLight{
+  position:absolute;
+  inset: 14px;
+  border-radius: inherit;
+  pointer-events:none;
+  z-index: 2;
+  mix-blend-mode: screen;
+  filter: blur(16px);
+  opacity: var(--panelInterferenceBase);
+  transition: opacity .18s ease;
+
+  background:
+    radial-gradient(150px 110px at 22% 56%, rgba(var(--L1), .46), transparent 70%),
+    radial-gradient(150px 110px at 50% 56%, rgba(var(--L2), .46), transparent 70%),
+    radial-gradient(150px 110px at 78% 56%, rgba(var(--L3), .46), transparent 70%),
+    linear-gradient(90deg,
+      rgba(var(--L1), .08),
+      rgba(var(--L2), .10),
+      rgba(var(--L3), .08));
+}
+
+.ledRow{
+  display:flex;
+  gap: var(--gap);
+  z-index: 7;
+  position:relative;
+}
+
+.led{
+  --rimTint: 0, 255, 255;
+  --c1:#e9ffff; --c2:#72f6ff; --c3:#00a7b8;
+  --on:0;
+
+  width: var(--led);
+  height: var(--led);
+  border-radius:50%;
+  position:relative;
+  cursor:pointer;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+  isolation:isolate;
+}
+
+.led .halo{
+  position:absolute;
+  inset:-72px;
+  border-radius:50%;
+  pointer-events:none;
+  z-index: 0;
+
+  background:
+    radial-gradient(62% 62% at 50% 58%,
+      rgba(var(--rimTint), calc((.10 + .95*var(--on)) * var(--haloBoost))) 0%,
+      rgba(255,255,255, calc(.08 * var(--on))) 18%,
+      rgba(var(--rimTint), 0) 78%);
+
+  filter: blur(calc(16px + 30px*var(--on)));
+  opacity: calc(.06 + .94*var(--on));
+  mix-blend-mode: screen;
+  transition: opacity .18s ease, filter .18s ease;
+}
+
+.led .seat{
+  position:absolute;
+  inset:-4px;
+  border-radius:50%;
+  z-index: 1;
+
+  background:
+    radial-gradient(closest-side at 50% 52%,
+      rgba(255,255,255,.34) 0%,
+      rgba(255,255,255,.16) 60%,
+      rgba(255,255,255,0) 72%),
+
+    radial-gradient(110% 90% at 48% 66%,
+      rgba(var(--rimTint), calc(.035 + .18*var(--on))) 0%,
+      rgba(var(--rimTint), calc(.015 + .10*var(--on))) 42%,
+      transparent 76%),
+
+    radial-gradient(100% 80% at 60% 72%,
+      rgba(var(--rimTint), calc(.020 + .14*var(--on))) 0%,
+      rgba(var(--rimTint), 0) 60%),
+
+    radial-gradient(110% 110% at 50% 60%,
+      rgba(255,255,255,.14) 0%,
+      rgba(255,255,255,.06) 34%,
+      rgba(0,0,0,.12) 58%,
+      rgba(0,0,0,.28) 76%,
+      rgba(0,0,0,0) 88%),
+
+    radial-gradient(92% 92% at 50% 92%,
+      rgba(0,0,0,.20),
+      rgba(0,0,0,0) 72%);
+
+  box-shadow:
+    inset 0 12px 14px rgba(255,255,255,.22),
+    inset 0 -20px 24px rgba(0,0,0,.32),
+    0 8px 12px rgba(0,0,0,.26);
+
+  opacity:.96;
+}
+.led .seat::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+
+  background:
+    radial-gradient(85% 75% at 50% 60%,
+      rgba(0,0,0,.18),
+      rgba(0,0,0,0) 70%);
+
+  opacity: calc(.55 * (1 - var(--on)));
+  filter: blur(1.1px);
+}
+
+.led .fuga{
+  position:absolute;
+  left: calc(var(--ledRing) - 1px);
+  top:  calc(var(--ledRing) - 1px);
+  width: calc(var(--led) - (var(--ledRing) - 1px)*2);
+  height: calc(var(--led) - (var(--ledRing) - 1px)*2);
+  border-radius:50%;
+  z-index: 2;
+  pointer-events:none;
+
+  background:
+    radial-gradient(closest-side at 50% 55%,
+      rgba(0,0,0,.24) 64%,
+      rgba(0,0,0,.12) 74%,
+      rgba(0,0,0,0) 86%);
+
+  filter: blur(.35px);
+  opacity:.9;
+}
+
+.led .rim{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  z-index: 3;
+  pointer-events:none;
+
+  background:
+    radial-gradient(72% 60% at 76% 84%,
+      rgba(var(--rimTint), calc(.05 * (0.20 + 0.90*var(--on)))) 0%,
+      rgba(var(--rimTint), calc(.03 * (0.20 + 0.90*var(--on)))) 30%,
+      transparent 70%),
+
+    radial-gradient(140% 120% at 50% 120%,
+      rgba(255,255,255,.70) 0%,
+      rgba(255,255,255,.24) 22%,
+      transparent 52%),
+
+    radial-gradient(170% 120% at 50% -38%,
+      rgba(0,0,0,.24) 0%,
+      rgba(0,0,0,.09) 14%,
+      transparent 30%),
+
+    radial-gradient(110% 110% at 50% 60%,
+      rgba(var(--rimTint), calc(.30 * (0.12 + 0.88*var(--on)))) 0%,
+      rgba(var(--rimTint), calc(.16 * (0.12 + 0.88*var(--on)))) 44%,
+      rgba(var(--rimTint), calc(.07 * (0.12 + 0.88*var(--on)))) 64%,
+      transparent 74%);
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+  padding: var(--ledRing);
+  filter: blur(1px);
+  opacity:.98;
+}
+
+.led .lens{
+  position:absolute;
+  left: var(--ledRing);
+  top:  var(--ledRing);
+  width: calc(var(--led) - var(--ledRing)*2);
+  height: calc(var(--led) - var(--ledRing)*2);
+  border-radius:50%;
+  z-index: 4;
+  overflow:hidden;
+
+  background:
+    radial-gradient(18px 18px at 28% 22%,
+      rgba(255,255,255,.68), rgba(255,255,255,0) 65%),
+
+    linear-gradient(180deg,
+      rgba(255,255,255,.58) 0%,
+      rgba(255,255,255,.14) 26%,
+      rgba(255,255,255,.06) 48%,
+      rgba(0,0,0,.10) 100%),
+
+    linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
+
+  border: 0;
+  box-shadow:
+    inset 0 -18px 22px rgba(0,0,0,.34),
+    inset 0  10px 14px rgba(255,255,255,.12),
+    0 10px 16px rgba(0,0,0,.18);
+
+  transition: filter .18s ease, transform .18s ease;
+}
+
+.led .lens::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  background:
+    radial-gradient(closest-side at 50% 58%,
+      rgba(255,255,255,.16) 66%,
+      rgba(255,255,255,.06) 74%,
+      rgba(0,0,0,.10) 82%,
+      rgba(0,0,0,0) 90%);
+  filter: blur(1.0px);
+  opacity:.85;
+}
+
+.led .shine1,.led .shine2{
+  position:absolute;
+  left: 12%;
+  right:12%;
+  border-radius:999px;
+  transform: rotate(-6deg);
+  pointer-events:none;
+  mix-blend-mode: screen;
+}
+.led .shine1{
+  top: 10%;
+  height: 46%;
+  background: radial-gradient(76% 90% at 50% 0%,
+    rgba(255,255,255,.88),
+    rgba(255,255,255,0) 74%);
+  opacity:.56;
+  filter: blur(1.05px);
+}
+.led .shine2{
+  top: 27%;
+  left: 18%;
+  right:18%;
+  height: 28%;
+  background: radial-gradient(82% 110% at 50% 0%,
+    rgba(255,255,255,.78),
+    rgba(255,255,255,0) 76%);
+  opacity:.46;
+  filter: blur(1.15px);
+}
+
+.led .innerGlow{
+  position:absolute;
+  inset:-14px;
+  border-radius:50%;
+  pointer-events:none;
+  z-index: 5;
+
+  background:
+    radial-gradient(42% 38% at 52% 60%,
+      rgba(255,255,255, calc((.12 + .86*var(--on)) * var(--coreBoost))) 0%,
+      rgba(255,255,255,0) 62%),
+    radial-gradient(58% 56% at 50% 66%,
+      rgba(var(--rimTint), calc(.10 + .98*var(--on))) 0%,
+      rgba(var(--rimTint), 0) 70%);
+
+  opacity: calc(.10 + .90*var(--on));
+  filter: blur(calc(2px + 8px*var(--on)));
+  mix-blend-mode: screen;
+  transition: opacity .18s ease, filter .18s ease;
+}
+
+.led[data-on="1"]{ --on:1; }
+.led[data-on="1"] .lens{
+  filter: saturate(1.28) brightness(1.14);
+  transform: translateY(-1px);
+}
+.led[data-on="0"]{ --on:0; }
+
+.y{ --rimTint: 255, 235,  70; --c1:#fffbe6; --c2:#fff06a; --c3:#c7a800; }
+.m{ --rimTint: 255,  60, 220; --c1:#ffe9fd; --c2:#ff62e9; --c3:#b0008f; }
+.c{ --rimTint:  40, 210, 255; --c1:#ecfdff; --c2:#7eefff; --c3:#00a8c7; }
+
+#ledWrapper{
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 9999;
+  transform: scale(0.45);
+  transform-origin: top right;
+}
+
+/* ===== LAYERS (LED2 spray + LED3 bloom) ===== */
+#vMilk, #vM, #vC, #vY, #bloomOverlay{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform: scale(1.03);
+  pointer-events:none;
+  visibility:hidden; /* řízeno JS */
+  opacity:0;
+}
+
+#vMilk{ z-index:6; filter:url(#milkyPaper); opacity:1; }
+#vM{ z-index:7; filter:url(#sprayMagenta); mix-blend-mode:screen; opacity:.95;
+     transform:scale(1.04);
+     filter:url(#sprayMagenta) drop-shadow(0 0 18px rgba(255,16,200,.40)) drop-shadow(0 0 42px rgba(255,16,200,.22));
+}
+#vC{ z-index:7; filter:url(#sprayCyan); mix-blend-mode:screen; opacity:.55; transform:scale(1.04); }
+#vY{ z-index:7; filter:url(#sprayYellow); mix-blend-mode:screen; opacity:.45; transform:scale(1.04); }
+
+/* Bloom overlay (jen LED3) */
+#bloomOverlay{
+  z-index:9;
+  mix-blend-mode:screen;
+  filter: blur(10px) brightness(1.55) contrast(1.18) saturate(2.2);
+  opacity:.40;
+  transform: scale(1.06);
+}
+
+/* Sand musí být NAD stackem, aby backdrop-blur fungoval i s LED2/LED3 */
+.sandGlass{ z-index:50; -webkit-backdrop-filter: blur(var(--glass-blur)); }
+
+/* ===== SAFARI FALLBACK (SVG filtry na <video> bývají v Safari nespolehlivé) ===== */
+html.is-safari #vM, html.is-safari #vC, html.is-safari #vY{
+  filter:none !important;
+  -webkit-filter:none !important;
+}
+html.is-safari #vMilk{
+  filter:none !important;
+  -webkit-filter:none !important;
+  mix-blend-mode:screen !important;
+  opacity:.85 !important;
+}
+html.is-safari #vM{
+  mix-blend-mode:screen !important;
+  opacity:.90 !important;
+  filter: saturate(4) contrast(1.55) brightness(1.12) hue-rotate(305deg) !important;
+  -webkit-filter: saturate(4) contrast(1.55) brightness(1.12) hue-rotate(305deg) !important;
+}
+html.is-safari #vC{
+  mix-blend-mode:screen !important;
+  opacity:.55 !important;
+  filter: saturate(4) contrast(1.45) brightness(1.08) hue-rotate(175deg) !important;
+  -webkit-filter: saturate(4) contrast(1.45) brightness(1.08) hue-rotate(175deg) !important;
+}
+html.is-safari #vY{
+  mix-blend-mode:screen !important;
+  opacity:.40 !important;
+  filter: saturate(3.2) contrast(1.35) brightness(1.06) hue-rotate(45deg) !important;
+  -webkit-filter: saturate(3.2) contrast(1.35) brightness(1.06) hue-rotate(45deg) !important;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- ===== SVG filtry pro LED2 spray (milky + 2–3 barvy) ===== -->
+<svg width="0" height="0" style="position:absolute;left:-9999px;top:-9999px" aria-hidden="true" focusable="false">
+  <filter id="milkyPaper" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      0.2126 0.7152 0.0722 0 0
+      0.2126 0.7152 0.0722 0 0
+      0.2126 0.7152 0.0722 0 0
+      0      0      0      1 0" result="g"/>
+    <feComponentTransfer in="g" result="w">
+      <feFuncR type="linear" slope="1.02" intercept="0.30"/>
+      <feFuncG type="linear" slope="1.02" intercept="0.30"/>
+      <feFuncB type="linear" slope="1.02" intercept="0.32"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="w" result="m">
+      <feFuncR type="gamma" amplitude="1" exponent="0.82" offset="0"/>
+      <feFuncG type="gamma" amplitude="1" exponent="0.82" offset="0"/>
+      <feFuncB type="gamma" amplitude="1" exponent="0.82" offset="0"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="m">
+      <feFuncR type="table" tableValues="0.20 0.34 0.50 0.66 0.80 0.92 1"/>
+      <feFuncG type="table" tableValues="0.20 0.34 0.50 0.66 0.80 0.92 1"/>
+      <feFuncB type="table" tableValues="0.22 0.35 0.50 0.66 0.81 0.93 1"/>
+    </feComponentTransfer>
+  </filter>
+
+  <!-- MAGENTA: alpha = 1.25*R + 1.25*B - 1.55*G - 0.25 -->
+  <filter id="sprayMagenta" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+      1.25 -1.55 1.25 0 -0.25" result="a"/>
+    <feComponentTransfer in="a" result="t">
+      <feFuncA type="gamma" amplitude="1" exponent="2.20" offset="0"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="t" result="h">
+      <feFuncA type="linear" slope="4.4" intercept="-1.18"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="h" stdDeviation="1.9" result="b"/>
+    <feColorMatrix in="b" type="matrix" values="
+      0 0 0 0 1.00
+      0 0 0 0 0.06
+      0 0 0 0 0.82
+      0 0 0 1 0" result="c"/>
+    <feComponentTransfer in="c">
+      <feFuncA type="linear" slope="1.30" intercept="0"/>
+    </feComponentTransfer>
+  </filter>
+
+  <!-- CYAN: alpha = 1.20*G + 1.20*B - 1.35*R - 0.20 -->
+  <filter id="sprayCyan" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+      -1.35 1.20 1.20 0 -0.20" result="a"/>
+    <feComponentTransfer in="a" result="t">
+      <feFuncA type="gamma" amplitude="1" exponent="2.10" offset="0"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="t" result="h">
+      <feFuncA type="linear" slope="4.0" intercept="-1.10"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="h" stdDeviation="1.8" result="b"/>
+    <feColorMatrix in="b" type="matrix" values="
+      0 0 0 0 0.05
+      0 0 0 0 0.92
+      0 0 0 0 1.00
+      0 0 0 1 0" result="c"/>
+    <feComponentTransfer in="c">
+      <feFuncA type="linear" slope="1.15" intercept="0"/>
+    </feComponentTransfer>
+  </filter>
+
+  <!-- YELLOW: alpha = 1.25*R + 1.10*G - 1.35*B - 0.18 -->
+  <filter id="sprayYellow" color-interpolation-filters="sRGB">
+    <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+      1.25 1.10 -1.35 0 -0.18" result="a"/>
+    <feComponentTransfer in="a" result="t">
+      <feFuncA type="gamma" amplitude="1" exponent="2.05" offset="0"/>
+    </feComponentTransfer>
+    <feComponentTransfer in="t" result="h">
+      <feFuncA type="linear" slope="3.6" intercept="-1.00"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="h" stdDeviation="1.7" result="b"/>
+    <feColorMatrix in="b" type="matrix" values="
+      0 0 0 0 1.00
+      0 0 0 0 0.95
+      0 0 0 0 0.10
+      0 0 0 1 0" result="c"/>
+    <feComponentTransfer in="c">
+      <feFuncA type="linear" slope="1.10" intercept="0"/>
+    </feComponentTransfer>
+  </filter>
+</svg>
+
+
+
+<!-- LED PANEL (vpravo) -->
+<div id="ledWrapper"></div>
+
+<!-- BACKGROUND LAYERS -->
+<div id="video-layer">
+
+  <!-- BASE VIDEO -->
+  <video id="myVideo" autoplay muted loop playsinline preload="auto">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+
+  <!-- LED2: milky + spray barvy -->
+  <video id="vMilk" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+  <video id="vM" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+  <video id="vC" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+  <video id="vY" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+
+  <!-- LED3: Bloom overlay (Ambient V2 zůstává jako #bloomVideo) -->
+  <video id="bloomOverlay" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+
+
+  <div class="sandGlass" id="glass1"></div>
+
+  <!-- AMBIENT -->
+  <video id="bloomVideo" autoplay muted loop playsinline preload="auto" style="visibility:hidden;opacity:0">
+    <source src="assets/video/wave.mp4" type="video/mp4">
+  </video>
+
+  <!-- BOUNCE -->
+</div>
+
+
+<script>
+/* Safari detekce (desktop + iOS WebKit) */
+(function(){
+  const ua = navigator.userAgent;
+  const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS/.test(ua);
+  if(isSafari) document.documentElement.classList.add('is-safari');
+})();
+</script>
+
+<script>
+/* ===== VIDEO LAYERS refs ===== */
+const base = document.getElementById("myVideo");
+const ambient = document.getElementById("bloomVideo");      // Ambient V2 (color-dodge)
+const bloomOv = document.getElementById("bloomOverlay");    // Bloom (screen)
+const vMilk = document.getElementById("vMilk");
+const vM = document.getElementById("vM");
+const vC = document.getElementById("vC");
+const vY = document.getElementById("vY");
+
+const vids = [base, ambient, bloomOv, vMilk, vM, vC, vY].filter(Boolean);
+
+/* Tichý pokus o autoplay (bez UI) */
+window.addEventListener('load', ()=>{
+  vids.forEach(v=>{
+    try{
+      v.muted = true;
+      v.playsInline = true;
+      v.play().catch(()=>{});
+    }catch(e){}
+  });
+});
+
+/* ===== Odlehčený sync (4×/s) ===== */
+function softSync(){
+  const t = base?.currentTime || 0;
+  vids.forEach(v=>{
+    if(v === base) return;
+    if(v.readyState >= 2 && base.readyState >= 2){
+      const d = t - v.currentTime;
+      if(Math.abs(d) > 0.35) v.currentTime = t;
+    }
+  });
+}
+setInterval(softSync, 250);
+</script>
+
+
+<script>
+/* ===== LED PANEL (shadow DOM, exact look from LED.html) ===== */
+(function(){
+  const host = document.getElementById('ledWrapper');
+  if(!host) return;
+
+  // State objects used by applyBG() below
+  window.leds = [{dataset:{on:"0"}}, {dataset:{on:"0"}}, {dataset:{on:"0"}}];
+const leds = window.leds; // make applyBG() use the bridged LED states
+
+
+  const shadow = host.attachShadow ? host.attachShadow({mode:'open'}) : null;
+  const root = shadow || host;
+
+  // Build DOM
+  const style = document.createElement('style');
+  style.textContent = '\n  :host{\n    --bg:#2f2f2f;\n\n    /* Proporce panelu */\n    --panelH: 132px;\n    --panelPadY: 18px;\n    --panelPadX: 44px;\n    --gap: 20px;\n\n    /* sklo panelu */\n    --glassClearA: rgba(255,255,255,.14);\n    --glassClearB: rgba(255,255,255,.08);\n    --glassMilkA:  rgba(255,255,255,.10);\n    --glassMilkB:  rgba(255,255,255,.12);\n\n    --glassRingThickness: 13px;\n    --glassRimBlur: 1.05px;\n\n    --topRim1: rgba(0,0,0,.24);\n    --topRim2: rgba(0,0,0,.09);\n    --topRimFade: 30%;\n\n    --botRim1: rgba(255,255,255,.74);\n    --botRim2: rgba(255,255,255,.30);\n\n    --bleedA: .16;\n    --bleedB: .08;\n\n    /* LED */\n    --led: 86px;\n    --ledRing: 12px;\n\n    /* svit */\n    --haloBoost: 1.65;\n    --coreBoost: 1.25;\n\n    /* vnitřní “lom” v panelu */\n    --panelInterferenceBase: .18;\n    --panelInterferenceStep: .28;\n  }\n\n  *{box-sizing:border-box}\n  html,body{height:100%;margin:0}\n  body{\n    display:grid;\n    place-items:center;\n    background:\n      radial-gradient(1100px 650px at 50% 25%, rgba(255,255,255,.06), transparent 60%),\n      radial-gradient(900px 500px at 20% 80%, rgba(0,255,255,.05), transparent 55%),\n      radial-gradient(900px 500px at 80% 80%, rgba(255,0,200,.05), transparent 55%),\n      radial-gradient(900px 500px at 50% 90%, rgba(255,255,0,.05), transparent 55%),\n      var(--bg);\n    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;\n  }\n\n  /* PANEL */\n  .panel{\n    height: var(--panelH);\n    width: fit-content;\n    padding: var(--panelPadY) var(--panelPadX);\n    border-radius: calc(var(--panelH) / 2);\n    position:relative;\n    display:flex;\n    align-items:center;\n    justify-content:center;\n    isolation:isolate;\n\n    background:\n      radial-gradient(120% 120% at 50% 60%, var(--glassMilkA), transparent 62%),\n      radial-gradient(120% 120% at 50% 92%, var(--glassMilkB), transparent 58%),\n      radial-gradient(120% 120% at 35% 25%, var(--glassClearA), transparent 55%),\n      radial-gradient(140% 140% at 65% 70%, var(--glassClearB), transparent 60%),\n      rgba(255,255,255,.08);\n\n    box-shadow:\n      inset 0 18px 26px rgba(0,0,0,.22),\n      inset 0 -22px 30px rgba(255,255,255,.22),\n      0 22px 54px rgba(0,0,0,.28);\n\n    backdrop-filter: blur(8px);\n    -webkit-backdrop-filter: blur(8px);\n  }\n\n  .panel::before{\n    content:"";\n    position:absolute;\n    inset: 12px;\n    border-radius: inherit;\n    pointer-events:none;\n    z-index: 1;\n    background:\n      radial-gradient(75% 60% at 18% 22%,\n        rgba(255,255,255,.40) 0%,\n        rgba(255,255,255,.16) 35%,\n        transparent 72%),\n      radial-gradient(55% 45% at 28% 32%,\n        rgba(255,255,255,.16) 0%,\n        transparent 72%);\n    filter: blur(1.35px);\n    opacity:.95;\n  }\n\n  .panel::after{\n    content:"";\n    position:absolute;\n    inset:-1px;\n    border-radius: inherit;\n    pointer-events:none;\n    z-index: 6;\n\n    background:\n      /* === FIX: jemné zvýraznění hrany vpravo nahoře (aby se neztrácela) === */\n      radial-gradient(70% 70% at 92% 18%,\n        rgba(255,255,255,.18) 0%,\n        rgba(255,255,255,.08) 34%,\n        transparent 62%),\n      radial-gradient(85% 75% at 88% 20%,\n        rgba(0,0,0,.14) 0%,\n        transparent 58%),\n\n      /* původní rim */\n      radial-gradient(140% 120% at 50% 120%,\n        var(--botRim1) 0%,\n        var(--botRim2) 22%,\n        transparent 52%),\n      radial-gradient(170% 120% at 50% -38%,\n        var(--topRim1) 0%,\n        var(--topRim2) 14%,\n        transparent var(--topRimFade));\n\n    -webkit-mask:\n      linear-gradient(#000 0 0) content-box,\n      linear-gradient(#000 0 0);\n    -webkit-mask-composite: xor;\n    mask-composite: exclude;\n\n    padding: var(--glassRingThickness);\n    filter: blur(var(--glassRimBlur));\n    opacity:.95;\n  }\n\n  .panelLight{\n    position:absolute;\n    inset: 14px;\n    border-radius: inherit;\n    pointer-events:none;\n    z-index: 2;\n    mix-blend-mode: screen;\n    filter: blur(16px);\n    opacity: var(--panelInterferenceBase);\n    transition: opacity .18s ease;\n\n    background:\n      radial-gradient(150px 110px at 22% 56%, rgba(var(--L1), .46), transparent 70%),\n      radial-gradient(150px 110px at 50% 56%, rgba(var(--L2), .46), transparent 70%),\n      radial-gradient(150px 110px at 78% 56%, rgba(var(--L3), .46), transparent 70%),\n      linear-gradient(90deg,\n        rgba(var(--L1), .08),\n        rgba(var(--L2), .10),\n        rgba(var(--L3), .08));\n  }\n\n  .ledRow{\n    display:flex;\n    gap: var(--gap);\n    z-index: 7;\n    position:relative;\n  }\n\n  /* LED */\n  .led{\n    --rimTint: 0, 255, 255;\n    --c1:#e9ffff; --c2:#72f6ff; --c3:#00a7b8;\n    --on:0;\n\n    width: var(--led);\n    height: var(--led);\n    border-radius:50%;\n    position:relative;\n    cursor:pointer;\n    user-select:none;\n    -webkit-tap-highlight-color: transparent;\n    isolation:isolate;\n  }\n\n  .led .halo{\n    position:absolute;\n    inset:-72px;\n    border-radius:50%;\n    pointer-events:none;\n    z-index: 0;\n\n    background:\n      radial-gradient(62% 62% at 50% 58%,\n        rgba(var(--rimTint), calc((.10 + .94*var(--on)) * var(--haloBoost))) 0%,\n        rgba(255,255,255, calc(.08 * var(--on))) 18%,\n        rgba(var(--rimTint), 0) 78%);\n\n    filter: blur(calc(18px + 26px*var(--on)));\n    opacity: calc(.07 + .93*var(--on));\n    mix-blend-mode: screen;\n    transition: opacity .18s ease, filter .18s ease;\n  }\n\n  /* ZAPUŠTĚNÍ (DRŮLEK) */\n  .led .seat{\n    position:absolute;\n    inset:-3px;\n    border-radius:50%;\n    z-index: 1;\n\n    background:\n      radial-gradient(closest-side at 50% 50%,\n        rgba(255,255,255,.30) 0%,\n        rgba(255,255,255,.12) 52%,\n        rgba(255,255,255,0) 60%),\n\n      radial-gradient(110% 92% at 44% 62%,\n        rgba(var(--rimTint), calc(.012 + .16*var(--on))) 0%,\n        rgba(var(--rimTint), calc(.006 + .10*var(--on))) 32%,\n        transparent 58%),\n      radial-gradient(98% 86% at 58% 70%,\n        rgba(var(--rimTint), calc(.010 + .14*var(--on))) 0%,\n        rgba(var(--rimTint), calc(.005 + .09*var(--on))) 28%,\n        transparent 54%),\n      radial-gradient(120% 96% at 52% 64%,\n        rgba(255,255,255, calc(.010 + .08*var(--on))) 0%,\n        rgba(255,255,255,0) 55%),\n\n      radial-gradient(115% 115% at 50% 60%,\n        rgba(255,255,255,.10) 0%,\n        rgba(255,255,255,.05) 30%,\n        rgba(0,0,0,.14) 46%,\n        rgba(0,0,0,.32) 62%,\n        rgba(0,0,0,0) 82%),\n\n      radial-gradient(88% 88% at 50% 92%,\n        rgba(0,0,0,.20),\n        rgba(0,0,0,0) 70%);\n\n    filter: blur(calc(0.55px + 0.15px*var(--on)));\n\n    box-shadow:\n      inset 0 8px 10px rgba(255,255,255,.18),\n      inset 0 -22px 28px rgba(0,0,0,.34),\n      0 6px 10px rgba(0,0,0,.22);\n\n    opacity:.96;\n  }\n\n  /* rim */\n  .led .rim{\n    position:absolute;\n    inset:0;\n    border-radius:50%;\n    z-index: 2;\n    pointer-events:none;\n\n    background:\n      radial-gradient(72% 60% at 76% 84%,\n        rgba(var(--rimTint), calc(var(--bleedA) * (0.45 + 0.95*var(--on)))) 0%,\n        rgba(var(--rimTint), calc(var(--bleedB) * (0.45 + 0.95*var(--on)))) 28%,\n        transparent 68%),\n\n      radial-gradient(140% 120% at 50% 120%,\n        rgba(255,255,255,.70) 0%,\n        rgba(255,255,255,.24) 22%,\n        transparent 52%),\n\n      radial-gradient(170% 120% at 50% -38%,\n        rgba(0,0,0,.24) 0%,\n        rgba(0,0,0,.09) 14%,\n        transparent 30%),\n\n      radial-gradient(110% 110% at 50% 60%,\n        rgba(var(--rimTint), .42) 0%,\n        rgba(var(--rimTint), .20) 44%,\n        rgba(var(--rimTint), .09) 64%,\n        transparent 74%);\n\n    -webkit-mask:\n      linear-gradient(#000 0 0) content-box,\n      linear-gradient(#000 0 0);\n    -webkit-mask-composite: xor;\n    mask-composite: exclude;\n    padding: var(--ledRing);\n\n    filter: blur(1px);\n    opacity:.98;\n  }\n\n  /* plast */\n  .led .lens{\n    position:absolute;\n    left: var(--ledRing);\n    top:  var(--ledRing);\n    width: calc(var(--led) - var(--ledRing)*2);\n    height: calc(var(--led) - var(--ledRing)*2);\n    border-radius:50%;\n    z-index: 3;\n    overflow:hidden;\n\n    background:\n      radial-gradient(18px 18px at 28% 22%,\n        rgba(255,255,255,.72), rgba(255,255,255,0) 65%),\n\n      linear-gradient(180deg,\n        rgba(255,255,255,.62) 0%,\n        rgba(255,255,255,.14) 26%,\n        rgba(255,255,255,.06) 48%,\n        rgba(0,0,0,.10) 100%),\n\n      linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));\n\n    border: 0;\n    outline: 1px solid rgba(255,255,255,.14);\n    outline-offset: -1px;\n\n    -webkit-mask: radial-gradient(circle at 50% 50%, #000 0 92%, transparent 100%);\n    mask: radial-gradient(circle at 50% 50%, #000 0 92%, transparent 100%);\n\n    box-shadow:\n      inset 0 -18px 22px rgba(0,0,0,.34),\n      inset 0  10px 14px rgba(255,255,255,.14),\n      0 10px 16px rgba(0,0,0,.18);\n\n    transition: filter .18s ease, transform .18s ease;\n  }\n\n  /* TĚSNÁ SPÁRA mezi čočkou a sedlem */\n  .led .lens::after{\n    content:"";\n    position:absolute;\n    inset:0;\n    border-radius:50%;\n    pointer-events:none;\n    background:\n      radial-gradient(circle at 50% 50%,\n        transparent 0 88%,\n        rgba(0,0,0,.34) 89%,\n        rgba(0,0,0,.18) 91%,\n        rgba(255,255,255,.10) 93%,\n        transparent 96%);\n    mix-blend-mode: multiply;\n    opacity:.80;\n    filter: blur(.2px);\n  }\n\n  /* odlesky */\n  .led .shine1,.led .shine2{\n    position:absolute;\n    left: 12%;\n    right:12%;\n    border-radius:999px;\n    transform: rotate(-6deg);\n    pointer-events:none;\n  }\n  .led .shine1{\n    top: 10%;\n    height: 46%;\n    background: radial-gradient(76% 90% at 50% 0%,\n      rgba(255,255,255,.92),\n      rgba(255,255,255,0) 74%);\n    opacity:.62;\n    filter: blur(1.2px);\n  }\n  .led .shine2{\n    top: 27%;\n    left: 18%;\n    right:18%;\n    height: 28%;\n    background: radial-gradient(82% 110% at 50% 0%,\n      rgba(255,255,255,.86),\n      rgba(255,255,255,0) 76%);\n    opacity:.56;\n    filter: blur(1.2px);\n  }\n\n  /* vnitřní svit */\n  .led .innerGlow{\n    position:absolute;\n    inset:-14px;\n    border-radius:50%;\n    pointer-events:none;\n    z-index: 4;\n\n    background:\n      radial-gradient(42% 38% at 52% 60%,\n        rgba(255,255,255, calc((.12 + .86*var(--on)) * var(--coreBoost))) 0%,\n        rgba(255,255,255,0) 62%),\n      radial-gradient(58% 56% at 50% 66%,\n        rgba(var(--rimTint), calc(.12 + .98*var(--on))) 0%,\n        rgba(var(--rimTint), 0) 70%);\n\n    opacity: calc(.10 + .90*var(--on));\n    filter: blur(calc(2px + 8px*var(--on)));\n    mix-blend-mode: screen;\n    transition: opacity .18s ease, filter .18s ease;\n  }\n\n  .led[data-on="1"]{ --on:1; }\n  .led[data-on="1"] .lens{\n    filter: saturate(1.28) brightness(1.14);\n    transform: translateY(-1px);\n  }\n  .led[data-on="0"]{ --on:0; }\n\n  /* Barvy – pořadí: Yellow, Magenta, Cyan */\n  .y{ --rimTint: 255, 235,  70; --c1:#fffbe6; --c2:#fff06a; --c3:#c7a800; }\n  .m{ --rimTint: 255,  60, 220; --c1:#ffe9fd; --c2:#ff62e9; --c3:#b0008f; }\n  .c{ --rimTint:  40, 210, 255; --c1:#ecfdff; --c2:#7eefff; --c3:#00a8c7; }\n';
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = '<div class="panel" id="panel">\n<div class="panelLight" id="panelLight"></div>\n<div class="ledRow">\n<div aria-label="Yellow" class="led y" data-on="0">\n<div class="halo"></div><div class="seat"></div><div class="rim"></div>\n<div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>\n</div>\n<div aria-label="Magenta" class="led m" data-on="0">\n<div class="halo"></div><div class="seat"></div><div class="rim"></div>\n<div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>\n</div>\n<div aria-label="Cyan" class="led c" data-on="0">\n<div class="halo"></div><div class="seat"></div><div class="rim"></div>\n<div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>\n</div>\n</div>\n</div>';
+
+  if(shadow){
+    shadow.appendChild(style);
+    shadow.appendChild(wrap);
+  } else {
+    // Fallback without shadow (old browsers): scope by prefixing in CSS is not done here; shadow should exist on modern Safari/Android.
+    host.appendChild(style);
+    host.appendChild(wrap);
+  }
+
+  const panel = root.getElementById ? root.getElementById('panel') : (shadow? shadow.querySelector('#panel') : host.querySelector('#panel'));
+  const panelLight = root.getElementById ? root.getElementById('panelLight') : (shadow? shadow.querySelector('#panelLight') : host.querySelector('#panelLight'));
+  const ledEls = [...(shadow ? shadow.querySelectorAll('.led') : host.querySelectorAll('.led'))];
+
+  function tint(el){
+    const v = getComputedStyle(el).getPropertyValue('--rimTint').trim();
+    return v || "255,255,255";
+  }
+  function rootVar(name){
+    // Vars live on :host now
+    const v = getComputedStyle(host).getPropertyValue(name).trim();
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function updatePanelLight(){
+    const t = ledEls.map(tint);
+    if(panel){
+      panel.style.setProperty('--L1', t[0]);
+      panel.style.setProperty('--L2', t[1]);
+      panel.style.setProperty('--L3', t[2]);
+    }
+    const k = ledEls.reduce((n,l)=> n + (l.dataset.on==="1"), 0);
+    const base = rootVar('--panelInterferenceBase');
+    const step = rootVar('--panelInterferenceStep');
+    if(panelLight) panelLight.style.opacity = (base + step * k).toFixed(2);
+  }
+
+  ledEls.forEach((el,i)=>{
+    el.addEventListener('click', ()=>{
+      el.dataset.on = (el.dataset.on === '1') ? '0' : '1';
+      window.leds[i].dataset.on = el.dataset.on;   // bridge to applyBG()
+      updatePanelLight();
+      if(typeof window.applyBG === 'function') window.applyBG();
+    });
+  });
+
+  updatePanelLight();
+  if(typeof window.applyBG === 'function') window.applyBG();
+})();
+</script>
+
+<script>
+/* ===== LED -> BACKGROUND ===== */
+function setVisible(el, on){
+  if(el) el.style.display = on ? "block" : "none";
+}
+function setLayer(v, on){
+  if(!v) return;
+  v.style.visibility = on ? "visible" : "hidden";
+  v.style.opacity = on ? "" : "0";
+  if(on){
+    v.play().catch(()=>{});
+  }else{
+    v.pause();
+  }
+}
+
+const sand = document.querySelector('.sandGlass');
+
+function applyBG(){
+  const sandOn = (leds[0] && leds[0].dataset && leds[0].dataset.on === "1");
+  const led2On = (leds[1] && leds[1].dataset && leds[1].dataset.on === "1");
+  const led3On = (leds[2] && leds[2].dataset && leds[2].dataset.on === "1");
+
+  setVisible(sand, sandOn);
+
+  // LED2 spray stack (mléko + 2–3 barvy)
+  setLayer(vMilk, led2On);
+  setLayer(vM, led2On);
+  setLayer(vC, led2On);
+  setLayer(vY, led2On);
+
+  // LED3 = Ambient V2 + Bloom
+  setLayer(ambient, led3On);
+  setLayer(bloomOv, led3On);
+
+  // když je něco ON, dorovnej čas (jen při zapnutí)
+  softSync();
+}
+applyBG();
+</script>
+
+</body>
+</html>
