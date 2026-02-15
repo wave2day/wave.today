@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>wave.today</title>
 
 <!-- CSS -->
@@ -12,94 +11,51 @@
 <link rel="stylesheet" href="css/qr.css">
 
 <style>
-/* ===== RESET ===== */
 html, body {
     margin: 0;
     padding: 0;
-    background: #000;
     height: 100%;
     overflow-x: hidden;
+    background: black;
 }
 
-/* ===== HERO (BACKGROUND SECTION) ===== */
-/* NENÍ fixed – takže panel zajíždí při scrollu */
-.hero {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
-}
-
-/* iframe s backgroundem – celá plocha */
-.hero iframe {
-    position: absolute;
+/* background přes celou obrazovku */
+#bg-frame {
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 100vh;
     border: none;
-    pointer-events: none;
+    z-index: 0;
 }
 
-/* LED panel / horní obsah */
-.hero-content {
+/* obsah nad backgroundem */
+#content {
     position: relative;
-    z-index: 5;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding-top: 20px;
-}
-
-/* ===== DALŠÍ OBSAH POD BACKGROUNDEM ===== */
-.content {
-    position: relative;
-    z-index: 2;
-    background: #000;
-    min-height: 200vh; /* jen aby šel testovat scroll */
+    z-index: 10;
+    min-height: 200vh; /* aby šlo scrollovat */
 }
 </style>
-
 </head>
+
 <body>
 
-<!-- ===== BACKGROUND + LED PANEL ===== -->
-<section class="hero">
+<!-- BACKGROUND -->
+<iframe id="bg-frame" src="background.html?v=1"></iframe>
 
-    <!-- background.html (tvůj funkční soubor) -->
-    <iframe src="background.html?v=1"></iframe>
+<!-- OBSAH WEBU -->
+<div id="content">
 
-    <!-- LED panel / diody / horní UI -->
-    <div class="hero-content">
-        <div id="led-panel">
-            <!-- pokud máš HTML diod v indexu, nech je tady -->
-        </div>
-    </div>
+    <!-- SHARE + QR se načítá přes JS -->
+    <div id="share-root"></div>
+    <div id="qr-root"></div>
 
-</section>
-
-<!-- ===== OBSAH STRÁNKY (aby panel zajížděl nahoru) ===== -->
-<div class="content">
-    <!-- sem budeš dávat další sekce webu -->
 </div>
 
-<!-- ===== QR / GIF ===== -->
-<div id="qr-container">
-    <img id="wave-gif" src="assets/gif/wave.gif" alt="wave">
-</div>
-
-<!-- ===== SHARE BUTTON ===== -->
-<button id="share-button">Share</button>
-
-<div id="share-panel">
-    <!-- obsah z tvého sharebuttonGIT -->
-</div>
-
-<!-- ===== JS ===== -->
-<script src="js/qr.js"></script>
+<!-- JS -->
 <script src="js/share.js"></script>
+<script src="js/qr.js"></script>
 
 </body>
 </html>
