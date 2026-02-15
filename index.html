@@ -3,70 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wave Today</title>
+
+<title>Wave</title>
 
 <link rel="stylesheet" href="css/extra.css">
 <link rel="stylesheet" href="css/share.css">
 <link rel="stylesheet" href="css/qr.css">
 
 <style>
-/* BACKGROUND přes celou stránku */
-#bgWrap{
-  position: fixed;
-  inset: 0;
-  z-index: -1;
+
+/* RESET */
+html, body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:black;
 }
 
-#bgWrap iframe{
+/* VIDEO BACKGROUND */
+#bgVideo{
+  position:fixed;
+  top:0;
+  left:0;
   width:100%;
   height:100%;
-  border:0;
+  object-fit:cover;
+  z-index:-1;
 }
 
-/* obsah stránky */
-main{
-  position: relative;
-  z-index: 1;
-  min-height: 300vh; /* test scrollu */
+/* OBSAH STRÁNKY */
+#page{
+  position:relative;
+  min-height:300vh; /* test scrollu */
 }
 
-/* QR overlay */
-#wtOverlay{
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  pointer-events: none;
+/* LED PANEL – součást stránky, takže zajíždí */
+#ledPanel{
+  position:absolute;
+  top:20px;
+  right:20px;
+  z-index:10;
 }
+
+.ledBtn{
+  width:36px;
+  height:36px;
+  margin:4px;
+  border-radius:6px;
+  border:none;
+  cursor:pointer;
+}
+
+.yellow{ background:#ffd400; }
+.blue{ background:#00bfff; }
+.pink{ background:#ff2fa0; }
+
+/* QR / GIF – zůstává nahoře */
+#qrLayer{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  z-index:999;
+}
+
+#qrCode{
+  display:none;
+  width:120px;
+}
+
+#waveGif{
+  width:80px;
+  cursor:pointer;
+}
+
 </style>
 </head>
-
 <body>
 
-<!-- BACKGROUND -->
-<div id="bgWrap">
-  <iframe src="background.html?v=1" allow="autoplay"></iframe>
-</div>
+<!-- VIDEO -->
+<video id="bgVideo" autoplay muted loop playsinline>
+  <source src="assets/video/background.mp4" type="video/mp4">
+</video>
 
-<!-- OBSAH STRÁNKY -->
-<main>
+<div id="page">
 
-  <!-- sem budeš přidávat obsah -->
-  <div style="height:120vh"></div>
-
-  <!-- SHARE BUTTON -->
-  <button id="shareBtn">SHARE</button>
-
-  <div id="sharePanel" class="hidden">
-    <!-- tvoje share odkazy -->
+  <!-- LED PANEL -->
+  <div id="ledPanel">
+    <button class="ledBtn yellow" id="ledYellow"></button>
+    <button class="ledBtn blue" id="ledBlue"></button>
+    <button class="ledBtn pink" id="ledPink"></button>
   </div>
 
-</main>
+  <!-- prostor pro scroll -->
+  <div style="height:200vh"></div>
 
-<!-- QR / GIF overlay -->
-<div id="wtOverlay">
-  <img id="waveIcon" src="assets/gif/wave.gif">
-  <img id="qrCode" src="assets/qr/qr.png" class="hidden">
 </div>
+
+<!-- QR / GIF -->
+<div id="qrLayer">
+  <img id="waveGif" src="assets/gif/wave.gif">
+  <img id="qrCode" src="assets/qr/qr.png">
+</div>
+
+<script>
+
+/* ===== LED EFFECTS ===== */
+const video = document.getElementById("bgVideo");
+
+document.getElementById("ledYellow").onclick = () => {
+  video.style.filter = "brightness(1.2) saturate(1.2)";
+};
+
+document.getElementById("ledBlue").onclick = () => {
+  video.style.filter = "hue-rotate(180deg) saturate(1.4)";
+};
+
+document.getElementById("ledPink").onclick = () => {
+  video.style.filter = "hue-rotate(320deg) saturate(2)";
+};
+
+
+/* ===== QR TOGGLE ===== */
+const gif = document.getElementById("waveGif");
+const qr = document.getElementById("qrCode");
+
+gif.onclick = () => {
+  gif.style.display = "none";
+  qr.style.display = "block";
+};
+
+qr.onclick = () => {
+  qr.style.display = "none";
+  gif.style.display = "block";
+};
+
+</script>
 
 <script src="js/share.js"></script>
 <script src="js/qr.js"></script>
