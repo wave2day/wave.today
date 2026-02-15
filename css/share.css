@@ -385,7 +385,7 @@
 
 /* === share orb: exact engine from sharebtn.html (scoped) === */
 #shareOrb{
-  --outer: 86px;
+  --outer: 59.4px;
   --innerRatio: .65;
 
   --glassClearA: rgba(255,255,255,.14);
@@ -414,8 +414,8 @@
   --pressTimeOut: 190ms;
 
   position: fixed;
-  top: calc(env(safe-area-inset-top) + 16px);
-  left: calc(env(safe-area-inset-left) + 16px);
+  top: calc(env(safe-area-inset-top) + 14px);
+  left: calc(env(safe-area-inset-left) + 14px);
   z-index: 30000;
 }
 #shareOrb, #shareOrb *{
