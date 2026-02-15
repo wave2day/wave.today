@@ -1,0 +1,26 @@
+[
+  {
+    "date": "2026-03-10",
+    "title": "Wave Night",
+    "image": "assets/images/2026-03-10_wave-night.jpg",
+    "link": ""
+  },
+  {
+    "date": "2026-02-15",
+    "title": "Dark Session",
+    "image": "assets/images/2026-02-15_dark-session.png",
+    "link": ""
+  },
+  {
+    "date": "2025-11-22",
+    "title": "Indigo Live",
+    "image": "assets/images/2025-11-22_indigo-live.gif",
+    "link": ""
+  },
+  {
+    "date": "2025-10-01",
+    "title": "Future Wave",
+    "image": "assets/images/2025-10-01_future-wave.jpg",
+    "link": ""
+  }
+]
