@@ -2,25 +2,25 @@
   {
     "date": "2023-04-24",
     "title": "Arcadia",
-    "image": "assets/images/2023-04-24_arcadia.gif",
+    "image": "assets/img/2023-04-24_arcadia.gif",
     "link": ""
   },
   {
     "date": "2025-06-26",
     "title": "Tears",
-    "image": "assets/images/2025-06-26_tears.jpg",
+    "image": "assets/img/2025-06-26_tears.jpg",
     "link": ""
   },
   {
     "date": "2025-08-23",
     "title": "Last",
-    "image": "assets/images/2025-08-23_last.png",
+    "image": "assets/img/2025-08-23_last.png",
     "link": ""
   },
   {
     "date": "2025-10-10",
     "title": "Skeler",
-    "image": "assets/images/2025-10-10_skeler.jpg",
+    "image": "assets/img/2025-10-10_skeler.jpg",
     "link": ""
   }
 ]
