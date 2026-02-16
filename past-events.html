@@ -357,9 +357,6 @@
       outline: none !important;
       -webkit-tap-highlight-color: transparent;
       user-select:none;
-      -webkit-touch-callout: none;
-      -webkit-user-select:none;
-      touch-action: manipulation;
 
       background:
         radial-gradient(120% 120% at 35% 25%, rgba(255,255,255,.16), transparent 55%),
@@ -440,9 +437,6 @@
       color: rgba(255,255,255,.88);
       text-shadow: 0 14px 36px rgba(0,0,0,.55);
       user-select:none;
-      -webkit-touch-callout: none;
-      -webkit-user-select:none;
-      touch-action: manipulation;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
@@ -456,14 +450,11 @@
       flex-direction: column;
       align-items:center;
       gap: 26px;
-      padding: 10px 18px 0;
+      padding-top: 10px;
     }
 
     /* Date mode: single column posters */
     .poster{
-      display:block;
-      text-decoration:none;
-      color: inherit;
       transition: transform 520ms cubic-bezier(.2,.8,.2,1);
       width: min(92vw, 560px);
       margin: 0 auto;
@@ -772,9 +763,6 @@
     outline: none !important;
     -webkit-tap-highlight-color: transparent;
     user-select:none;
-      -webkit-touch-callout: none;
-      -webkit-user-select:none;
-      touch-action: manipulation;
 
     background:
       radial-gradient(120% 120% at 35% 25%, rgba(255,255,255,.16), transparent 55%),
@@ -895,246 +883,9 @@
 #ambientGlow{ opacity: 1; }
 .glassPage{ background: rgba(255,255,255,.026); }
 
-  
-/* ===== HERO (odloupnutí plakátu) ===== */
-body.heroOpen #eventsGrid{ filter: blur(8px) saturate(.95); opacity:.38; transform: scale(.985); transform-origin: center top; transition: filter 220ms ease, opacity 220ms ease, transform 220ms ease; }
-body.heroOpen .topBar{ opacity:.65; filter: blur(.3px); }
-#heroOverlay{
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-#heroOverlay.isOpen{ display:flex; }
-#heroOverlay .heroBack{
-  position:absolute;
-  inset:0;
-  background: rgba(5,6,10,.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-#heroOverlay .heroCard{
-  position: fixed;
-  left: 0; top: 0;
-  width: 0; height: 0;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 34px 120px rgba(0,0,0,.55);
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(255,255,255,.03);
-  transform: translateZ(0);
-  will-change: left, top, width, height, border-radius;
-}
-#heroOverlay .heroCard img{
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display:block;
-  background: rgba(0,0,0,.18);
-}
-
-
-/* ===== HERO roll (srolování / odrolování) ===== */
-#heroOverlay .rollWrap{
-  position:absolute;
-  inset:0;
-  transform-origin: top;
-  transform: scaleY(0.02);
-  will-change: transform, filter;
-}
-#heroOverlay .rollWrap img{
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display:block;
-  background: rgba(0,0,0,.18);
-}
-#heroOverlay .roller{
-  position:absolute;
-  left: 50%;
-  top: -10px;
-  transform: translateX(-50%);
-  width: 86%;
-  max-width: 720px;
-  height: 26px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.18));
-  box-shadow:
-    0 10px 26px rgba(0,0,0,.45),
-    inset 0 1px 0 rgba(255,255,255,.22),
-    inset 0 -10px 18px rgba(0,0,0,.28);
-  opacity: 0;
-  pointer-events:none;
-}
-
-@keyframes unrollPoster{
-  0%   { transform: perspective(900px) rotateX(22deg) scaleY(0.03); filter: blur(1.2px); }
-  55%  { transform: perspective(900px) rotateX(10deg) scaleY(0.65); filter: blur(0.6px); }
-  100% { transform: perspective(900px) rotateX(0deg)  scaleY(1);    filter: blur(0px); }
-}
-  55%  { transform: scaleY(1.02); filter: blur(.2px); }
-  100% { transform: scaleY(1); filter: blur(0); }
-}
-@keyframes rollUpPoster{
-  0%   { transform: perspective(900px) rotateX(0deg)  scaleY(1);    filter: blur(0px); }
-  55%  { transform: perspective(900px) rotateX(14deg) scaleY(0.35); filter: blur(0.6px); }
-  100% { transform: perspective(900px) rotateX(26deg) scaleY(0.03); filter: blur(1.2px); }
-}
-  100% { transform: scaleY(0.02); filter: blur(1.6px); }
-}
-@keyframes rollerPop{
-  0%   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-  18%  { opacity: .92; transform: translateX(-50%) translateY(0); }
-  70%  { opacity: .55; transform: translateX(-50%) translateY(16px); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(26px); }
-}
-
-#heroOverlay .heroCard.unrolling .rollWrap{
-  animation: unrollPoster 520ms cubic-bezier(.16,.9,.18,1) both;
-}
-#heroOverlay .heroCard.unrolling .roller{
-  animation: rollerPop 520ms cubic-bezier(.16,.9,.18,1) both;
-}
-#heroOverlay .heroCard.rollingUp .rollWrap{
-  animation: rollUpPoster 260ms cubic-bezier(.2,.8,.2,1) both;
-}
-#heroOverlay .heroCard.rollingUp .roller{
-  opacity: .9;
-  animation: rollerPop 260ms cubic-bezier(.2,.8,.2,1) both;
-}
-#heroOverlay .heroHint{
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  font-size: 12px;
-  letter-spacing: .2px;
-  color: rgba(255,255,255,.78);
-  text-shadow: 0 12px 34px rgba(0,0,0,.6);
-  user-select:none;
-      -webkit-touch-callout: none;
-      -webkit-user-select:none;
-      touch-action: manipulation;
-  pointer-events:none;
-  opacity:.0;
-  transition: opacity 240ms ease;
-}
-#heroOverlay.isOpen .heroHint{ opacity:.85; }
-
-
-/* ===== Stabilizace kompozice (zoom / mobile blikání) ===== */
-#ambientBg, #ambientPoster, #ambientGlow{ will-change: transform, opacity, filter; transform: translateZ(0); }
-.glassPage{ isolation:isolate; }
-
-
-/* --- roll-up (tapeta/roleta) výraznější --- */
-.heroCard .rollWrap{ position:relative; overflow:hidden; border-radius:18px; }
-.heroCard .rollWrap img{ width:100%; display:block; transform-origin: top center; }
-.heroCard.unrolling .rollWrap img{ animation: unrollPoster 520ms cubic-bezier(.2,.8,.2,1) both; }
-.heroCard.rollingUp .rollWrap img{ animation: rollUpPoster 420ms cubic-bezier(.2,.8,.2,1) both; }
-.heroCard .roller{
-  position:absolute; left:0; right:0; top:0;
-  height:18px;
-  background: linear-gradient(to bottom, rgba(255,255,255,.22), rgba(0,0,0,.18));
-  box-shadow: 0 10px 18px rgba(0,0,0,.22);
-  border-bottom:1px solid rgba(255,255,255,.18);
-  opacity:.85;
-}
-.heroCard.unrolling .roller{ animation: rollerOut 520ms cubic-bezier(.2,.8,.2,1) both; }
-.heroCard.rollingUp .roller{ animation: rollerIn 420ms cubic-bezier(.2,.8,.2,1) both; }
-
-@keyframes rollerOut{ 0%{ transform: translateY(0); } 100%{ transform: translateY(-26px); opacity:.1; } }
-@keyframes rollerIn{ 0%{ transform: translateY(-26px); opacity:.1; } 100%{ transform: translateY(0); opacity:.85; } }
-
-
-/* === CORNER PEEL + ROLL HERO (stylekeep) === */
-#peelHeroOverlay{
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: none;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 64px 14px 24px;
-  background: rgba(0,0,0,.55);
-  backdrop-filter: blur(10px);
-}
-#peelHeroOverlay.isOpen{ display:flex; }
-
-#peelHeroCard{
-  width: min(92vw, 640px);
-  position: relative;
-  transform-origin: top left;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0,0,0,.65);
-  will-change: transform, opacity;
-}
-#peelHeroCard img{ width:100%; height:auto; display:block; }
-
-#peelHeroCard::after{
-  content:"";
-  position:absolute;
-  top:0; left:0;
-  width: 34%;
-  height: 34%;
-  pointer-events:none;
-  background: radial-gradient(closest-side at 12% 12%, rgba(255,255,255,.35), rgba(255,255,255,0) 65%);
-  mix-blend-mode: screen;
-  opacity: .75;
-  transform: rotate(-6deg);
-}
-
-#peelRoller{
-  position:absolute;
-  top:-14px;
-  left:50%;
-  transform: translateX(-50%);
-  width:68%;
-  height:16px;
-  border-radius:999px;
-  background: linear-gradient(to bottom, rgba(255,255,255,.22), rgba(255,255,255,.08));
-  box-shadow: 0 10px 25px rgba(0,0,0,.35);
-  opacity:0;
-}
-#peelHeroCard.peelOpen #peelRoller{ opacity:1; }
-
-@keyframes peelUnroll{
-  0%   { transform: translateY(10px) rotateX(70deg) rotateZ(-7deg) scaleY(.06) scaleX(.98); }
-  18%  { transform: translateY(6px) rotateX(55deg) rotateZ(-6deg) scaleY(.06) scaleX(.98); }
-  32%  { transform: translateY(0px) rotateX(0deg)  rotateZ(0deg)  scaleY(.06) scaleX(1.0); }
-  100% { transform: translateY(0px) rotateX(0deg)  rotateZ(0deg)  scaleY(1.0) scaleX(1.0); }
-}
-@keyframes rollUpPeel{
-  0%   { transform: translateY(0px) rotateX(0deg) rotateZ(0deg) scaleY(1.0) scaleX(1.0); opacity:1; }
-  55%  { transform: translateY(0px) rotateX(0deg) rotateZ(0deg) scaleY(.06) scaleX(1.0); opacity:1; }
-  100% { transform: translateY(10px) rotateX(70deg) rotateZ(-7deg) scaleY(.06) scaleX(.98); opacity:0; }
-}
-#peelHeroCard.peelOpen{ animation: peelUnroll 640ms cubic-bezier(.2,.85,.2,1) both; }
-#peelHeroCard.peelClose{ animation: rollUpPeel 520ms cubic-bezier(.2,.85,.2,1) both; }
-
-body.heroOpen #eventsGrid{
-  filter: blur(8px);
-  opacity: .35;
-  transform: scale(.96);
-  transition: filter .35s ease, opacity .35s ease, transform .35s ease;
-}
-
-</style>
+  </style>
 </head>
 <body>
-
-<!-- Peel/Roll hero overlay -->
-<div id="peelHeroOverlay" aria-hidden="true">
-  <div id="peelHeroCard">
-    <div id="peelRoller"></div>
-    <img id="peelHeroImg" alt="">
-  </div>
-</div>
-
   <div id="pageBase" aria-hidden="true"></div>
   <div id="ambientBg"></div>
   <div id="ambientPoster"></div>
@@ -1144,9 +895,9 @@ body.heroOpen #eventsGrid{
       <div id="wtMainPill" aria-label="Main page">
         <div class="glassBase pill v-blue">
           <div class="pressGlow"></div>
-          <button class="coreBtn" type="button" aria-label="Main page" onclick="window.location.href='index.html';">
+          <a class="coreBtn" href="index.html" aria-label="Main page">
             <span class="coreText">main page</span>
-          </button>
+          </a>
         </div>
       </div>
 
@@ -1156,7 +907,7 @@ body.heroOpen #eventsGrid{
             <div class="glassBase v-blue">
               <div class="pressGlow"></div>
               <button class="coreBtn" type="button" aria-label="Řadit podle data">
-                <span class="coreText wtModeText">date</span>
+                <svg class="wtIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v2M17 3v2M4 8h16M6 6h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
               </button>
             </div>
           </div>
@@ -1165,7 +916,7 @@ body.heroOpen #eventsGrid{
             <div class="glassBase v-blue">
               <div class="pressGlow"></div>
               <button class="coreBtn" type="button" aria-label="Náhodné rozložení">
-                <span class="coreText wtModeText">rndm</span>
+                <svg class="wtIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20l5-5M4 4l7 7M9 9l-5 5M21 16v5h-5M14 14l7 7M15 4l6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
           </div>
@@ -1292,13 +1043,6 @@ body.heroOpen #eventsGrid{
     img.src = e.image;
 
     a.appendChild(img);
-      // Open hero (peel+roll) instead of navigating
-      a.addEventListener('click', (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        const src = img.currentSrc || img.src;
-        if(src) window.__openPeelHero(src);
-      });
     return a;
   }
 
@@ -1396,127 +1140,6 @@ body.heroOpen #eventsGrid{
     });
   }
 
-
-  // ===== HERO (odloupnutí plakátu) =====
-  const heroOverlay = document.getElementById('heroOverlay');
-  const heroCard = heroOverlay ? heroOverlay.querySelector('.heroCard') : null;
-
-  let heroOpen = false;
-  let heroFrom = null; // {left,top,width,height,borderRadius}
-  let heroSrc = null;
-
-  function getPosterFromTarget(t){
-    const el = t.closest && t.closest('.poster');
-    return el || null;
-  }
-
-  function openHero(posterEl){
-    if(!heroOverlay || !heroCard) return;
-    const img = posterEl.querySelector('img');
-    if(!img) return;
-
-    const rect = img.getBoundingClientRect();
-    heroFrom = { left: rect.left, top: rect.top, width: rect.width, height: rect.height, r: 18 };
-    heroSrc = img.currentSrc || img.src;
-
-    // lock scroll
-    document.body.classList.add('heroOpen');
-    heroOverlay.classList.add('isOpen');
-    heroOverlay.setAttribute('aria-hidden', 'false');
-    heroOpen = true;
-
-    // Build hero card content (roll/unroll)
-    heroCard.innerHTML = '';
-    heroCard.classList.remove('unrolling','rollingUp');
-    const wrap = document.createElement('div');
-    wrap.className = 'rollWrap';
-    const hi = document.createElement('img');
-    hi.alt = img.alt || '';
-    hi.src = heroSrc;
-    const roller = document.createElement('div');
-    roller.className = 'roller';
-    wrap.appendChild(hi);
-    wrap.appendChild(roller);
-    heroCard.appendChild(wrap);
-
-    // Start at original rect
-    heroCard.style.left = heroFrom.left + 'px';
-    heroCard.style.top = heroFrom.top + 'px';
-    heroCard.style.width = heroFrom.width + 'px';
-    heroCard.style.height = heroFrom.height + 'px';
-    heroCard.style.borderRadius = (posterEl.classList.contains('poster') ? 18 : 18) + 'px';
-
-    // Target size
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const maxW = Math.min(vw - 32, 980);
-    const maxH = Math.min(vh - 96, 900);
-    const natW = img.naturalWidth || rect.width;
-    const natH = img.naturalHeight || rect.height;
-    const scale = Math.min(maxW / natW, maxH / natH, 1.0);
-    const tW = Math.max(240, Math.round(natW * scale));
-    const tH = Math.max(240, Math.round(natH * scale));
-    const tL = Math.round((vw - tW) / 2);
-    const tT = Math.round((vh - tH) / 2);
-
-    // Animate to center
-    heroCard.style.transition = 'none';
-    requestAnimationFrame(() => {
-      heroCard.style.transition = 'left 360ms cubic-bezier(.2,.85,.2,1), top 360ms cubic-bezier(.2,.85,.2,1), width 360ms cubic-bezier(.2,.85,.2,1), height 360ms cubic-bezier(.2,.85,.2,1), border-radius 360ms ease';
-      heroCard.style.left = tL + 'px';
-      heroCard.style.top = tT + 'px';
-      heroCard.style.width = tW + 'px';
-      heroCard.style.height = tH + 'px';
-      heroCard.style.borderRadius = '22px';
-      // start "odrolování" efekt
-      heroCard.classList.remove('rollingUp');
-      heroCard.classList.add('unrolling');
-    });
-
-    // Optional: shift ambient to selected poster (jemně)
-    if(img.complete){
-      setPosterTexture(img);
-      getAverageColor(img).then(setAmbientTarget).catch(()=>{});
-    }
-  }
-
-  function closeHero(){
-    if(!heroOverlay || !heroCard || !heroOpen || !heroFrom) return;
-
-    // start roll-up immediately
-    heroCard.classList.remove('unrolling');
-    heroCard.classList.add('rollingUp');
-
-    heroCard.style.transition = 'left 260ms cubic-bezier(.2,.8,.2,1), top 260ms cubic-bezier(.2,.8,.2,1), width 260ms cubic-bezier(.2,.8,.2,1), height 260ms cubic-bezier(.2,.8,.2,1), border-radius 260ms ease';
-    heroCard.style.left = heroFrom.left + 'px';
-    heroCard.style.top = heroFrom.top + 'px';
-    heroCard.style.width = heroFrom.width + 'px';
-    heroCard.style.height = heroFrom.height + 'px';
-    heroCard.style.borderRadius = '18px';
-
-    window.setTimeout(() => {
-      heroOverlay.classList.remove('isOpen');
-      heroOverlay.setAttribute('aria-hidden', 'true');
-      document.body.classList.remove('heroOpen');
-      heroCard.classList.remove('unrolling','rollingUp');
-      heroCard.innerHTML = '';
-      heroOpen = false;
-      heroFrom = null;
-      heroSrc = null;
-    }, 280);
-  }
-
-  if(heroOverlay){
-    heroOverlay.addEventListener('click', (e) => {
-      const close = e.target && (e.target.getAttribute('data-hero-close') === '1');
-      if(close) closeHero();
-    });
-    window.addEventListener('keydown', (e) => {
-      if(e.key === 'Escape') closeHero();
-    });
-  }
-
-
   function setupAmbientObserver(){
     if(observer) observer.disconnect();
 
@@ -1571,16 +1194,6 @@ body.heroOpen #eventsGrid{
     grid.innerHTML = '';
     items.forEach((e, idx) => grid.appendChild(posterEl(e, idx)));
 
-    // HERO click (jen otevře, nic neničí)
-    grid.addEventListener('click', (ev) => {
-      const p = getPosterFromTarget(ev.target);
-      if(!p) return;
-      // pokud je to link, neodcházej pryč – otevři hero
-      ev.preventDefault();
-      ev.stopPropagation();
-      openHero(p);
-    }, { passive:false });
-
     // hook buttons
     modeButtons.forEach(btn => {
       btn.addEventListener('click', () => setMode(btn.dataset.mode));
@@ -1600,14 +1213,6 @@ body.heroOpen #eventsGrid{
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
 </script>
-
-
-  <!-- HERO overlay -->
-  <div id="heroOverlay" aria-hidden="true">
-    <div class="heroBack" data-hero-close="1"></div>
-    <div class="heroCard" role="dialog" aria-modal="true"></div>
-    <div class="heroHint">tap mimo pro zavření</div>
-  </div>
 
 </body>
 </html>
