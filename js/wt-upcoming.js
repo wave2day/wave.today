@@ -1,97 +1,164 @@
-// wt-upcoming_scoped.js
-// Scope: render ONLY inside #wtNewEventsSlot. Nešahá na zbytek stránky.
+(() => {
+  const slot = document.getElementById('wtNewEventsSlot');
+  if(!slot) return;
 
-(function(){
-  const SLOT_ID = "wtNewEventsSlot";
-  const JSON_PATH = "./data/upcoming.json";
-  const LABEL_HTML_PATH = "./whitelabelone.html";
+  const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  const pad2 = (n)=>String(n).padStart(2,'0');
 
   function parseISODate(s){
-    if(!s || typeof s !== "string") return null;
-    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"").trim());
     if(!m) return null;
-    const y = +m[1], mo = +m[2], d = +m[3];
-    const dt = new Date(y, mo-1, d);
-    return isNaN(dt.getTime()) ? null : dt;
+    const mo = +m[2], d = +m[3];
+    if(mo<1||mo>12||d<1||d>31) return null;
+    return { mo, d };
   }
 
-  function parseDateFromFilename(path){
-    if(!path || typeof path !== "string") return null;
-    const m = path.match(/(\d{4})-(\d{2})-(\d{2})_/);
-    if(!m) return null;
-    return new Date(+m[1], (+m[2])-1, +m[3]);
-  }
+  function buildLabel(dd, mon, scale){
+    const wrap = document.createElement('div');
+    wrap.className = 'wtLabelWrap';
+    wrap.style.setProperty('--wtLabelScale', String(scale ?? 0.13));
 
-  function month3(dt){
-    return new Intl.DateTimeFormat("en", { month:"short" }).format(dt).toUpperCase();
-  }
+    const scope = document.createElement('div');
+    scope.className = 'wtLabelScope';
 
-  function getList(data){
-    if(Array.isArray(data)) return data;
-    if(data && Array.isArray(data.events)) return data.events;
-    return [];
-  }
+    const glass = document.createElement('div');
+    glass.className = 'glassSquare';
 
-  async function load(){
-    const slot = document.getElementById(SLOT_ID);
-    if(!slot) return;
+    const press = document.createElement('div');
+    press.className = 'pressGlow';
 
-    let data;
-    try{
-      const res = await fetch(JSON_PATH, { cache:"no-cache" });
-      if(!res.ok) return;
-      data = await res.json();
-    }catch(e){ return; }
+    const core = document.createElement('button');
+    core.className = 'coreSquare';
+    core.type = 'button';
+    core.tabIndex = -1;
+    core.setAttribute('aria-label','date label');
 
-    const list = getList(data);
-    if(!list.length) return;
+    glass.appendChild(press);
+    glass.appendChild(core);
 
-    const ev = list[0];
-    const img = ev.image || ev.img || ev.poster || "";
-    const url = ev.url || ev.link || ev.href || "#";
-    const dt = parseISODate(ev.date || ev.datetime || "") || parseDateFromFilename(img);
+    const date = document.createElement('div');
+    date.className = 'wtLabelDate';
 
-    const day = dt ? String(dt.getDate()).padStart(2,"0") : "00";
-    const mon = dt ? month3(dt) : "MON";
+    const day = document.createElement('div');
+    day.className = 'wtLabelDay';
+    day.textContent = dd;
 
-    slot.innerHTML = `
-      <div class="wtUpcomingItem wtReveal">
-        <a class="wtPosterLink" href="${escapeAttr(url)}" target="_blank" rel="noopener">
-          <img class="wtPosterImg" src="${escapeAttr(img)}" alt="upcoming poster">
-          <div class="wtWhiteLabel" aria-hidden="true">
-            <iframe src="${LABEL_HTML_PATH}" title="label"></iframe>
-            <div class="wtLabelText">
-              <div class="wtLabelDay">${day}</div>
-              <div class="wtLabelMonth">${mon}</div>
-            </div>
-          </div>
-        </a>
-      </div>
-    `;
+    const month = document.createElement('div');
+    month.className = 'wtLabelMonth';
+    month.textContent = mon;
 
-    // Reveal when visible
-    const el = slot.querySelector(".wtReveal");
-    if(!el) return;
+    date.appendChild(day);
+    date.appendChild(month);
 
-    const io = new IntersectionObserver((entries)=>{
-      for(const e of entries){
-        if(e.isIntersecting){
-          el.classList.add("isIn");
-          io.disconnect();
-        }
+    const root = document.createElement('div');
+    root.className = 'wtUpcoming';
+    root.appendChild(scope);
+    scope.appendChild(glass);
+    scope.appendChild(date);
+
+    wrap.appendChild(root);
+
+    const measure = () => {
+      const dayW = day.getBoundingClientRect().width;
+      const monW = month.getBoundingClientRect().width;
+      if(dayW>0){
+        scope.style.setProperty('--monW', dayW.toFixed(1) + 'px');
       }
-    }, { threshold: 0.18, rootMargin: "0px 0px -10% 0px" });
+      if(dayW>0 && monW>0){
+        const s = dayW / monW;
+        const clamped = Math.max(0.55, Math.min(1.35, s));
+        month.style.transformOrigin = 'center top';
+        month.style.transform = `scaleX(${clamped.toFixed(3)})`;
+      }
+    };
+    requestAnimationFrame(measure);
+    setTimeout(measure, 120);
+    setTimeout(measure, 320);
 
-    io.observe(el);
+    return { wrap, measure };
   }
 
-  function escapeAttr(s){
-    return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  function buildItem(ev){
+    const iso = parseISODate(ev.date);
+    const dd = iso ? pad2(iso.d) : "--";
+    const mon = iso ? MONTHS[iso.mo-1] : "---";
+
+    const item = document.createElement('div');
+    item.className = 'wtUpcomingItem wtReveal';
+
+    const a = document.createElement('a');
+    a.className = 'wtUpcomingLink';
+    a.href = ev.url || '#';
+    a.target = '_blank';
+    a.rel = 'noopener';
+
+    const img = document.createElement('img');
+    img.className = 'wtUpcomingPoster';
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.alt = '';
+    img.src = ev.poster;
+
+    a.appendChild(img);
+    item.appendChild(a);
+
+    const { wrap, measure } = buildLabel(dd, mon, ev.labelScale);
+    item.appendChild(wrap);
+
+    img.addEventListener('load', () => setTimeout(measure, 50), { once:true });
+
+    return item;
   }
 
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", load);
-  }else{
-    load();
+  function revealInit(container){
+    const els = container.querySelectorAll('.wtReveal');
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting) e.target.classList.add('isIn');
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
+    els.forEach(el=>io.observe(el));
   }
+
+  async function fetchFirst(urls){
+    for(const u of urls){
+      try{
+        const res = await fetch(u, { cache:'no-cache' });
+        if(res.ok) return await res.json();
+      }catch(_){}
+    }
+    throw new Error('No upcoming json found');
+  }
+
+  async function run(){
+    slot.innerHTML = '';
+    const list = document.createElement('div');
+    list.className = 'wtUpcomingList';
+    slot.appendChild(list);
+
+    const candidates = ['data/upcoming.json'];
+
+    try{
+      const data = await fetchFirst(candidates);
+      const events = Array.isArray(data?.events) ? data.events : (Array.isArray(data) ? data : []);
+      events.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+      events.forEach(ev => { if(ev?.poster) list.appendChild(buildItem(ev)); });
+      revealInit(list);
+    }catch(e){
+      console.warn('Upcoming load failed:', e);
+    }
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', run, { once:true });
+  } else run();
+
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.wtUpcoming .wtLabelScope').forEach(scope => {
+      const day = scope.querySelector('.wtLabelDay');
+      if(!day) return;
+      const w = day.getBoundingClientRect().width;
+      if(w>0) scope.style.setProperty('--monW', w.toFixed(1) + 'px');
+    });
+  }, { passive:true });
 })();
