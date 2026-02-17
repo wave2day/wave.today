@@ -5,6 +5,16 @@
   const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
   const pad2 = (n)=>String(n).padStart(2,'0');
 
+
+  function normalizeEvent(ev){
+    if(!ev || typeof ev !== 'object') return null;
+    const poster = ev.poster || ev.image || ev.img || ev.posterPath || ev.path || ev.file || '';
+    const url = ev.url || ev.link || ev.href || ev.ticket || ev.tickets || ev.page || '';
+    const date = ev.date || ev.datetime || ev.day || '';
+    return { ...ev, poster, url, date };
+  }
+
+
   function parseISODate(s){
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"").trim());
     if(!m) return null;
@@ -142,7 +152,7 @@
       const data = await fetchFirst(candidates);
       const events = Array.isArray(data?.events) ? data.events : (Array.isArray(data) ? data : []);
       events.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
-      events.forEach(ev => { if(ev?.poster) list.appendChild(buildItem(ev)); });
+      events.forEach(ev0 => { const ev = normalizeEvent(ev0); if(ev && ev.poster) list.appendChild(buildItem(ev)); });
       revealInit(list);
     }catch(e){
       console.warn('Upcoming load failed:', e);
