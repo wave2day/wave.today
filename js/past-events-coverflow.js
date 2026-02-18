@@ -1,10 +1,9 @@
 // js/past-events-coverflow.js
-// Coverflow feel 1:1 podle wt-coverflow-feel-exact.html
+// Coverflow s "feel" podle wt-coverflow-feel-exact + idle návrat + šipky
 // - načítá data z data/events.json (nebo window.WT_PAST_EVENTS_JSON pokud je nastaveno)
-// - vygeneruje slidy do #carouselSlot uvnitř #coverflow
-// - inicializuje Swiper s parametry přesně jako reference
-// - napojí šipky (prev/next) na víc možných selektorů
-// - neřeší label ani share
+// - generuje slidy do #carouselSlot uvnitř #coverflow
+// - šipky: .wtNavPrev/.wtNavNext, #wtCarouselPrev/#wtCarouselNext, data-* fallbacky + wt:click
+// - idle návrat po nečinnosti na první (nejnovější)
 
 (function () {
   const DEFAULT_JSON = "data/events.json";
@@ -56,7 +55,6 @@
   }
 
   function bindArrows(swiper) {
-    // Napojení šipek: funguje, pokud tvoje tlačítka mají aspoň jednu z těchto podob.
     const prevSelectors = [
       ".wtNavPrev",
       "#wtCarouselPrev",
@@ -65,7 +63,6 @@
       "[data-action='prev']",
       "[aria-label='Previous']"
     ];
-
     const nextSelectors = [
       ".wtNavNext",
       "#wtCarouselNext",
@@ -88,13 +85,33 @@
       btn.addEventListener("touchend", (e) => { e.preventDefault(); swiper.slideNext(); }, { passive: false });
     });
 
-    // Pokud máš starší inline systém, který dispatchuje:
+    // Podpora staršího systému eventů:
     // window.dispatchEvent(new CustomEvent("wt:click", { detail: { name: "prev" } }))
     window.addEventListener("wt:click", (e) => {
       const name = e && e.detail ? e.detail.name : "";
       if (name === "prev") swiper.slidePrev();
       if (name === "next") swiper.slideNext();
     });
+  }
+
+  function bindIdleReturn(swiper) {
+    let t;
+    const IDLE_DELAY = 4500;   // ms do návratu po nečinnosti
+    const RETURN_SPEED = 3000; // ms rychlost návratu
+
+    const arm = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        if (swiper.activeIndex !== 0) swiper.slideTo(0, RETURN_SPEED);
+      }, IDLE_DELAY);
+    };
+
+    swiper.on("touchStart", arm);
+    swiper.on("touchEnd", arm);
+    swiper.on("slideChange", arm);
+    swiper.on("transitionEnd", arm);
+
+    arm();
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
@@ -105,7 +122,6 @@
 
     const container = q("#coverflow");
     const wrapper = q("#carouselSlot");
-
     if (!container || !wrapper) {
       console.error("[coverflow] Missing #coverflow or #carouselSlot");
       return;
@@ -137,6 +153,7 @@
       });
 
       bindArrows(swiper);
+      bindIdleReturn(swiper);
     });
   });
 
