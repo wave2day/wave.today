@@ -1,98 +1,68 @@
-// js/past-events-coverflow_MERGED.js
-(function () {
-  async function loadEvents(){
-    const path = window.WT_PAST_EVENTS_JSON || "data/events.json";
-    const res = await fetch(path, { cache: "no-cache" });
-    if(!res.ok){
-      console.error("[past-events] JSON not found:", path, res.status);
-      return [];
-    }
-    try { return await res.json(); }
-    catch(e){ console.error("[past-events] JSON parse error:", e); return []; }
+// js/past-events-coverflow.js
+// Jednoduchá finální verze – načte data a až potom spustí Swiper
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+  const container = document.getElementById("coverflow");
+  const wrapper = document.getElementById("carouselSlot");
+
+  if (!container || !wrapper) {
+    console.error("[coverflow] missing #coverflow or #carouselSlot");
+    return;
   }
 
-  function fillSlides(data, wrapper){
-    wrapper.innerHTML = "";
-    if(!wrapper.classList.contains("swiper-wrapper")) wrapper.classList.add("swiper-wrapper");
+  // cesta k JSON
+  const jsonPath = "data/events.json";
 
-    data.forEach(item => {
-      const slide = document.createElement("div");
-      slide.className = "swiper-slide";
-
-      const img = document.createElement("img");
-      img.className = "poster";
-      img.src = item.image;
-      img.alt = item.title || "";
-
-      if(item.link){
-        const a = document.createElement("a");
-        a.href = item.link;
-        a.target = "_blank";
-        a.rel = "noopener";
-        a.appendChild(img);
-        slide.appendChild(a);
-      } else {
-        slide.appendChild(img);
-      }
-
-      wrapper.appendChild(slide);
-    });
+  let data = [];
+  try {
+    const res = await fetch(jsonPath);
+    data = await res.json();
+  } catch (e) {
+    console.error("[coverflow] JSON load error", e);
+    return;
   }
 
-  function bindNav(swiper){
-    const nav = document.getElementById("wtCarouselNav");
-    if(nav){
-      nav.addEventListener("click", (e) => {
-        const prev = e.target && e.target.closest ? e.target.closest(".wtNavPrev") : null;
-        const next = e.target && e.target.closest ? e.target.closest(".wtNavNext") : null;
-        if(prev){ e.preventDefault(); swiper.slidePrev(); }
-        if(next){ e.preventDefault(); swiper.slideNext(); }
-      });
-    }
-    window.addEventListener("wt:click", (e) => {
-      const name = e && e.detail ? e.detail.name : "";
-      if(name === "prev") swiper.slidePrev();
-      if(name === "next") swiper.slideNext();
-    });
+  if (!Array.isArray(data) || data.length === 0) {
+    console.error("[coverflow] empty data");
+    return;
   }
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    if(typeof Swiper === "undefined"){
-      console.error("[past-events] Swiper not loaded");
-      return;
-    }
+  // seřadit od nejnovějších
+  data.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    const container = document.getElementById("coverflow");
-    const wrapper = document.getElementById("carouselSlot");
-    if(!container || !wrapper){
-      console.error("[past-events] Missing #coverflow or #carouselSlot");
-      return;
-    }
+  // vytvořit slidy
+  wrapper.innerHTML = "";
+  wrapper.classList.add("swiper-wrapper");
 
-    const data = await loadEvents();
-    if(!Array.isArray(data) || data.length === 0){
-      console.error("[past-events] No events loaded");
-      return;
-    }
+  data.forEach(item => {
+    const slide = document.createElement("div");
+    slide.className = "swiper-slide";
 
-    data.sort((a,b) => new Date(b.date) - new Date(a.date));
-    fillSlides(data, wrapper);
+    const img = document.createElement("img");
+    img.className = "poster";
+    img.src = item.image;
+    img.alt = item.title || "";
 
-    const swiper = new Swiper(container, {
+    slide.appendChild(img);
+    wrapper.appendChild(slide);
+  });
+
+  // až jsou slidy v DOM → spustit Swiper
+  requestAnimationFrame(() => {
+    new Swiper(container, {
       effect: "coverflow",
       centeredSlides: true,
       slidesPerView: "auto",
-      loop: false,
       grabCursor: true,
       coverflowEffect: {
         rotate: 0,
         stretch: 0,
-        depth: 240,
+        depth: 250,
         modifier: 1,
         slideShadows: false
       }
     });
-
-    bindNav(swiper);
   });
-})();
+
+});
