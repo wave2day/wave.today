@@ -1,26 +1,14 @@
-// js/past-events-coverflow_WT_FIXPATH.js
-// Loads ONE JSON: (WT_BASE + 'data/events.json'), where WT_BASE defaults to ''.
-// This works on:
-// - wave.today root (WT_BASE = '')
-// - GitHub Pages repo root (WT_BASE = '/repo/')
-// Keeps share/qr scripts untouched.
-
+// js/past-events-coverflow_MERGED.js
 (function () {
-  function basePath(){
-    const b = (window.WT_BASE || "").toString();
-    if(!b) return "";
-    return b.endsWith("/") ? b : (b + "/");
-  }
-
   async function loadEvents(){
-    const path = basePath() + "data/events.json";
+    const path = window.WT_PAST_EVENTS_JSON || "data/events.json";
     const res = await fetch(path, { cache: "no-cache" });
     if(!res.ok){
       console.error("[past-events] JSON not found:", path, res.status);
-      return null;
+      return [];
     }
     try { return await res.json(); }
-    catch(e){ console.error("[past-events] JSON parse error:", e); return null; }
+    catch(e){ console.error("[past-events] JSON parse error:", e); return []; }
   }
 
   function fillSlides(data, wrapper){
@@ -51,6 +39,23 @@
     });
   }
 
+  function bindNav(swiper){
+    const nav = document.getElementById("wtCarouselNav");
+    if(nav){
+      nav.addEventListener("click", (e) => {
+        const prev = e.target && e.target.closest ? e.target.closest(".wtNavPrev") : null;
+        const next = e.target && e.target.closest ? e.target.closest(".wtNavNext") : null;
+        if(prev){ e.preventDefault(); swiper.slidePrev(); }
+        if(next){ e.preventDefault(); swiper.slideNext(); }
+      });
+    }
+    window.addEventListener("wt:click", (e) => {
+      const name = e && e.detail ? e.detail.name : "";
+      if(name === "prev") swiper.slidePrev();
+      if(name === "next") swiper.slideNext();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     if(typeof Swiper === "undefined"){
       console.error("[past-events] Swiper not loaded");
@@ -67,7 +72,6 @@
     const data = await loadEvents();
     if(!Array.isArray(data) || data.length === 0){
       console.error("[past-events] No events loaded");
-      // IMPORTANT: do not clear anything if load failed
       return;
     }
 
@@ -89,10 +93,6 @@
       }
     });
 
-    window.addEventListener("wt:click", (e) => {
-      const name = e && e.detail ? e.detail.name : "";
-      if(name === "prev") swiper.slidePrev();
-      if(name === "next") swiper.slideNext();
-    });
+    bindNav(swiper);
   });
 })();
