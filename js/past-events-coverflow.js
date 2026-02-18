@@ -1,10 +1,14 @@
-// js/past-events-coverflow_WT_FINAL.js
-// Uses ONE JSON: <WT_BASE>/data/events.json
-// Keeps your existing share + QR modules untouched.
+// js/past-events-coverflow_WT_FIXPATH.js
+// Loads ONE JSON: (WT_BASE + 'data/events.json'), where WT_BASE defaults to ''.
+// This works on:
+// - wave.today root (WT_BASE = '')
+// - GitHub Pages repo root (WT_BASE = '/repo/')
+// Keeps share/qr scripts untouched.
 
 (function () {
   function basePath(){
-    const b = (window.WT_BASE || "./").toString();
+    const b = (window.WT_BASE || "").toString();
+    if(!b) return "";
     return b.endsWith("/") ? b : (b + "/");
   }
 
@@ -13,10 +17,10 @@
     const res = await fetch(path, { cache: "no-cache" });
     if(!res.ok){
       console.error("[past-events] JSON not found:", path, res.status);
-      return [];
+      return null;
     }
     try { return await res.json(); }
-    catch(e){ console.error("[past-events] JSON parse error:", e); return []; }
+    catch(e){ console.error("[past-events] JSON parse error:", e); return null; }
   }
 
   function fillSlides(data, wrapper){
@@ -35,7 +39,7 @@
       if(item.link){
         const a = document.createElement("a");
         a.href = item.link;
-        a.target = "_self";
+        a.target = "_blank";
         a.rel = "noopener";
         a.appendChild(img);
         slide.appendChild(a);
@@ -63,6 +67,7 @@
     const data = await loadEvents();
     if(!Array.isArray(data) || data.length === 0){
       console.error("[past-events] No events loaded");
+      // IMPORTANT: do not clear anything if load failed
       return;
     }
 
@@ -84,7 +89,6 @@
       }
     });
 
-    // Your inline code dispatches window event: wt:click with detail.name = prev/next
     window.addEventListener("wt:click", (e) => {
       const name = e && e.detail ? e.detail.name : "";
       if(name === "prev") swiper.slidePrev();
