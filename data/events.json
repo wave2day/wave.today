@@ -1,44 +1,86 @@
 [
   {
+    "id": 1,
     "date": "2023-04-24",
     "title": "Arcadia",
     "image": "assets/img/2023-04-24_arcadia.gif",
     "link": ""
   },
   {
+    "id": 2,
     "date": "2025-02-22",
     "title": "Futura",
     "image": "assets/img/2025-02-22_futura.jpg",
     "link": ""
   },
   {
-    "date": "2025-05-24",
-    "title": "Wavefunction",
-    "image": "assets/img/2025-05-24_wavefunction.jpg",
+    "id": 3,
+    "date": "2025-03-08",
+    "title": "Atlanta",
+    "image": "assets/img/2025-03-08_atlanta.jpg",
     "link": ""
   },
   {
+    "id": 4,
+    "date": "2025-05-02",
+    "title": "Wavepool",
+    "image": "assets/img/2025-05-02_wavepool.jpg",
+    "link": ""
+  },
+  {
+    "id": 5,
+    "date": "2025-05-24",
+    "title": "Wavefunction",
+    "image": "assets/img/2025-24-05_wavefunction.jpg",
+    "link": ""
+  },
+  {
+    "id": 6,
     "date": "2025-06-26",
     "title": "Tears",
     "image": "assets/img/2025-06-26_tears.jpg",
     "link": ""
   },
   {
+    "id": 7,
+    "date": "2025-06-27",
+    "title": "Seattle",
+    "image": "assets/img/2025-06-27_seatle.jpg",
+    "link": ""
+  },
+  {
+    "id": 8,
+    "date": "2025-07-03",
+    "title": "Madchiller",
+    "image": "assets/img/2025-07-03_madchiller.jpeg",
+    "link": ""
+  },
+  {
+    "id": 9,
     "date": "2025-07-07",
     "title": "Fluidity",
     "image": "assets/img/2025-07-07_fluidity.png",
     "link": ""
   },
   {
+    "id": 10,
     "date": "2025-08-23",
     "title": "Last",
     "image": "assets/img/2025-08-23_last.png",
     "link": ""
   },
   {
+    "id": 11,
     "date": "2025-10-10",
     "title": "Skeler",
     "image": "assets/img/2025-10-10_skeler.jpg",
+    "link": ""
+  },
+  {
+    "id": 12,
+    "date": "2026-02-05",
+    "title": "Fent",
+    "image": "assets/img/2026-02-05_fent.jpg",
     "link": ""
   }
 ]
