@@ -5,11 +5,6 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <title>wave.today</title>
-<script>
-  // Base path for data on different hosts / subpages
-  window.WT_BASE = "/";
-</script>
-
 <link href="css/share.css?v=1" rel="stylesheet"/>
 <link href="css/qr.css?v=1" rel="stylesheet"/>
 <link href="css/extra.css?v=1" rel="stylesheet"/>
@@ -797,94 +792,7 @@ body{background:transparent !important;}
 </style>
 
 
-<style id="wtOverrides_final">
-/* --- FIXES: label typography + window vertical position (user-defined) --- */
-
-/* 1) White label: always black text, centered, readable */
-.wtLabelWrap{
-  --wtLabelScale: 0.18; /* bigger label without changing graphic */
-}
-.wtLabelScope{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-}
-
-/* day + month widths aligned */
-.wtLabelDay, .wtLabelMonth{
-  width: 2.25em;        /* common text block width */
-  text-align:center;
-  margin-left:auto;
-  margin-right:auto;
-  color: rgba(0,0,0,.88) !important;
-}
-
-/* day: tabular digits keep equal width (00–31) */
-.wtLabelDay{
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: 118px;     /* readable */
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-/* month: 3 letters compressed to fit same width as day block */
-.wtLabelMonth{
-  font-weight: 700;
-  font-size: 50px;
-  line-height: 1.05;
-  transform: scaleX(.78);
-  transform-origin: center;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-/* 2) OKNO: move the whole glass window DOWN (tweak only this variable) */
-:root{
-  --wtOknoOffset: 62vh; /* increase = lower; decrease = higher */
-}
-#oknoSection{
-  margin-top: var(--wtOknoOffset) !important;
-}
-
-/* keep window wide */
-#oknoSection .window{
-  width: 96vw !important;
-  max-width: 1200px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* 3) Relikt killer: if any extra underlayer exists, hide it */
-#oknoSection .windowUnderframe,
-#oknoSection .underframe,
-#oknoSection .sheetBackdrop,
-#oknoSection .wtSheetBackdrop,
-#oknoSection .wtUnderframe{
-  display:none !important;
-}
-</style>
-
 <!-- OVERRIDE v8: zachovat pozici okna (52vh) + label beze změny velikosti (jen černý text + přesné centrování) -->
-<style id="wtOverride_v8">
-  :root{ --wtOknoOffset: 52vh; } /* zachovat správnou pozici okna */
-
-  /* label: NEMĚNIT velikost; jen pojistka černé barvy a centrování textu */
-  .day, .mon, .wtLabelDay, .wtLabelMonth{
-    color: rgba(18,18,22,.92) !important;
-    text-shadow: none !important;
-    text-align: center !important;
-  }
-  .date, .wtLabelDate{
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:center !important;
-    justify-content:center !important;
-    text-align:center !important;
-  }
-</style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
 <style id="wtOverride_v9">
   :root{ --wtOknoOffset: 52vh; }
@@ -985,8 +893,57 @@ body{background:transparent !important;}
     text-align:center;
   }
 </style>
+<style id="wtStableOverrides">
+  /* === STABLE OVERRIDES (single source of truth) === */
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+  /* OKNO: wide + centered (almost edge-to-edge) */
+  *, *::before, *::after { box-sizing: border-box; }
+  #oknoSection{ max-width:none !important; width:100% !important; margin:0 !important; padding:0 0 18px !important; }
+  #oknoSection .stage{ width:100% !important; padding-left:0 !important; padding-right:0 !important; margin:0 !important; }
+  #oknoSection .window{ width:96vw !important; max-width:1200px !important; margin-left:auto !important; margin-right:auto !important; justify-self:center !important; }
+
+  /* OKNO: vertical offset (lower value = higher position) */
+  :root{ --wtOknoOffset: 47vh; }
+  #oknoSection{ margin-top: var(--wtOknoOffset) !important; }
+
+  /* Relikt killer */
+  #oknoSection::before,#oknoSection::after,
+  #oknoSection .stage::before,#oknoSection .stage::after,
+  #oknoSection .window::before,#oknoSection .window::after,
+  #oknoSection .windowUnderframe,
+  #oknoSection .underframe,
+  #oknoSection .sheetBackdrop,
+  #oknoSection .wtSheetBackdrop,
+  #oknoSection .wtUnderframe{ content:none !important; display:none !important; }
+
+  /* White date label: always black, centered, readable */
+  .wtLabelDay, .wtLabelMonth, .day, .mon{
+    color: rgba(18,18,22,.92) !important;
+    text-shadow: none !important;
+    text-align: center !important;
+    font-variant-numeric: tabular-nums;
+  }
+  .wtLabelDay{
+    font-weight: 800;
+    font-size: 118px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .wtLabelMonth{
+    font-weight: 700;
+    font-size: 50px;
+    line-height: 1.05;
+    text-transform: uppercase;
+    transform: scaleX(.78);
+    transform-origin: center;
+  }
+  .wtLabelDate{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+</style>
 </head>
 <body>
 <!-- ===== WT BACKGROUND MODULE (DOM) ===== -->
@@ -1140,7 +1097,7 @@ body{background:transparent !important;}
 </div>
 </div>
 <div aria-label="Karuzel plakátů" class="swiper" id="coverflow">
-<div aria-label="Slot pro karusel" id="carouselSlot" class="swiper-wrapper"></div>
+<div aria-label="Slot pro karusel" id="carouselSlot"></div>
 </div>
 <div aria-label="Ovládání karuzelu" id="wtCarouselNav">
 <div class="wtNavRow">
@@ -1373,8 +1330,5 @@ const leds = window.leds; // make applyBG() use the bridged LED states
   <script src="js/share-actions.js?v=1"></script>
 <script src="js/qr.js?v=1"></script>
 <script src="assets/js/wt-upcoming.js" defer></script>
-
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="js/past-events-coverflow_WT_FINAL.js?v=1"></script>
 </body>
 </html>
