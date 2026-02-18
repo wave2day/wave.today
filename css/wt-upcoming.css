@@ -1,4 +1,4 @@
-/* === wave.today upcoming posters + label === */
+
 #wtNewEventsSlot{display:block;width:100%;}
 .wtUpcomingList{display:flex;flex-direction:column;gap:18px;padding:0 14px;}
 .wtUpcomingItem{position:relative;width:100%;}
@@ -6,27 +6,31 @@
 .wtUpcomingPoster{width:100%;height:auto;display:block;border-radius:0 !important;}
 .wtReveal{
   opacity:0;
-  transform: translate3d(0, 120px, 0) scale(0.90);
-  transition: opacity 1.25s ease-out;
+  transform: translate3d(0, 140px, 0) scale(0.92);
+  transition: opacity 900ms ease-out;
   will-change: transform, opacity;
 }
 .wtReveal.isIn{
   opacity:1;
-  /* transform řídí animace, aby byl „vyloupnutí“ efekt deterministický */
-  animation: wtRise 1450ms cubic-bezier(.16,1,.3,1) both;
+  animation: wtRise 1650ms cubic-bezier(.16,1,.3,1) both;
 }
-@keyframes wtRise{
-  0%   { transform: translate3d(0, 120px, 0) scale(0.90); }
-  60%  { transform: translate3d(0, -10px, 0) scale(1.01); }
-  100% { transform: translate3d(0,   0px, 0) scale(1.00); }
+ wtRise{
+  0%   { transform: translate3d(0, 140px, 0) scale(0.92); }
+  75%  { transform: translate3d(0,  -6px, 0) scale(1.01); }
+  100% { transform: translate3d(0,    0px, 0) scale(1.00); }
 }
 .wtLabelWrap{position:absolute; top:10px; left:10px; z-index:5; pointer-events:auto;
-  transform: scale(var(--wtLabelScale, 0.13)); transform-origin: top left;}
+  transform: scale(var(--wtLabelScale, clamp(0.16, 0.22, 0.26))); transform-origin: top left;}
+.wtLabelWrap{cursor:pointer;}
 .wtLabelDate{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; pointer-events:none;}
+.wtLabelDate{color:#000; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
 .wtLabelDay{font-weight:800; line-height:1; font-variant-numeric: tabular-nums;}
+.wtLabelDay{font-size: 240px;}
 .wtLabelMonth{margin-top: 10px; font-weight:750; line-height:1; text-transform: uppercase; display:block;
+.wtLabelMonth{font-size: 130px; letter-spacing: 0.06em;}
   width: var(--monW, 2ch); margin-left:auto; margin-right:auto; text-align: justify;}
 .wtLabelMonth::after{content:""; display:inline-block; width:100%;}
+.wtLabelMonth{font-size: 130px; letter-spacing: 0.06em;}
 .wtLabelScope{--bg:#9c9c9c;
 
     /* stejné měřítko / styl */
@@ -308,69 +312,15 @@
 #oknoSection .window{width:min(1200px, 96vw) !important; margin:0 auto !important;}
 @media (max-width:700px){#oknoSection .window{width:96vw !important;}}
 
-/* === overrides / tuning === */
-/* Deterministic overrides (no heuristic edits) */
-  :root{
-    --panelTop: 54vh; /* move panel slightly up to avoid the browser share bar */
-  }
 
-  /* Keep posters with square corners */
-  .wtPoster, .wtPoster img, .wtPosterImg, .wtCardPosterImg{
-    border-radius: 0 !important;
-  }
-
-  /* Wide panel positioning */
-  .wtPanelWrap{ margin-top: var(--panelTop) !important; }
-
-  /* Reveal like wave.today: slower rise from "depth" + gentle overshoot, no snap */
-  .wtReveal{
-    opacity: 0;
-    transform: translateY(180px) scale(0.90);
-    transition: none !important;
-    will-change: transform, opacity;
-  }
-  .wtReveal.isIn{
-    opacity: 1;
-    transform: none;
-    animation: wtRise 1350ms cubic-bezier(.16,1,.3,1) both;
-  }
-  @keyframes wtRise{
-    0%{ opacity:0; transform: translateY(190px) scale(0.89); }
-    70%{ opacity:1; transform: translateY(-10px) scale(1.01); }
-    100%{ opacity:1; transform: translateY(0) scale(1); }
-  }
-
-  /* Label: always black on white, centered, "square" block */
-  .wtLabelScope{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .wtLabelInner{
-    width: 100%;
-    height: 100%;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap: 10px;
-  }
-  .wtLabelDay{
-    color:#111 !important;
-    font-weight: 800;
-    font-size: 82px !important;
-    line-height: 0.95;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.5px;
-  }
-  .wtLabelMonth{
-    color:#111 !important;
-    font-weight: 700;
-    font-size: 38px !important;
-    line-height: 1;
-    display:inline-block;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    width: var(--monW, auto);
-    text-align:center;
-  }
+/* === PATCH: label klik nesmí otevřít plakát === */
+.wtWhiteLabel{ pointer-events: auto !important; }
+.wtWhiteLabel iframe{ pointer-events: none !important; } /* aby klik nebral iframe */
+.wtLabelHitArea{
+  position:absolute;
+  inset:0;
+  background:transparent;
+  pointer-events:auto;
+  cursor:pointer;
+  z-index: 7;
+}
