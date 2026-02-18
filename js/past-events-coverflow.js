@@ -1,9 +1,8 @@
-// js/past-events-coverflow_BASE_FINAL.js
-// Coverflow carousel fed from ONE JSON location: <WT_BASE>/data/events.json
-// Does NOT touch share.js or share-actions.js.
+// js/past-events-coverflow_WT_FINAL.js
+// Uses ONE JSON: <WT_BASE>/data/events.json
+// Keeps your existing share + QR modules untouched.
 
 (function () {
-
   function basePath(){
     const b = (window.WT_BASE || "./").toString();
     return b.endsWith("/") ? b : (b + "/");
@@ -29,13 +28,14 @@
       slide.className = "swiper-slide";
 
       const img = document.createElement("img");
+      img.className = "poster";
       img.src = item.image;
       img.alt = item.title || "";
 
       if(item.link){
         const a = document.createElement("a");
         a.href = item.link;
-        a.target = "_blank";
+        a.target = "_self";
         a.rel = "noopener";
         a.appendChild(img);
         slide.appendChild(a);
@@ -44,18 +44,6 @@
       }
 
       wrapper.appendChild(slide);
-    });
-  }
-
-  function bindNav(swiper){
-    const nav = document.getElementById("wtCarouselNav");
-    if(!nav) return;
-
-    nav.addEventListener("click", (e) => {
-      const prev = e.target && e.target.closest ? e.target.closest(".wtNavPrev") : null;
-      const next = e.target && e.target.closest ? e.target.closest(".wtNavNext") : null;
-      if(prev){ e.preventDefault(); swiper.slidePrev(); }
-      if(next){ e.preventDefault(); swiper.slideNext(); }
     });
   }
 
@@ -96,7 +84,11 @@
       }
     });
 
-    bindNav(swiper);
+    // Your inline code dispatches window event: wt:click with detail.name = prev/next
+    window.addEventListener("wt:click", (e) => {
+      const name = e && e.detail ? e.detail.name : "";
+      if(name === "prev") swiper.slidePrev();
+      if(name === "next") swiper.slideNext();
+    });
   });
-
 })();
