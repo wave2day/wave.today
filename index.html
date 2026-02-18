@@ -1067,16 +1067,17 @@ body{background:transparent !important;}
 .wtLabelDate{align-items:center !important; justify-content:center !important;}
 </style>
 <style id="wtSheetBackdropFix">
-/* Share panel/backdrop must be fixed and hidden by default, but MUST remain displayable when .show is added */
+/* Share panel/backdrop: keep it COMPLETELY removed until .show is added (prevents any "grey veil") */
 #wtSheetBackdrop{
   position:fixed !important;
   inset:0 !important;
-  display:block !important;          /* <-- was display:none; that killed the panel */
+  display:none !important;           /* hidden by default */
   opacity:0 !important;
   pointer-events:none !important;
   background:rgba(0,0,0,.35) !important;
 }
 #wtSheetBackdrop.show{
+  display:block !important;          /* becomes visible only when .show is added */
   opacity:1 !important;
   pointer-events:auto !important;
 }
@@ -1085,11 +1086,8 @@ body{background:transparent !important;}
   position:fixed !important;
   left:0; right:0; bottom:0;
   z-index:9999;
-  pointer-events:none;               /* default off */
 }
-#wtActionSheet.show{
-  pointer-events:auto;
-}
+
 </style>
 
 
