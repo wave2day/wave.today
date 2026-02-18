@@ -1191,7 +1191,7 @@ body{background:transparent !important;}
 </style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
 <style id="wtOverride_v9">
-  :root{ --wtOknoOffset: 52vh; }
+  :root{ --wtOknoOffset: 35vh; }
 
   /* NEMĚNNÉ PRAVIDLO: white label musí být čitelné = zvětšit celý label přes scale */
   .wtLabelWrap{ --wtLabelScale: 0.18 !important; } /* bylo ~0.13 -> výrazně větší */
@@ -1289,6 +1289,8 @@ body{background:transparent !important;}
     text-align:center;
   }
 </style>
+<link rel="stylesheet" href="css/wt-upcoming_v2_labelclick.css">
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 </head>
 <body>
@@ -1417,96 +1419,7 @@ body{background:transparent !important;}
 </div>
 <!-- ===== /WT BACKGROUND MODULE ===== -->
 <!-- ===== SHARE MODULE (původní) ===== -->
-<div aria-label="Share" class="glassBase circle v-white" id="shareOrb">
-<div class="pressGlow"></div>
-<button aria-label="Share" class="coreBtn">
-<svg aria-hidden="true" class="shareIcon" viewbox="0 0 24 24">
-<circle cx="18" cy="5" r="3"></circle>
-<circle cx="6" cy="12" r="3"></circle>
-<circle cx="18" cy="19" r="3"></circle>
-<path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"></path>
-</svg>
-</button>
-</div>
-<div class="main"><div aria-hidden="true" class="wtSpacerTop"></div><div aria-hidden="true" id="wtNewEventsSlot"></div><div aria-hidden="true" class="wtSpacerBetween"></div><section aria-label="Past events window" id="oknoSection">
-<div class="stage">
-<div aria-label="Okno s karuzelem" class="window">
-<div class="windowInner">
-<div class="topRow">
-<div aria-label="Past events" id="wtPastPill">
-<div class="glassBase pill v-blue">
-<div class="pressGlow"></div>
-<a aria-label="Past events" class="coreBtn" href="past-events.html" target="_self">
-<span class="coreText">past events</span>
-</a>
-</div>
-</div>
-</div>
-<div aria-label="Karuzel plakátů" class="swiper" id="coverflow">
-<div aria-label="Slot pro karusel" id="carouselSlot" class="swiper-wrapper"></div>
-</div>
-<div aria-label="Ovládání karuzelu" id="wtCarouselNav">
-<div class="wtNavRow">
-<div class="wtNavBtn wtNavPrev"></div>
-<div class="wtNavBtn wtNavNext"></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<script>
-const ARROW = (dir)=>`
-      <div class="glassBase pill v-blue">
-        <div class="pressGlow"></div>
-        <button class="coreBtn" type="button" aria-label="${dir==='prev'?'Předchozí':'Další'}">
-          <svg class="arrow" viewBox="0 0 100 100" aria-hidden="true">
-            <defs>
-              <linearGradient id="gFill${dir}" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#1a1a1a" stop-opacity="0.92"/>
-                <stop offset="0.55" stop-color="#0f0f0f" stop-opacity="0.98"/>
-                <stop offset="1" stop-color="#000" stop-opacity="1"/>
-              </linearGradient>
-              <linearGradient id="gHi${dir}" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
-                <stop offset="0.35" stop-color="#ffffff" stop-opacity="0.06"/>
-                <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            ${dir==='prev'
-              ? '<path d="M64 18 L30 50 L64 82" fill="none" stroke="url(#gFillprev)" stroke-width="18" class="stroke"/><path d="M64 18 L30 50 L64 82" fill="none" stroke="url(#gHiprev)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="72 3" stroke-dashoffset="-2" opacity="0.9"/>'
-              : '<path d="M36 18 L70 50 L36 82" fill="none" stroke="url(#gFillnext)" stroke-width="18" class="stroke"/><path d="M36 18 L70 50 L36 82" fill="none" stroke="url(#gHinext)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="72 3" stroke-dashoffset="-2" opacity="0.9"/>'}
-          </svg>
-        </button>
-      </div>
-    `;
-    
 
-    
-    // vložení TVÝCH tlačítek (jen jednou)
-    const prevSlot = document.querySelector('#wtCarouselNav .wtNavPrev');
-    const nextSlot = document.querySelector('#wtCarouselNav .wtNavNext');
-    if(prevSlot && !prevSlot.innerHTML.trim()) prevSlot.innerHTML = ARROW('prev');
-    if(nextSlot && !nextSlot.innerHTML.trim()) nextSlot.innerHTML = ARROW('next');
-
-    // deterministicky inertní kliky: jen eventy, žádná knihovna, žádné posouvání
-    const fire = (name) => window.dispatchEvent(new CustomEvent('wt:click', { detail: { name } }));
-    document.querySelector('#wtCarouselNav .wtNavPrev')?.addEventListener('click', (e)=>{ e.preventDefault(); fire('prev'); });
-    document.querySelector('#wtCarouselNav .wtNavNext')?.addEventListener('click', (e)=>{ e.preventDefault(); fire('next'); });
-</script>
-</section><div aria-hidden="true" class="wtSpacerBottom"></div></div>
-<!-- přesný konec stránky -->
-<div aria-hidden="true" id="wtBottomSentinel"></div>
-<div id="wtSheetBackdrop"></div>
-<div aria-label="Share" aria-modal="true" id="wtActionSheet" role="dialog">
-<div aria-label="glass plate" class="glassPlate">
-<div class="pressGlow"></div>
-<div aria-label="share options" class="coreSquare shareCore" role="menu">
-<button class="shareRow" data-action="share" type="button">Share</button>
-<a class="shareRow" data-action="instagram" href="https://www.instagram.com/wave__today?igsh=Y2xhcGdlMGtlejdx" target="_blank" rel="noopener" style="text-decoration:none;display:block;">Instagram</a>
-<a class="shareRow" data-action="mail" href="mailto:info@wave.today?subject=wave.today&body=https%3A%2F%2Fwave.today" style="text-decoration:none;display:block;">Mail</a>
-</div>
-</div>
-</div>
 <!-- ===== QR MODULE (původní, jen wrapper + 2 třídy přejmenované) ===== -->
 <div id="qrWrap">
 <div aria-label="Sticker" id="wtOrb" role="button" tabindex="0">
@@ -1672,8 +1585,6 @@ const leds = window.leds; // make applyBG() use the bridged LED states
     window.applyBG = applyBG;
     applyBG();
   </script>
-<script src="js/share.js?v=1"></script>
-  <script src="js/share-actions.js"></script>
 <script src="js/qr.js?v=1"></script>
 <script id="wtUpcomingLoader">
 (() => {
@@ -1841,5 +1752,105 @@ const leds = window.leds; // make applyBG() use the bridged LED states
   }, { passive:true });
 })();
 </script>
+<script defer src="js/wt-upcoming_v2_labelclick.js"></script>
+
+<script>
+  // Past events JSON location (single source)
+  window.WT_PAST_EVENTS_JSON = "data/events.json";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<script src="js/past-events-coverflow.js?v=2"></script>
+<div aria-label="Share" class="glassBase circle v-white" id="shareOrb">
+<div class="pressGlow"></div>
+<button aria-label="Share" class="coreBtn">
+<svg aria-hidden="true" class="shareIcon" viewbox="0 0 24 24">
+<circle cx="18" cy="5" r="3"></circle>
+<circle cx="6" cy="12" r="3"></circle>
+<circle cx="18" cy="19" r="3"></circle>
+<path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"></path>
+</svg>
+</button>
+</div>
+<div class="main"><div aria-hidden="true" class="wtSpacerTop"></div><div aria-hidden="true" id="wtNewEventsSlot"></div><div aria-hidden="true" class="wtSpacerBetween"></div><section aria-label="Past events window" id="oknoSection">
+<div class="stage">
+<div aria-label="Okno s karuzelem" class="window">
+<div class="windowInner">
+<div class="topRow">
+<div aria-label="Past events" id="wtPastPill">
+<div class="glassBase pill v-blue">
+<div class="pressGlow"></div>
+<a aria-label="Past events" class="coreBtn" href="past-events.html" target="_self">
+<span class="coreText">past events</span>
+</a>
+</div>
+</div>
+</div>
+<div aria-label="Karuzel plakátů" class="swiper" id="coverflow">
+<div aria-label="Slot pro karusel" id="carouselSlot"></div>
+</div>
+<div aria-label="Ovládání karuzelu" id="wtCarouselNav">
+<div class="wtNavRow">
+<div class="wtNavBtn wtNavPrev"></div>
+<div class="wtNavBtn wtNavNext"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+const ARROW = (dir)=>`
+      <div class="glassBase pill v-blue">
+        <div class="pressGlow"></div>
+        <button class="coreBtn" type="button" aria-label="${dir==='prev'?'Předchozí':'Další'}">
+          <svg class="arrow" viewBox="0 0 100 100" aria-hidden="true">
+            <defs>
+              <linearGradient id="gFill${dir}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#1a1a1a" stop-opacity="0.92"/>
+                <stop offset="0.55" stop-color="#0f0f0f" stop-opacity="0.98"/>
+                <stop offset="1" stop-color="#000" stop-opacity="1"/>
+              </linearGradient>
+              <linearGradient id="gHi${dir}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+                <stop offset="0.35" stop-color="#ffffff" stop-opacity="0.06"/>
+                <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            ${dir==='prev'
+              ? '<path d="M64 18 L30 50 L64 82" fill="none" stroke="url(#gFillprev)" stroke-width="18" class="stroke"/><path d="M64 18 L30 50 L64 82" fill="none" stroke="url(#gHiprev)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="72 3" stroke-dashoffset="-2" opacity="0.9"/>'
+              : '<path d="M36 18 L70 50 L36 82" fill="none" stroke="url(#gFillnext)" stroke-width="18" class="stroke"/><path d="M36 18 L70 50 L36 82" fill="none" stroke="url(#gHinext)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="72 3" stroke-dashoffset="-2" opacity="0.9"/>'}
+          </svg>
+        </button>
+      </div>
+    `;
+    
+
+    
+    // vložení TVÝCH tlačítek (jen jednou)
+    const prevSlot = document.querySelector('#wtCarouselNav .wtNavPrev');
+    const nextSlot = document.querySelector('#wtCarouselNav .wtNavNext');
+    if(prevSlot && !prevSlot.innerHTML.trim()) prevSlot.innerHTML = ARROW('prev');
+    if(nextSlot && !nextSlot.innerHTML.trim()) nextSlot.innerHTML = ARROW('next');
+
+    // deterministicky inertní kliky: jen eventy, žádná knihovna, žádné posouvání
+    const fire = (name) => window.dispatchEvent(new CustomEvent('wt:click', { detail: { name } }));
+    document.querySelector('#wtCarouselNav .wtNavPrev')?.addEventListener('click', (e)=>{ e.preventDefault(); fire('prev'); });
+    document.querySelector('#wtCarouselNav .wtNavNext')?.addEventListener('click', (e)=>{ e.preventDefault(); fire('next'); });
+</script>
+</section><div aria-hidden="true" class="wtSpacerBottom"></div></div>
+<!-- přesný konec stránky -->
+<div aria-hidden="true" id="wtBottomSentinel"></div>
+<div id="wtSheetBackdrop"></div>
+<div aria-label="Share" aria-modal="true" id="wtActionSheet" role="dialog">
+<div aria-label="glass plate" class="glassPlate">
+<div class="pressGlow"></div>
+<div aria-label="share options" class="coreSquare shareCore" role="menu">
+<button class="shareRow" data-action="share" type="button">Share</button>
+<a class="shareRow" data-action="instagram" href="https://www.instagram.com/wave__today/" target="_blank" rel="noopener" style="text-decoration:none;display:block;">Instagram</a>
+<a class="shareRow" data-action="mail" href="mailto:info@wave.today?subject=wave.today&body=https%3A%2F%2Fwave.today" style="text-decoration:none;display:block;">Mail</a>
+</div>
+</div>
+</div>
+<script src="js/share.js?v=1"></script>
+<script src="js/share-actions.js?v=1"></script>
 </body>
 </html>
