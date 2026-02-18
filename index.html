@@ -1191,7 +1191,7 @@ body{background:transparent !important;}
 </style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
 <style id="wtOverride_v9">
-  :root{ --wtOknoOffset: 35vh; }
+  :root{ --wtOknoOffset: 52vh; }
 
   /* NEMĚNNÉ PRAVIDLO: white label musí být čitelné = zvětšit celý label přes scale */
   .wtLabelWrap{ --wtLabelScale: 0.18 !important; } /* bylo ~0.13 -> výrazně větší */
@@ -1289,9 +1289,6 @@ body{background:transparent !important;}
     text-align:center;
   }
 </style>
-<link rel="stylesheet" href="css/wt-upcoming_v2_labelclick.css">
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 </head>
 <body>
 <!-- ===== WT BACKGROUND MODULE (DOM) ===== -->
@@ -1445,7 +1442,7 @@ body{background:transparent !important;}
 </div>
 </div>
 <div aria-label="Karuzel plakátů" class="swiper" id="coverflow">
-<div aria-label="Slot pro karusel" id="carouselSlot" class="swiper-wrapper"></div>
+<div aria-label="Slot pro karusel" id="carouselSlot"></div>
 </div>
 <div aria-label="Ovládání karuzelu" id="wtCarouselNav">
 <div class="wtNavRow">
@@ -1504,8 +1501,8 @@ const ARROW = (dir)=>`
 <div class="pressGlow"></div>
 <div aria-label="share options" class="coreSquare shareCore" role="menu">
 <button class="shareRow" data-action="share" type="button">Share</button>
-<a class="shareRow" data-action="instagram" href="https://www.instagram.com/wave__today/" target="_blank" rel="noopener" style="text-decoration:none;display:block;">Instagram</a>
-<a class="shareRow" data-action="mail" href="mailto:info@wave.today?subject=wave.today&body=https%3A%2F%2Fwave.today" style="text-decoration:none;display:block;">Mail</a>
+<button class="shareRow" data-action="instagram" type="button">Instagram</button>
+<button class="shareRow" data-action="mail" type="button">Mail</button>
 </div>
 </div>
 </div>
@@ -1675,7 +1672,7 @@ const leds = window.leds; // make applyBG() use the bridged LED states
     applyBG();
   </script>
 <script src="js/share.js?v=1"></script>
-  <script src="js/share-actions.js?v=1"></script>
+<script src="js/share-actions.js?v=1"></script>
 <script src="js/qr.js?v=1"></script>
 <script id="wtUpcomingLoader">
 (() => {
@@ -1843,13 +1840,5 @@ const leds = window.leds; // make applyBG() use the bridged LED states
   }, { passive:true });
 })();
 </script>
-<script defer src="js/wt-upcoming_v2_labelclick.js"></script>
-
-<script>
-  // Past events JSON location (single source)
-  window.WT_PAST_EVENTS_JSON = "data/events.json";
-</script>
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="js/past-events-coverflow.js?v=1"></script>
 </body>
 </html>
