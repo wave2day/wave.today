@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>WT – coverflow feel (exakt)</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.css">
+
+<style>
+  html,body{height:100%;margin:0}
+  body{
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    overflow:hidden;
+  }
+
+  /* minimal stage */
+  #wtpeWidget{ width:min(1120px, 96vw); }
+
+  /* Swiper area (stejné paddingy jako v původním souboru) */
+  #wtpeCoverflow{
+    width:100%;
+    padding: 8px 14px 8px;
+  }
+  @media (max-width:520px){
+    #wtpeCoverflow{ padding: 6px 10px 6px; }
+  }
+
+  #wtpeCoverflow .swiper-wrapper{ align-items:center; }
+  #wtpeCoverflow .swiper-slide{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* Posters – bez zaoblení (jak chceš). Ostatní hodnoty odpovídají původnímu. */
+  #wtpeCoverflow .poster{
+    height: clamp(170px, 32vh, 340px);
+    width:auto;
+    max-width: 78vw;
+    border-radius: 0;
+    border: 1px solid rgba(255,255,255,.16);
+    box-shadow: 0 18px 60px rgba(0,0,0,.40);
+    background: rgba(255,255,255,.03);
+    object-fit: contain;
+    display:block;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+</style>
+</head>
+
+<body>
+  <div id="wtpeWidget">
+
+    <div class="swiper" id="wtpeCoverflow" aria-label="Karuzel plakátů">
+      <div class="swiper-wrapper" id="wtpeWrap"></div>
+    </div>
+
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/swiper@8/swiper-bundle.min.js"></script>
+<script>
+/* CHANGE ONLY THIS LIST (můžeš sem dát svoje URL nebo lokální assets/img/...) */
+const POSTER_URLS = [
+  "https://wave.today/wp-content/uploads/2022/09/0281c303-919a-4382-b43d-bb88b71b68f8.jpg",
+  "https://wave.today/wp-content/uploads/2022/09/20221104LONDONFlyersSquare1_1_900x.webp",
+  "https://wave.today/wp-content/uploads/2022/09/20220513TRIPFlyersSquare2_900x.webp",
+  "https://wave.today/wp-content/uploads/2022/09/20220611OGUZFlyersSquare_900x.webp",
+  "https://wave.today/wp-content/uploads/2022/09/20220812SierraFlyersSquare_900x.webp",
+  "https://wave.today/wp-content/uploads/2022/09/20220723SKELERFlyersSquare_900x.webp"
+];
+
+(function(){
+  const wrap = document.getElementById("wtpeWrap");
+  if(wrap){
+    POSTER_URLS.forEach(src=>{
+      const s = document.createElement("div");
+      s.className = "swiper-slide";
+      const img = document.createElement("img");
+      img.className = "poster";
+      img.loading = "lazy";
+      img.alt = "";
+      img.src = src;
+      s.appendChild(img);
+      wrap.appendChild(s);
+    });
+  }
+
+  const swiperEl = document.querySelector('#wtpeCoverflow');
+  if(!swiperEl || typeof Swiper === 'undefined') return;
+
+  // NEW: newest first (reverse DOM order of slides), keep everything else unchanged
+  const _w = swiperEl.querySelector('.swiper-wrapper');
+  if(_w){
+    _w.append(...Array.from(_w.children).reverse());
+  }
+
+  const swiper = new Swiper('#wtpeCoverflow',{
+    effect:'coverflow',
+    centeredSlides:true,
+    slidesPerView: 1.8,
+    grabCursor:true,
+    speed:560,
+    coverflowEffect:{
+      rotate: 22,
+      stretch: 0,
+      depth: 160,
+      modifier: 1.18,
+      slideShadows:false
+    }
+  });
+
+  // idle return (exakt)
+  let idleTimer;
+  const IDLE_DELAY = 4500;
+  const reset = ()=>{
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(()=>{ if(swiper.activeIndex !== 0) swiper.slideTo(0, 3000); }, IDLE_DELAY);
+  };
+  swiper.on('touchEnd', reset);
+  swiper.on('slideChange', reset);
+  reset();
+})();
+</script>
+</body>
+</html>
