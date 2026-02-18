@@ -1067,27 +1067,9 @@ body{background:transparent !important;}
 .wtLabelDate{align-items:center !important; justify-content:center !important;}
 </style>
 <style id="wtSheetBackdropFix">
-/* Share panel/backdrop: keep it COMPLETELY removed until .show is added (prevents any "grey veil") */
-#wtSheetBackdrop{
-  position:fixed !important;
-  inset:0 !important;
-  display:none !important;           /* hidden by default */
-  opacity:0 !important;
-  pointer-events:none !important;
-  background:rgba(0,0,0,.35) !important;
-}
-#wtSheetBackdrop.show{
-  display:block !important;          /* becomes visible only when .show is added */
-  opacity:1 !important;
-  pointer-events:auto !important;
-}
-
-#wtActionSheet{
-  position:fixed !important;
-  left:0; right:0; bottom:0;
-  z-index:9999;
-}
-
+/* Prevent any grey underlayer from affecting layout (share backdrop must be fixed + hidden by default) */
+#wtSheetBackdrop{position:fixed !important; inset:0 !important; display:none !important; opacity:0 !important; pointer-events:none !important; background:rgba(0,0,0,.35) !important;}
+#wtActionSheet{position:fixed !important; left:0; right:0; bottom:0; z-index:9999;}
 </style>
 
 
@@ -1209,7 +1191,7 @@ body{background:transparent !important;}
 </style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
 <style id="wtOverride_v9">
-  :root{ --wtOknoOffset: 35vh; }
+  :root{ --wtOknoOffset: 52vh; }
 
   /* NEMĚNNÉ PRAVIDLO: white label musí být čitelné = zvětšit celý label přes scale */
   .wtLabelWrap{ --wtLabelScale: 0.18 !important; } /* bylo ~0.13 -> výrazně větší */
@@ -1692,8 +1674,9 @@ const leds = window.leds; // make applyBG() use the bridged LED states
     window.applyBG = applyBG;
     applyBG();
   </script>
-<script src="js/share.js"></script>
-  <script src="js/share-actions.js"></script>
+<script src="js/share.js?v=1"></script>
+  <script src="js/share-actions.js?v=1"></script>
+  <script src="js/share-links-fix.js?v=1"></script>
 <script src="js/qr.js?v=1"></script>
 <script id="wtUpcomingLoader">
 (() => {
@@ -1868,6 +1851,6 @@ const leds = window.leds; // make applyBG() use the bridged LED states
   window.WT_PAST_EVENTS_JSON = "data/events.json";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-<script src="js/past-events-coverflow.js"></script>
+<script src="js/past-events-coverflow.js?v=2"></script>
 </body>
 </html>
