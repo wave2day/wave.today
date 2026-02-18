@@ -1191,7 +1191,7 @@ body{background:transparent !important;}
 </style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
 <style id="wtOverride_v9">
-  :root{ --wtOknoOffset: 52vh; }
+  :root{ --wtOknoOffset: 35vh; }
 
   /* NEMĚNNÉ PRAVIDLO: white label musí být čitelné = zvětšit celý label přes scale */
   .wtLabelWrap{ --wtLabelScale: 0.18 !important; } /* bylo ~0.13 -> výrazně větší */
@@ -1292,13 +1292,6 @@ body{background:transparent !important;}
 <link rel="stylesheet" href="css/wt-upcoming_v2_labelclick.css">
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-
-<style id="wtLabelClickOverride">
-  /* Allow the date label to receive clicks (so it doesn't fall through to the poster link) */
-  .wtLabelWrap{ pointer-events:auto !important; }
-  .wtLabelDate{ pointer-events:none !important; } /* only the glass/button handles click */
-  .wtLabelScope, .glassSquare, .pressGlow, .coreSquare{ pointer-events:auto; }
-</style>
 </head>
 <body>
 <!-- ===== WT BACKGROUND MODULE (DOM) ===== -->
@@ -1681,7 +1674,7 @@ const leds = window.leds; // make applyBG() use the bridged LED states
     window.applyBG = applyBG;
     applyBG();
   </script>
-<script src="js/share.js?v=1"></script>
+<script src="js/share.js"></script>
   <script src="js/share-actions.js"></script>
 <script src="js/qr.js?v=1"></script>
 <script id="wtUpcomingLoader">
