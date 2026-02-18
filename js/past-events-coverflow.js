@@ -1,6 +1,7 @@
 // js/past-events-coverflow_NEW.js
-// Builds Swiper coverflow inside #coverflow using events from window.WT_PAST_EVENTS_JSON (default: events.json).
-// Does NOT touch your share scripts.
+// Swiper coverflow for the Past Events window.
+// Reads events from window.WT_PAST_EVENTS_JSON (default: events.json).
+// Does NOT touch share.js.
 
 (function () {
   async function loadEvents(){
@@ -10,18 +11,19 @@
     return await res.json();
   }
 
-  function buildSlides(data, slot){
-    const wrap = document.createElement("div");
-    wrap.className = "swiper-wrapper";
+  function buildSlides(data, wrapper){
+    // Make sure wrapper is the real Swiper wrapper (direct child of container)
+    wrapper.classList.add("swiper-wrapper");
+    wrapper.innerHTML = "";
 
     data.forEach(item => {
       const slide = document.createElement("div");
       slide.className = "swiper-slide";
 
       const img = document.createElement("img");
-      img.className = "poster";
       img.src = item.image;
       img.alt = item.title || "";
+      img.loading = "lazy";
 
       if(item.link){
         const a = document.createElement("a");
@@ -34,11 +36,8 @@
         slide.appendChild(img);
       }
 
-      wrap.appendChild(slide);
+      wrapper.appendChild(slide);
     });
-
-    slot.innerHTML = "";
-    slot.appendChild(wrap);
   }
 
   function bindNav(swiper){
@@ -46,12 +45,17 @@
     if(!nav) return;
 
     nav.addEventListener("click", (e) => {
-      const prev = e.target && e.target.closest ? e.target.closest(".wtNavPrev") : null;
-      const next = e.target && e.target.closest ? e.target.closest(".wtNavNext") : null;
-      if(prev){ e.preventDefault(); swiper.slidePrev(); }
-      if(next){ e.preventDefault(); swiper.slideNext(); }
-    });
+      if(e.target && e.target.closest && e.target.closest(".wtNavPrev")) {
+        e.preventDefault();
+        swiper.slidePrev();
+      }
+      if(e.target && e.target.closest && e.target.closest(".wtNavNext")) {
+        e.preventDefault();
+        swiper.slideNext();
+      }
+    }, true);
 
+    // If your arrow module dispatches custom events
     nav.addEventListener("wt:click", (e) => {
       const t = e.target;
       if(t && t.closest && t.closest(".wtNavPrev")) swiper.slidePrev();
@@ -61,28 +65,28 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     const container = document.getElementById("coverflow");
-    const slot = document.getElementById("carouselSlot");
-    if(!container || !slot) return;
+    const wrapper = document.getElementById("carouselSlot"); // will become .swiper-wrapper
+    if(!container || !wrapper) return;
 
     let data;
     try{
       data = await loadEvents();
     }catch(err){
-      console.warn(err);
+      console.warn("[coverflow] " + err.message);
       return;
     }
     if(!Array.isArray(data)) return;
 
     data.sort((a,b) => new Date(b.date) - new Date(a.date));
+    buildSlides(data, wrapper);
 
-    buildSlides(data, slot);
-
-    const swiper = new Swiper(container, {
+    const swiper = new Swiper("#coverflow", {
       effect: "coverflow",
       centeredSlides: true,
       slidesPerView: "auto",
       loop: false,
       grabCursor: true,
+      watchOverflow: true,
       coverflowEffect: {
         rotate: 0,
         stretch: 0,
