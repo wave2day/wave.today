@@ -1,3 +1,4 @@
+
 (() => {
   const slot = document.getElementById('wtNewEventsSlot');
   if(!slot) return;
@@ -32,11 +33,10 @@
     core.type = 'button';
     core.tabIndex = -1;
     core.setAttribute('aria-label','date label');
-    // Label click must NOT open the poster link (reserved for future calendar UI)
-    const swallow = (e) => { e.preventDefault(); e.stopPropagation(); };
-    core.addEventListener('click', swallow);
-    core.addEventListener('mousedown', swallow);
-    core.addEventListener('touchstart', swallow, { passive:false });
+
+    /* Label click must not trigger poster/link */
+    wrap.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
+    core.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); }, true);
 
     glass.appendChild(press);
     glass.appendChild(core);
@@ -80,10 +80,6 @@
     setTimeout(measure, 120);
     setTimeout(measure, 320);
 
-    // Also swallow any clicks on the label wrapper area
-    wrap.addEventListener('click', swallow);
-    wrap.addEventListener('mousedown', swallow);
-    wrap.addEventListener('touchstart', swallow, { passive:false });
     return { wrap, measure };
   }
 
@@ -97,7 +93,7 @@
 
     const a = document.createElement('a');
     a.className = 'wtUpcomingLink';
-    a.href = ev.url || '#';
+    a.href = (ev.link || ev.url) || '#';
     a.target = '_blank';
     a.rel = 'noopener';
 
@@ -106,7 +102,7 @@
     img.loading = 'lazy';
     img.decoding = 'async';
     img.alt = '';
-    img.src = ev.poster;
+    img.src = (ev.poster || ev.image || ev.img || "");
 
     a.appendChild(img);
     item.appendChild(a);
@@ -123,7 +119,7 @@
     const els = container.querySelectorAll('.wtReveal');
     const io = new IntersectionObserver((entries)=>{
       entries.forEach(e=>{
-        if(e.isIntersecting) e.target.classList.add('isIn');
+        if(e.isIntersecting){ e.target.classList.add("isIn"); io.unobserve(e.target); }
       });
     }, { threshold: 0.18, rootMargin: '0px 0px -10% 0px' });
     els.forEach(el=>io.observe(el));
@@ -145,13 +141,13 @@
     list.className = 'wtUpcomingList';
     slot.appendChild(list);
 
-    const candidates = ['data/upcoming.json'];
+    const candidates = ['data/upcoming.json','data/Upcoming.json','data/UPCOMING.json'];
 
     try{
       const data = await fetchFirst(candidates);
       const events = Array.isArray(data?.events) ? data.events : (Array.isArray(data) ? data : []);
       events.sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
-      events.forEach(ev => { if(ev?.poster) list.appendChild(buildItem(ev)); });
+      events.forEach(ev => { if(ev && (ev.poster || ev.image || ev.img)) list.appendChild(buildItem(ev)); });
       revealInit(list);
     }catch(e){
       console.warn('Upcoming load failed:', e);
