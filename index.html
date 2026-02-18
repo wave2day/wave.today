@@ -1191,7 +1191,7 @@ body{background:transparent !important;}
 </style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
 <style id="wtOverride_v9">
-  :root{ --wtOknoOffset:35vh; }
+  :root{ --wtOknoOffset: 52vh; }
 
   /* NEMĚNNÉ PRAVIDLO: white label musí být čitelné = zvětšit celý label přes scale */
   .wtLabelWrap{ --wtLabelScale: 0.18 !important; } /* bylo ~0.13 -> výrazně větší */
@@ -1289,6 +1289,8 @@ body{background:transparent !important;}
     text-align:center;
   }
 </style>
+<link rel="stylesheet" href="css/wt-upcoming_v2_labelclick.css">
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 </head>
 <body>
@@ -1840,6 +1842,12 @@ const leds = window.leds; // make applyBG() use the bridged LED states
     });
   }, { passive:true });
 })();
+</script>
+<script defer src="js/wt-upcoming_v2_labelclick.js"></script>
+
+<script>
+  // Past events JSON location (single source)
+  window.WT_PAST_EVENTS_JSON = "data/events.json";
 </script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="js/past-events-coverflow.js"></script>
