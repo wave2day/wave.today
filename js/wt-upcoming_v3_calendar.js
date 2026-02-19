@@ -107,6 +107,7 @@
     glass.className = 'glassSquare';
 
     const core = document.createElement('div');
+    // Must match CSS (.coreSquare). If this differs, the date label becomes invisible.
     core.className = 'coreSquare';
 
     const date = document.createElement('div');
