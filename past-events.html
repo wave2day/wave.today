@@ -1232,17 +1232,33 @@ will-change: transform, filter;
   const before = new Map();
   posters.forEach(el => before.set(el.dataset.key, el.getBoundingClientRect()));
 
-  // allow "Random" to reshuffle + re-randomize on repeated clicks
+    // allow repeated clicks:
+  // - random: reshuffle + re-randomize
+  // - date: re-enforce true date order (useful after any DOM churn)
   if(mode === currentMode){
     if(mode === 'random'){
       shufflePosters();
       randomizeVars();
       requestAnimationFrame(() => flipAnimate(before));
+    } else {
+      // DATE MODE (re-apply)
+      clearRandomVars();
+
+      const posters = Array.from(grid.querySelectorAll('.poster'));
+      const map = new Map();
+      posters.forEach(p => map.set(Number(p.dataset.key), p));
+
+      grid.innerHTML = '';
+      items.forEach((_, idx) => {
+        const el = map.get(idx);
+        if(el) grid.appendChild(el);
+      });
+
+      requestAnimationFrame(() => flipAnimate(before));
     }
     return;
   }
-
-  currentMode = mode;
+currentMode = mode;
   grid.classList.toggle('randomMode', mode === 'random');
   updateActiveMode(mode);
 
@@ -1252,7 +1268,19 @@ will-change: transform, filter;
     shufflePosters();
     randomizeVars();
   }else{
+    // DATE MODE – vrátit skutečné pořadí podle data
     clearRandomVars();
+
+    // znovu připojit postery podle pořadí v items
+    const posters = Array.from(grid.querySelectorAll('.poster'));
+    const map = new Map();
+    posters.forEach(p => map.set(Number(p.dataset.key), p));
+
+    grid.innerHTML = '';
+    items.forEach((_, idx) => {
+      const el = map.get(idx);
+      if(el) grid.appendChild(el);
+    });
   }
 
   requestAnimationFrame(() => flipAnimate(before));
