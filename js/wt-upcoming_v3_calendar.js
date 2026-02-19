@@ -107,7 +107,7 @@
     glass.className = 'glassSquare';
 
     const core = document.createElement('div');
-    core.className = 'core';
+    core.className = 'coreSquare';
 
     const date = document.createElement('div');
     date.className = 'wtLabelDate';
