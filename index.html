@@ -1290,14 +1290,12 @@ body{background:transparent !important;}
   }
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
-
-<link rel="stylesheet" href="css/wt-upcoming_v2_labelclick.css">
-
-<style id="wtLabelClickOverride">
-  /* Make date label clickable (stop "click-through" to poster link) */
+<style id="wtLabelClickScoped">
+  /* pouze date label – žádné zásahy do Share orb / globálních tříd */
   .wtLabelWrap{ pointer-events:auto !important; }
-  .wtLabelDate{ pointer-events:none !important; }
-  .wtLabelScope, .glassSquare, .pressGlow, .coreSquare{ pointer-events:auto !important; }
+  .wtLabelWrap .glassSquare,
+  .wtLabelWrap .pressGlow{ pointer-events:none !important; } /* dekorace nekliká */
+  .wtLabelWrap .coreSquare{ pointer-events:auto !important; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -1850,9 +1848,19 @@ const leds = window.leds; // make applyBG() use the bridged LED states
   }, { passive:true });
 })();
 </script>
-<script defer src="js/wt-upcoming_v2_labelclick.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="js/past-events-coverflow.js"></script>
+<script id="wtLabelClickStopNav">
+  // Zabráníme tomu, aby klik na label spustil klik na plakát.
+  // (funguje i kdyby se později měnilo DOM – používáme delegaci)
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('.wtLabelWrap .coreSquare');
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // tady můžeš později navázat vlastní akci (modal, share, filtr...)
+    // console.log('Label click', btn);
+  }, true);
+</script>
 </body>
 </html>
