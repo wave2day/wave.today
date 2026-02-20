@@ -344,3 +344,37 @@
     --wtLabelScale: 0.22;
   }
 }
+/* --- FIX: label musí být pozicovaný vůči stejné krabici jako plakát --- */
+
+/* 1) Item je referenční box pro label */
+.wtUpcomingItem{
+  position: relative;
+}
+
+/* 2) Na desktopu: vycentruj ITEM (ne plakát) a ať se item smrskne na obsah */
+@media (min-width: 900px){
+  /* když je to grid, vycentruj položky */
+  .wtUpcomingList{
+    justify-items: center;
+  }
+
+  /* item má být "tak široký jako plakát" */
+  .wtUpcomingItem{
+    display: inline-block;
+    width: fit-content;
+  }
+
+  /* zruš centrování plakátu pomocí margin auto (to právě posouvá plakát mimo label) */
+  .wtUpcomingPoster,
+  .wtUpcomingPosterImg{
+    margin: 0;
+  }
+}
+
+/* 3) Label vždy absolutně v rámci itemu */
+.wtLabelWrap{
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+}
