@@ -378,16 +378,3 @@
   left: 14px;
   z-index: 10;
 }
-/* ===== Desktop label scale – bezpečné zvětšení bez rozbití ===== */
-@media (min-width: 900px){
-
-  /* drž label uvnitř plakátu */
-  .wtLabelWrap{
-    top: 14px;
-    left: 14px;
-    overflow: visible;
-    transform-origin: top left;
-    transform: scale(1.25);   /* zkus 1.15 / 1.20 / 1.25 */
-  }
-
-}
