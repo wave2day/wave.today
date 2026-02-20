@@ -829,7 +829,7 @@ body{background:transparent !important;}
 /* month: 3 letters compressed to fit same width as day block */
 .wtLabelMonth{
   font-weight: 700;
-  font-size: 50px;
+  font-size: 55px;
   line-height: 1.05;
   transform: scaleX(.78);
   transform-origin: center;
@@ -861,6 +861,14 @@ body{background:transparent !important;}
 #oknoSection .wtUnderframe{
   display:none !important;
 }
+/* --- BOTTOM SAFE SPACE (aby Past events neležel na spodní liště) --- */
+:root{
+  --wtBottomGuard: 110px;
+}
+
+.main{
+  padding-bottom: calc(env(safe-area-inset-bottom) + var(--wtBottomGuard)) !important;
+}    
 </style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
 <style id="wtOverride_v9">
