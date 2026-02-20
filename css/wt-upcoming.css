@@ -378,21 +378,3 @@
   left: 14px;
   z-index: 10;
 }
-/* ===== Desktop label size ===== */
-
-@media (min-width: 900px){
-
-  .wtLabelWrap{
-    width: 88px;
-    height: 88px;
-  }
-
-  .wtLabelDay{
-    font-size: 26px;
-  }
-
-  .wtLabelMonth{
-    font-size: 13px;
-  }
-
-}
