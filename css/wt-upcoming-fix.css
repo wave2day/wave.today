@@ -1,0 +1,81 @@
+/* wt-upcoming-fix.css
+   Fix desktop layout: stop posters from stretching full width and keep date label as a fixed square.
+   Scoped ONLY to #wtNewEventsSlot (Upcoming).
+*/
+
+/* Slot centers its content */
+#wtNewEventsSlot{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Make the first-level card/anchor behave like a centered "card" with max width */
+#wtNewEventsSlot > *{
+  width: min(1120px, 92vw);
+  margin: 0 auto;
+  position: relative; /* anchor point for absolute label */
+}
+
+/* Any poster image inside upcoming: never overflow screen width on desktop */
+#wtNewEventsSlot img{
+  width: 100%;
+  height: auto;
+  display: block;
+  max-width: 100%;
+}
+
+/* If your upcoming block uses a specific poster class, keep it compatible */
+#wtNewEventsSlot .poster,
+#wtNewEventsSlot .wtPoster,
+#wtNewEventsSlot .wtUpcomingPoster{
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Date label: force fixed square, pinned to top-left of the card/poster */
+#wtNewEventsSlot .wtLabelWrap{
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 58px;
+  height: 58px;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+}
+
+/* The clickable label button (your script references .wtLabelWrap .coreSquare) */
+#wtNewEventsSlot .wtLabelWrap .coreSquare{
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+/* Prevent label text from stretching weirdly */
+#wtNewEventsSlot .wtLabelWrap *{
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Optional: if there is text overlay next to label that is forced full-width, keep it inside */
+#wtNewEventsSlot .wtText,
+#wtNewEventsSlot .wtMeta,
+#wtNewEventsSlot .wtUpcomingMeta{
+  max-width: 100%;
+}
+
+/* Small screens: keep edge padding */
+@media (max-width: 520px){
+  #wtNewEventsSlot > *{
+    width: 94vw;
+  }
+  #wtNewEventsSlot .wtLabelWrap{
+    top: 12px;
+    left: 12px;
+    width: 54px;
+    height: 54px;
+  }
+}
