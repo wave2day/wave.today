@@ -341,7 +341,7 @@
   }
   /* label nesmí být “mrňavý roh” */
   .wtLabelWrap{
-    --wtLabelScale: 0.22;
+    --wtLabelScale: 0.30;
   }
 }
 /* --- FIX: label musí být pozicovaný vůči stejné krabici jako plakát --- */
