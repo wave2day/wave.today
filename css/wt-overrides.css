@@ -1,0 +1,97 @@
+/* consolidated overrides: using v9 as final + keeping v4 extras */
+
+  :root{ --wtOknoOffset:35vh; }
+
+  /* NEMĚNNÉ PRAVIDLO: white label musí být čitelné = zvětšit celý label přes scale */
+  .wtLabelWrap{ --wtLabelScale: 0.18 !important; } /* bylo ~0.13 -> výrazně větší */
+
+  /* NEMĚNNÉ PRAVIDLO: černý text v bílém labelu */
+  .wtLabelDay, .wtLabelMonth, .day, .mon{
+    color: rgba(18,18,22,.92) !important;
+    text-shadow: none !important;
+  }
+
+  /* NEMĚNNÉ PRAVIDLO: centrování */
+  .wtLabelDate, .date{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+  }
+  .wtLabelDay, .day{ text-align:center !important; width:100% !important; }
+  .wtLabelMonth, .mon{
+    text-align:center !important;
+    width:100% !important;
+    letter-spacing: 4px !important;
+  }
+
+  /* pojistka: kdyby něco přepisovalo velikosti, držíme velké typy */
+  .wtLabelDay{ font-size: 92px !important; line-height: .95 !important; }
+  .wtLabelMonth{ font-size: 44px !important; line-height: .95 !important; margin-top: 10px !important; }
+
+  /* Deterministic overrides (no heuristic edits) */
+  :root{
+    --panelTop: 54vh; /* move panel slightly up to avoid the browser share bar */
+  }
+
+  /* Keep posters with square corners */
+  .wtPoster, .wtPoster img, .wtPosterImg, .wtCardPosterImg{
+    border-radius: 0 !important;
+  }
+
+  /* Wide panel positioning */
+  .wtPanelWrap{ margin-top: var(--panelTop) !important; }
+
+  /* Reveal like wave.today: slower rise from "depth" + gentle overshoot, no snap */
+  .wtReveal{
+    opacity: 0;
+    transform: translateY(180px) scale(0.90);
+    transition: none !important;
+    will-change: transform, opacity;
+  }
+  .wtReveal.isIn{
+    opacity: 1;
+    transform: none;
+    animation: wtRise 1350ms cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes wtRise{
+    0%{ opacity:0; transform: translateY(190px) scale(0.89); }
+    70%{ opacity:1; transform: translateY(-10px) scale(1.01); }
+    100%{ opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  /* Label: always black on white, centered, "square" block */
+  .wtLabelScope{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .wtLabelInner{
+    width: 100%;
+    height: 100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap: 10px;
+  }
+  .wtLabelDay{
+    color:#111 !important;
+    font-weight: 800;
+    font-size: 82px !important;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+  }
+  .wtLabelMonth{
+    color:#111 !important;
+    font-weight: 700;
+    font-size: 38px !important;
+    line-height: 1;
+    display:inline-block;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    width: var(--monW, auto);
+    text-align:center;
+  }
