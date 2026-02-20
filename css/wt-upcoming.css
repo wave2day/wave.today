@@ -1,5 +1,11 @@
 #wtNewEventsSlot{display:block;width:100%;}
-
+/* UPCOMING: ať nepřidáváním plakátů neposouvá zbytek stránky */
+#wtNewEventsSlot{
+  max-height: 34dvh;                 /* ladíš jen tohle (např. 28–42dvh) */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
 /* UPCOMING list = vždy pod sebou */
 .wtUpcomingList{display:flex;flex-direction:column;gap:18px;padding:0 14px;}
 
