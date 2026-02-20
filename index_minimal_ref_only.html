@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>wave.today (minimal)</title>
+<style id="wt-carousel-nav-style">
+#wtCarouselNav{
+    --bg:#9c9c9c;
+
+    /* kruh */
+    --outer: 190px;
+    --innerRatio: .65;
+
+    /* sklo */
+    --glassClearA: rgba(255,255,255,.14);
+    --glassClearB: rgba(255,255,255,.08);
+    --glassMilkA:  rgba(255,255,255,.10);
+    --glassMilkB:  rgba(255,255,255,.12);
+
+    --glassRingThickness: 13px;
+    --glassRimBlur: 1.05px;
+
+    --topRim1: rgba(0,0,0,.28);
+    --topRim2: rgba(0,0,0,.12);
+    --topRimFade: 30%;
+
+    --botRim1: rgba(255,255,255,.74);
+    --botRim2: rgba(255,255,255,.30);
+
+    --bleedA: .14;
+    --bleedB: .07;
+
+    /* press */
+    --pressY: 3px;
+    --pressTimeIn: 110ms;
+    --pressTimeOut: 190ms;
+
+    /* šipka */
+    --arrowSize: 74px;
+  }#wtCarouselNav *{box-sizing:border-box}#wtCarouselNav html, #wtCarouselNav body{height:100%;margin:0}#wtCarouselNav body{
+    background: var(--bg);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }#wtCarouselNav .stage{
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding: 48px 24px;
+  }#wtCarouselNav .row{
+    display:flex;
+    gap: 64px;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+  }#wtCarouselNav /* =========================================================
+     ENGINE — sklo + core
+     ========================================================= */
+  .glassBase{
+    --w: var(--outer);
+    --h: var(--outer);
+    --r: 50%;
+    --smearInset: 10px;
+
+    --rimTint: 120, 155, 255;
+    --bleedX: 76%;
+    --bleedY: 84%;
+
+    width: var(--w);
+    height: var(--h);
+    border-radius: var(--r);
+    position: relative;
+    display:grid;
+    place-items:center;
+    isolation:isolate;
+
+    background:
+      radial-gradient(120% 120% at 50% 60%, var(--glassMilkA), transparent 62%),
+      radial-gradient(120% 120% at 50% 92%, var(--glassMilkB), transparent 58%),
+      radial-gradient(120% 120% at 35% 25%, var(--glassClearA), transparent 55%),
+      radial-gradient(140% 140% at 65% 70%, var(--glassClearB), transparent 60%),
+      rgba(255,255,255,.08);
+
+    box-shadow:
+      inset 0 18px 26px rgba(0,0,0,.24),
+      inset 0 -22px 30px rgba(255,255,255,.22),
+      0 22px 44px rgba(0,0,0,.18);
+
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    transition: filter var(--pressTimeOut) ease;
+  }#wtCarouselNav .glassBase::before{
+    content:"";
+    position:absolute;
+    inset: var(--smearInset);
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:1;
+
+    background:
+      radial-gradient(75% 60% at 18% 22%,
+        rgba(255,255,255,.42) 0%,
+        rgba(255,255,255,.18) 35%,
+        transparent 72%),
+      radial-gradient(55% 45% at 28% 32%,
+        rgba(255,255,255,.18) 0%,
+        transparent 72%);
+
+    filter: blur(1.35px);
+    opacity:.95;
+  }#wtCarouselNav .glassBase::after{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:2;
+
+    background:
+      radial-gradient(72% 60% at var(--bleedX) var(--bleedY),
+        rgba(var(--rimTint), var(--bleedA)) 0%,
+        rgba(var(--rimTint), var(--bleedB)) 28%,
+        transparent 68%),
+
+      conic-gradient(from 210deg,
+        transparent 0 18%,
+        rgba(var(--rimTint), .12) 22%,
+        transparent 36%,
+        rgba(var(--rimTint), .06) 46%,
+        transparent 62%,
+        rgba(var(--rimTint), .045) 70%,
+        transparent 100%),
+
+      radial-gradient(140% 120% at 50% 120%,
+        var(--botRim1) 0%,
+        var(--botRim2) 22%,
+        transparent 52%),
+
+      radial-gradient(170% 120% at 50% -38%,
+        var(--topRim1) 0%,
+        var(--topRim2) 14%,
+        transparent var(--topRimFade));
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: var(--glassRingThickness);
+    filter: blur(var(--glassRimBlur));
+    opacity:.95;
+  }#wtCarouselNav .glassBase .pressGlow{
+    position:absolute;
+    inset:-22px;
+    border-radius: var(--r);
+    pointer-events:none;
+    opacity:0;
+    filter: blur(10px);
+    transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
+    transform: scale(0.995);
+    z-index:0;
+
+    background:
+      radial-gradient(80% 80% at 70% 70%,
+        rgba(var(--rimTint), .18) 0%,
+        rgba(var(--rimTint), .10) 26%,
+        transparent 62%),
+      radial-gradient(100% 90% at 50% 110%,
+        rgba(255,255,255,.20) 0%,
+        transparent 55%);
+  }#wtCarouselNav .coreBtn{
+      text-decoration: none;
+      color: inherit;
+
+    --cw: calc(var(--outer) * var(--innerRatio));
+    --ch: calc(var(--outer) * var(--innerRatio));
+    --cr: 50%;
+
+    width: var(--cw);
+    height: var(--ch);
+    border-radius: var(--cr);
+
+    position:relative;
+    z-index:3;
+    border:0;
+    padding:0;
+    cursor:pointer;
+
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+    user-select:none;
+
+    background:
+      radial-gradient(120% 120% at 35% 25%, rgba(255,255,255,.16), transparent 55%),
+      linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
+
+    box-shadow:
+      0 18px 26px rgba(0,0,0,.18),
+      inset 0 16px 22px rgba(0,0,0,.13),
+      inset 0 -14px 20px rgba(255,255,255,.14);
+
+    transform: translateY(0);
+    transition:
+      transform var(--pressTimeOut) cubic-bezier(.2,.8,.2,1),
+      box-shadow var(--pressTimeOut) ease,
+      filter var(--pressTimeOut) ease;
+
+    display:grid;
+    place-items:center;
+  }#wtCarouselNav .coreBtn:focus, #wtCarouselNav .coreBtn:focus-visible{ outline:none !important; }#wtCarouselNav .coreBtn::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius: inherit;
+    pointer-events:none;
+    background:
+      radial-gradient(120% 120% at 50% 50%,
+        transparent 62%,
+        rgba(0,0,0,.26) 100%);
+    mix-blend-mode: soft-light;
+    opacity:.95;
+  }#wtCarouselNav .coreBtn::after{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: inherit;
+    pointer-events:none;
+
+    background:
+      radial-gradient(140% 120% at 50% 120%,
+        rgba(255,255,255,.52) 0%,
+        rgba(255,255,255,.20) 24%,
+        transparent 52%),
+      radial-gradient(170% 120% at 50% -38%,
+        rgba(0,0,0,.30) 0%,
+        rgba(0,0,0,.12) 14%,
+        transparent 30%);
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: 6px;
+    filter: blur(.78px);
+    opacity:.95;
+    mix-blend-mode: screen;
+  }#wtCarouselNav .glassBase:has(.coreBtn:active){
+    filter: brightness(.985);
+    transition: filter var(--pressTimeIn) ease;
+  }#wtCarouselNav .glassBase:has(.coreBtn:active) .pressGlow{
+    opacity:1;
+    transform: scale(1.01);
+    transition: opacity var(--pressTimeIn) ease, transform var(--pressTimeIn) ease;
+  }#wtCarouselNav .coreBtn:active{
+    transform: translateY(var(--pressY));
+    transition:
+      transform var(--pressTimeIn) cubic-bezier(.2,.8,.2,1),
+      box-shadow var(--pressTimeIn) ease,
+      filter var(--pressTimeIn) ease;
+
+    box-shadow:
+      0 10px 18px rgba(0,0,0,.16),
+      inset 0 20px 26px rgba(0,0,0,.18),
+      inset 0 -10px 16px rgba(255,255,255,.10);
+    filter: brightness(.99) saturate(.98);
+  }#wtCarouselNav /* modrá varianta */
+  .v-blue{
+    --c1:#6f7ed0; --c2:#5462bb; --c3:#4a57ae;
+    --rimTint: 120, 155, 255;
+    --bleedX: 74%; --bleedY: 86%;
+  }#wtCarouselNav /* =========================================================
+     ŠIPKY — méně segmentované (dlouhé dashes, #wtCarouselNav mikro mezera)
+     ========================================================= */
+  .arrow{
+    width: var(--arrowSize);
+    height: var(--arrowSize);
+    display:block;
+    pointer-events:none;
+    filter:
+      drop-shadow(0 10px 10px rgba(0,0,0,.18))
+      drop-shadow(0 2px 2px rgba(0,0,0,.18));
+  }#wtCarouselNav .arrow .stroke{
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    /* MÍSTO 10 6 -> skoro souvislé */
+    stroke-dasharray: 72 3;
+    stroke-dashoffset: -2;
+
+    filter: drop-shadow(0 2px 1px rgba(0,0,0,.28));
+  }#wtCarouselNav .glassBase:has(.coreBtn:active) .arrow{
+    transform: translateY(1px);
+  }#wtCarouselNav /* jen aby byl export čistý */
+body{background:transparent !important;}#wtCarouselNav .stage{padding:0 !important;}
+
+/* ===== WT Carousel Nav (injected) ===== */
+#wtCarouselNav{
+  --wtScale: .26; /* match Past events pill scale */
+  width: 100%;
+  display:flex;
+  justify-content:center;
+  margin-top: 10px;
+}
+#wtCarouselNav .wtNavRow{
+  display:flex;
+  gap: 14px;
+  align-items:center;
+  justify-content: space-between;
+  width: min(520px, 92vw);
+}
+#wtCarouselNav .wtNavBtn{
+  width: calc(var(--outer) * var(--wtScale));
+  height: calc(var(--outer) * var(--wtScale));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex: 0 0 auto;
+}
+/* Primary: layout-scaling without distorting the circle */
+#wtCarouselNav .glassBase{
+  zoom: var(--wtScale);
+  transform: none;
+  transform-origin: center;
+}
+/* Fallback for browsers that ignore `zoom` */
+@supports not (zoom: 1){
+  #wtCarouselNav .glassBase{
+    zoom: 1;
+    transform: scale(var(--wtScale));
+    transform-origin: center;
+  }
+}
+#wtCarouselNav button.coreBtn{ cursor:pointer; }
+
+
+/* ===== WT: orb under rotating GIF ===== */
+#shareOrb{ z-index:15000 !important; }
+/* put GIF images above the orb (only .gif files) */
+img[src$=".gif"], img[src*=".gif?"]{ position:relative; z-index:16000 !important; }
+</style>
+
+  <style>
+    :root{
+      --bg0:#05050a;
+      --bg1:#0b0b16;
+
+      --glassA: rgba(255,255,255,.075);
+      --glassB: rgba(255,255,255,.035);
+      --stroke: rgba(255,255,255,.12);
+
+      --R: 34px;
+
+      /* prostor v okně (chtěl jsi odskok nahoře i dole) */
+      --padTop: var(--padSide);
+      --padSide: 18px;
+      --padBottom: var(--padSide);
+
+      /* výška plakátu pro "landscape coverflow" – širší pás, ne obří výška */
+      --posterH: 34vh;
+      --posterMin: 180px;
+      --posterMax: 340px;
+
+      --navGapBottom: 10px; /* mezera mezi karuzelem a tlačítky dole */
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      overflow-x:hidden;
+      background:
+        radial-gradient(1200px 700px at 50% 18%, rgba(120,150,255,.16), transparent 60%),
+        radial-gradient(900px 600px at 18% 72%, rgba(255,120,210,.09), transparent 62%),
+        radial-gradient(1100px 700px at 80% 78%, rgba(90,255,220,.06), transparent 66%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+      color:#eef0ff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+
+    .stage{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 22px 14px;
+      position:relative;
+    }
+
+    .window{
+      width: min(1120px, 100%);
+      border-radius: var(--R);
+      background: linear-gradient(180deg, var(--glassA), var(--glassB));
+      border: 1px solid var(--stroke);
+      box-shadow: 0 26px 90px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.10);
+      backdrop-filter: blur(12px);
+      position:relative;
+      overflow:hidden; /* zaoblení nahoře i dole */
+    }
+
+    .windowInner{
+      padding: var(--padTop) var(--padSide) var(--padBottom);
+      position:relative;
+    }
+
+    /* horní řádek: tlačítko Past events */
+    .topRow{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      padding: 0 0 14px; /* žádné extra odsazení; odsazení dělá windowInner */
+    }
+
+    /* jednoduché skleněné tlačítko (pro past events) */
+    .pastBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      text-decoration:none;
+      color:#eef0ff;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      font-size:12px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: radial-gradient(120px 60px at 30% 30%, rgba(255,255,255,.12), rgba(255,255,255,.05));
+      box-shadow: 0 18px 55px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pastBtn:active{ transform: scale(.99); }
+    .pastDot{
+      width:10px;height:10px;border-radius:999px;
+      background: rgba(120,150,255,.85);
+      box-shadow: 0 0 22px rgba(120,150,255,.45);
+      flex:0 0 auto;
+    }
+
+    /* karuzel (coverflow, ale "landscape styl" = menší výška, víc pásově) */
+    .swiper{
+      width:100%;
+      padding: 8px 14px 8px; /* víc prostoru pro sousední slidy i na výšku */
+      box-sizing:border-box;
+    }
+    
+    /* prázdný slot pro budoucí karuzel – drží stejnou výšku jako původní pás plakátů */
+    #carouselSlot{
+      min-height: clamp(var(--posterMin), var(--posterH), var(--posterMax));
+    }
+@media (max-width:520px){
+      .swiper{ padding: 6px 10px 6px; }
+      :root{ --posterH: 32vh; --posterMin: 170px; --posterMax: 300px; }
+    }
+
+    .swiper-wrapper{ align-items:center; }
+    .swiper-slide{
+      width: 280px; /* JS přepočítá */
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition: opacity .28s ease, filter .28s ease;
+    }
+    .swiper-slide:not(.swiper-slide-active){
+      opacity:.74;
+      filter:saturate(.92) contrast(.95);
+    }
+
+    .poster{
+      height: clamp(var(--posterMin), var(--posterH), var(--posterMax));
+      width:auto;
+      max-width: 80vw;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      background: rgba(255,255,255,.03);
+      object-fit: contain;
+      display:block;
+    }
+
+    .placeholder{
+      padding: 60px 26px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 18px;
+      opacity:.8;
+    }
+
+    /* tvoje WT tlačítka DOLE – ne overlay uprostřed */
+    #wtCarouselNav{
+      margin-top: var(--navGapBottom);
+      padding: 10px 0 0;
+    }
+    #wtCarouselNav .wtNavRow{
+      width: 100%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      pointer-events:auto;
+    }
+    #wtCarouselNav .wtNavBtn{
+      pointer-events:auto;
+    }
+  </style>
+
+<style>
+
+  /* ===== WT Past events pill (injected) ===== */
+  #wtPastPill{
+
+    --outer: 190px;
+    --innerRatio: .65;
+    --pillW: 440px;
+
+    --glassClearA: rgba(255,255,255,.14);
+    --glassClearB: rgba(255,255,255,.08);
+    --glassMilkA:  rgba(255,255,255,.10);
+    --glassMilkB:  rgba(255,255,255,.12);
+
+    --glassRingThickness: 13px;
+    --glassRimBlur: 1.05px;
+
+    --topRim1: rgba(0,0,0,.28);
+    --topRim2: rgba(0,0,0,.12);
+    --topRimFade: 30%;
+
+    --botRim1: rgba(255,255,255,.74);
+    --botRim2: rgba(255,255,255,.30);
+
+    --bleedA: .14;
+    --bleedB: .07;
+
+    --pressY: 3px;
+    --pressTimeIn: 110ms;
+    --pressTimeOut: 190ms;
+
+    --textColor: rgba(255,255,255,.92);
+    --textSize: 34px;
+    --textScaleX: 1.12;
+    --textWidth: 90%;
+
+    --stroke: rgba(0,0,0,.34);
+    --depth1: rgba(0,0,0,.30);
+    --depth2: rgba(0,0,0,.18);
+    --lacquer: rgba(255,255,255,.28);
+
+    /* škálování do horního řádku okna */
+    --pillScale: .253;
+    display:flex;
+    align-items:center;
+  }
+
+  #wtPastPill *{ box-sizing:border-box; }
+
+  #wtPastPill .glassBase{
+    --w: var(--outer);
+    --h: var(--outer);
+    --r: 50%;
+    --smearInset: 10px;
+
+    --rimTint: 120, 155, 255;
+    --bleedX: 76%;
+    --bleedY: 84%;
+
+    width: var(--w);
+    height: var(--h);
+    border-radius: var(--r);
+    position: relative;
+    display:grid;
+    place-items:center;
+    isolation:isolate;
+
+    background:
+      radial-gradient(120% 120% at 50% 60%, var(--glassMilkA), transparent 62%),
+      radial-gradient(120% 120% at 50% 92%, var(--glassMilkB), transparent 58%),
+      radial-gradient(120% 120% at 35% 25%, var(--glassClearA), transparent 55%),
+      radial-gradient(140% 140% at 65% 70%, var(--glassClearB), transparent 60%),
+      rgba(255,255,255,.08);
+
+    box-shadow:
+      inset 0 18px 26px rgba(0,0,0,.24),
+      inset 0 -22px 30px rgba(255,255,255,.22),
+      0 22px 44px rgba(0,0,0,.18);
+
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    transition: filter var(--pressTimeOut) ease;
+
+    /* scale without distorting */
+    zoom: var(--pillScale);
+    transform-origin: left center;
+  }
+  @supports not (zoom: 1){
+    #wtPastPill .glassBase{
+      zoom: 1;
+      transform: scale(var(--pillScale));
+    }
+  }
+
+  #wtPastPill .glassBase::before{
+    content:"";
+    position:absolute;
+    inset: var(--smearInset);
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:1;
+
+    background:
+      radial-gradient(75% 60% at 18% 22%,
+        rgba(255,255,255,.42) 0%,
+        rgba(255,255,255,.18) 35%,
+        transparent 72%),
+      radial-gradient(55% 45% at 28% 32%,
+        rgba(255,255,255,.18) 0%,
+        transparent 72%);
+
+    filter: blur(1.35px);
+    opacity:.95;
+  }
+
+  #wtPastPill .glassBase::after{
+    content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:2;
+
+    background:
+      radial-gradient(72% 60% at var(--bleedX) var(--bleedY),
+        rgba(var(--rimTint), var(--bleedA)) 0%,
+        rgba(var(--rimTint), var(--bleedB)) 28%,
+        transparent 68%),
+
+      conic-gradient(from 210deg,
+        transparent 0 18%,
+        rgba(var(--rimTint), .12) 22%,
+        transparent 36%,
+        rgba(var(--rimTint), .06) 46%,
+        transparent 62%,
+        rgba(var(--rimTint), .045) 70%,
+        transparent 100%),
+
+      radial-gradient(140% 120% at 50% 120%,
+        var(--botRim1) 0%,
+        var(--botRim2) 22%,
+        transparent 52%),
+
+      radial-gradient(170% 120% at 50% -38%,
+        var(--topRim1) 0%,
+        var(--topRim2) 14%,
+        transparent var(--topRimFade));
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: var(--glassRingThickness);
+    filter: blur(var(--glassRimBlur));
+    opacity:.95;
+  }
+
+  #wtPastPill .pressGlow{
+    position:absolute;
+    inset:-22px;
+    border-radius: var(--r);
+    pointer-events:none;
+    opacity:0;
+    filter: blur(10px);
+    transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
+    transform: scale(0.995);
+    z-index:0;
+
+    background:
+      radial-gradient(80% 80% at 70% 70%,
+        rgba(var(--rimTint), .18) 0%,
+        rgba(var(--rimTint), .10) 26%,
+        transparent 62%),
+      radial-gradient(100% 90% at 50% 110%,
+        rgba(255,255,255,.20) 0%,
+        transparent 55%);
+  }
+
+  #wtPastPill .coreBtn{
+    --cw: calc(var(--outer) * var(--innerRatio));
+    --ch: calc(var(--outer) * var(--innerRatio));
+    --cr: 50%;
+
+    width: var(--cw);
+    height: var(--ch);
+    border-radius: var(--cr);
+
+    position:relative;
+    z-index:3;
+    border:0;
+    padding:0;
+    cursor:pointer;
+
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+    user-select:none;
+
+    background:
+      radial-gradient(120% 120% at 35% 25%, rgba(255,255,255,.16), transparent 55%),
+      linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
+
+    box-shadow:
+      0 18px 26px rgba(0,0,0,.18),
+      inset 0 16px 22px rgba(0,0,0,.13),
+      inset 0 -14px 20px rgba(255,255,255,.14);
+
+    transform: translateY(0);
+    transition:
+      transform var(--pressTimeOut) cubic-bezier(.2,.8,.2,1),
+      box-shadow var(--pressTimeOut) ease,
+      filter var(--pressTimeOut) ease;
+
+    display:grid;
+    place-items:center;
+
+    /* make it a link that looks like a button */
+    text-decoration:none;
+  }
+
+  #wtPastPill .glassBase:has(.coreBtn:active){
+    filter: brightness(.985);
+    transition: filter var(--pressTimeIn) ease;
+  }
+  #wtPastPill .glassBase:has(.coreBtn:active) .pressGlow{
+    opacity:1;
+    transform: scale(1.01);
+    transition: opacity var(--pressTimeIn) ease, transform var(--pressTimeIn) ease;
+  }
+  #wtPastPill .coreBtn:active{
+    transform: translateY(var(--pressY));
+    transition:
+      transform var(--pressTimeIn) cubic-bezier(.2,.8,.2,1),
+      box-shadow var(--pressTimeIn) ease,
+      filter var(--pressTimeIn) ease;
+
+    box-shadow:
+      0 10px 18px rgba(0,0,0,.16),
+      inset 0 20px 26px rgba(0,0,0,.18),
+      inset 0 -10px 16px rgba(255,255,255,.10);
+    filter: brightness(.99) saturate(.98);
+  }
+
+  #wtPastPill .pill{
+    --w: var(--pillW);
+    --h: var(--outer);
+    --r: calc(var(--outer)/2);
+    --gap: calc(var(--outer) * (1 - var(--innerRatio)) / 2);
+  }
+  #wtPastPill .pill .coreBtn{
+    --ch: calc(var(--outer) * var(--innerRatio));
+    --cw: calc(var(--pillW) - (2 * var(--gap)));
+    --cr: calc((var(--outer) * var(--innerRatio)) / 2);
+  }
+
+  #wtPastPill .v-blue{
+    --c1:#6f7ed0; --c2:#5462bb; --c3:#4a57ae;
+    --rimTint: 120, 155, 255;
+    --bleedX: 74%; --bleedY: 86%;
+  }
+
+  #wtPastPill .coreText{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+
+    width: var(--textWidth);
+    margin: 0 auto;
+
+    color: var(--textColor);
+    font-weight: 720;
+    font-size: var(--textSize);
+    letter-spacing: .55px;
+    line-height: 1;
+    text-transform: lowercase;
+
+    transform: scaleX(var(--textScaleX));
+    transform-origin: center;
+
+    text-shadow:
+      -0.75px 0      0 var(--stroke),
+       0.75px 0      0 var(--stroke),
+       0      -0.75px 0 var(--stroke),
+       0       0.75px 0 var(--stroke),
+      -0.55px -0.55px 0 var(--stroke),
+       0.55px -0.55px 0 var(--stroke),
+      -0.55px  0.55px 0 var(--stroke),
+       0.55px  0.55px 0 var(--stroke),
+      0 -0.55px 0 var(--lacquer),
+      0  1.25px 1.45px var(--depth1),
+      0  3px    8px    var(--depth2);
+  }
+
+</style>
+
+<style>
+/* ==== EMBED OVERRIDES (index) ==== */
+html,body{background:transparent !important;}
+.stage{min-height:auto !important; padding:0 !important; display:flex !important; align-items:flex-start !important; justify-content:center !important;}
+/* keep only the window visible, no extra glow outside */
+</style>
+
+</head>
+
+<body>
+  <div class="stage">
+    <div class="window" aria-label="Okno s karuzelem">
+      <div class="windowInner">
+
+        <div class="topRow">
+          <div id="wtPastPill" aria-label="Past events">
+            <div class="glassBase pill v-blue">
+              <div class="pressGlow"></div>
+              <a class="coreBtn" href="past-events.html" target="_blank" rel="noopener" aria-label="Past events">
+                <span class="coreText">past events</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="swiper" id="coverflow" aria-label="Karuzel plakátů">
+          <div id="carouselSlot" aria-label="Slot pro karusel"></div>
+        </div>
+
+        <div id="wtCarouselNav" aria-label="Ovládání karuzelu">
+          <div class="wtNavRow">
+            <div class="wtNavBtn wtNavPrev"></div>
+            <div class="wtNavBtn wtNavNext"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+<script>
+const ARROW = (dir)=>`
+      <div class="glassBase pill v-blue">
+        <div class="pressGlow"></div>
+        <button class="coreBtn" type="button" aria-label="${dir==='prev'?'Předchozí':'Další'}">
+          <svg class="arrow" viewBox="0 0 100 100" aria-hidden="true">
+            <defs>
+              <linearGradient id="gFill${dir}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#1a1a1a" stop-opacity="0.92"/>
+                <stop offset="0.55" stop-color="#0f0f0f" stop-opacity="0.98"/>
+                <stop offset="1" stop-color="#000" stop-opacity="1"/>
+              </linearGradient>
+              <linearGradient id="gHi${dir}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+                <stop offset="0.35" stop-color="#ffffff" stop-opacity="0.06"/>
+                <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            ${dir==='prev'
+              ? '<path d="M64 18 L30 50 L64 82" fill="none" stroke="url(#gFillprev)" stroke-width="18" class="stroke"/><path d="M64 18 L30 50 L64 82" fill="none" stroke="url(#gHiprev)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="72 3" stroke-dashoffset="-2" opacity="0.9"/>'
+              : '<path d="M36 18 L70 50 L36 82" fill="none" stroke="url(#gFillnext)" stroke-width="18" class="stroke"/><path d="M36 18 L70 50 L36 82" fill="none" stroke="url(#gHinext)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="72 3" stroke-dashoffset="-2" opacity="0.9"/>'}
+          </svg>
+        </button>
+      </div>
+    `;
+    
+
+    
+    // vložení TVÝCH tlačítek (jen jednou)
+    const prevSlot = document.querySelector('#wtCarouselNav .wtNavPrev');
+    const nextSlot = document.querySelector('#wtCarouselNav .wtNavNext');
+    if(prevSlot && !prevSlot.innerHTML.trim()) prevSlot.innerHTML = ARROW('prev');
+    if(nextSlot && !nextSlot.innerHTML.trim()) nextSlot.innerHTML = ARROW('next');
+
+    // deterministicky inertní kliky: jen eventy, žádná knihovna, žádné posouvání
+    const fire = (name) => window.dispatchEvent(new CustomEvent('wt:click', { detail: { name } }));
+    document.querySelector('#wtCarouselNav .wtNavPrev')?.addEventListener('click', (e)=>{ e.preventDefault(); fire('prev'); });
+    document.querySelector('#wtCarouselNav .wtNavNext')?.addEventListener('click', (e)=>{ e.preventDefault(); fire('next'); });
+</script>
+</body>
+</html>
