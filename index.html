@@ -9,24 +9,987 @@
 <link href="css/qr.css?v=1" rel="stylesheet"/>
 <link href="css/extra.css?v=1" rel="stylesheet"/>
 <!-- Debug guard: kdyby ti něco globálně schovalo IMG, tohle ho vytáhne zpět -->
-
+<style>
+    #wtOrb img, #wtOverlay img { opacity: 1 !important; display: block !important; visibility: visible !important; }
+  </style>
 <!-- ===== WT BACKGROUND MODULE ===== -->
+<style>
+    /* Background module (integrace). Pozor: NEblokovat scroll. */
+    :root{
+      --glass-blur: 11px;
+      --glass-milk: 0.045;
+      --grain-op: 0.14;
+      --proj-opacity: 0.48;
+      --proj-blur: 16px;
+      --proj-bright: 1.55;
+      --proj-sat: 2.55;
+      --proj-contrast: 1.28;
+      --panelInterferenceBase: .18;
+      --panelInterferenceStep: .28;
+    }
+    html,body{ width:100%; min-height:100%; }
+    body{ margin:0; background:#0a0808; overflow-x:hidden; position:relative; }
 
-<link href="css/wt-upcoming.css?v=3" rel="stylesheet"/>
+    #video-layer{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+    #video-layer video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none; }
+    #myVideo{ filter: blur(2px); transform: scale(1.03); }
 
+    .sandGlass{ position:absolute; inset:0; z-index:50; pointer-events:none;
+      background: rgba(255,255,255,var(--glass-milk));
+      backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur));
+    }
+    .sandGlass::before{ content:""; position:absolute; inset:0; opacity: var(--grain-op); mix-blend-mode: overlay;
+      background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,.25) 0 1px, transparent 2px);
+    }
+
+    #bloomVideo{ z-index:3; pointer-events:none; filter: blur(var(--proj-blur)) brightness(var(--proj-bright)) contrast(var(--proj-contrast)) saturate(var(--proj-sat));
+      opacity: var(--proj-opacity); mix-blend-mode: color-dodge; transform: scale(1.06);
+      animation: drift 60s ease-in-out infinite alternate; visibility:hidden; opacity:0;
+    }
+    @keyframes drift{ 0%{ transform: scale(1.05) translate3d(0.5%, -0.3%, 0); } 100%{ transform: scale(1.075) translate3d(-0.5%, 0.3%, 0); } }
+
+    #vMilk, #vM, #vC, #vY, #bloomOverlay{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform: scale(1.03);
+      pointer-events:none; visibility:hidden; opacity:0; }
+
+    #vMilk{ z-index:6; filter:url(#milkyPaper); opacity:1; }
+    #vM{ z-index:7; filter:url(#sprayMagenta); mix-blend-mode:screen; opacity:.95; transform:scale(1.04);
+      filter:url(#sprayMagenta) drop-shadow(0 0 18px rgba(255,16,200,.40)) drop-shadow(0 0 42px rgba(255,16,200,.22)); }
+    #vC{ z-index:7; filter:url(#sprayCyan); mix-blend-mode:screen; opacity:.55; transform:scale(1.04); }
+    #vY{ z-index:7; filter:url(#sprayYellow); mix-blend-mode:screen; opacity:.45; transform:scale(1.04); }
+
+    #bloomOverlay{ z-index:9; mix-blend-mode:screen; filter: blur(10px) brightness(1.55) contrast(1.18) saturate(2.2);
+      opacity:.40; transform: scale(1.06); }
+
+    html.is-safari #vM, html.is-safari #vC, html.is-safari #vY{ filter:none !important; -webkit-filter:none !important; }
+    html.is-safari #vMilk{ filter:none !important; -webkit-filter:none !important; mix-blend-mode:screen !important; opacity:.85 !important; }
+    html.is-safari #vM{ mix-blend-mode:screen !important; opacity:.90 !important; filter: saturate(4) contrast(1.55) brightness(1.12) hue-rotate(305deg) !important;
+      -webkit-filter: saturate(4) contrast(1.55) brightness(1.12) hue-rotate(305deg) !important; }
+    html.is-safari #vC{ mix-blend-mode:screen !important; opacity:.55 !important; filter: saturate(4) contrast(1.45) brightness(1.08) hue-rotate(175deg) !important;
+      -webkit-filter: saturate(4) contrast(1.45) brightness(1.08) hue-rotate(175deg) !important; }
+    html.is-safari #vY{ mix-blend-mode:screen !important; opacity:.40 !important; filter: saturate(3.2) contrast(1.35) brightness(1.06) hue-rotate(45deg) !important;
+      -webkit-filter: saturate(3.2) contrast(1.35) brightness(1.06) hue-rotate(45deg) !important; }
+
+    /* LED panel: scrolluje, není fixed */
+    #ledWrapper{ position:absolute; top:calc(env(safe-area-inset-top) + 14px); right:calc(env(safe-area-inset-right) + 14px); z-index:9999; transform: scale(0.45); transform-origin: top right; pointer-events:auto; }
+
+    /* Share orb: srovnat velikost se scale(0.45) LED panelu (~60px) */
+    #shareOrb{ --outer:59.4px; top:calc(env(safe-area-inset-top) + 14px) !important; left:calc(env(safe-area-inset-left) + 14px) !important; }
+    /* ===== LED PANEL (scoped) ===== */
+    
+</style>
+<style id="oknoScoped">
+#oknoSection{margin:0 auto; padding:0 0 18px; max-width:1200px;}
+.wtSpacerTop{height:min(30vh,280px);}
+.wtSpacerBetween{height:22px;}
+.wtSpacerBottom{height:min(18vh,180px);}
+
+#oknoSection #wtCarouselNav{--bg:#9c9c9c;
+
+    
+    --outer: 190px;
+    --innerRatio: .65;
+
+    
+    --glassClearA: rgba(255,255,255,.14);
+    --glassClearB: rgba(255,255,255,.08);
+    --glassMilkA:  rgba(255,255,255,.10);
+    --glassMilkB:  rgba(255,255,255,.12);
+
+    --glassRingThickness: 13px;
+    --glassRimBlur: 1.05px;
+
+    --topRim1: rgba(0,0,0,.28);
+    --topRim2: rgba(0,0,0,.12);
+    --topRimFade: 30%;
+
+    --botRim1: rgba(255,255,255,.74);
+    --botRim2: rgba(255,255,255,.30);
+
+    --bleedA: .14;
+    --bleedB: .07;
+
+    
+    --pressY: 3px;
+    --pressTimeIn: 110ms;
+    --pressTimeOut: 190ms;
+
+    
+    --arrowSize: 74px;}
+#oknoSection #wtCarouselNav *{box-sizing:border-box}
+#oknoSection #wtCarouselNav html, #oknoSection #wtCarouselNav body{height:100%;margin:0}
+#oknoSection #wtCarouselNav body{background: var(--bg);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;}
+#oknoSection #wtCarouselNav .stage{min-height:100vh;
+    display:grid;
+    place-items:center;
+    padding: 48px 24px;}
+#oknoSection #wtCarouselNav .row{display:flex;
+    gap: 64px;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;}
+#oknoSection #wtCarouselNav 
+  .glassBase{--w: var(--outer);
+    --h: var(--outer);
+    --r: 50%;
+    --smearInset: 10px;
+
+    --rimTint: 120, 155, 255;
+    --bleedX: 76%;
+    --bleedY: 84%;
+
+    width: var(--w);
+    height: var(--h);
+    border-radius: var(--r);
+    position: relative;
+    display:grid;
+    place-items:center;
+    isolation:isolate;
+
+    background:
+      radial-gradient(120% 120% at 50% 60%, var(--glassMilkA), transparent 62%),
+      radial-gradient(120% 120% at 50% 92%, var(--glassMilkB), transparent 58%),
+      radial-gradient(120% 120% at 35% 25%, var(--glassClearA), transparent 55%),
+      radial-gradient(140% 140% at 65% 70%, var(--glassClearB), transparent 60%),
+      rgba(255,255,255,.08);
+
+    box-shadow:
+      inset 0 18px 26px rgba(0,0,0,.24),
+      inset 0 -22px 30px rgba(255,255,255,.22),
+      0 22px 44px rgba(0,0,0,.18);
+
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    transition: filter var(--pressTimeOut) ease;}
+#oknoSection #wtCarouselNav .glassBase::before{content:"";
+    position:absolute;
+    inset: var(--smearInset);
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:1;
+
+    background:
+      radial-gradient(75% 60% at 18% 22%,
+        rgba(255,255,255,.42) 0%,
+        rgba(255,255,255,.18) 35%,
+        transparent 72%),
+      radial-gradient(55% 45% at 28% 32%,
+        rgba(255,255,255,.18) 0%,
+        transparent 72%);
+
+    filter: blur(1.35px);
+    opacity:.95;}
+#oknoSection #wtCarouselNav .glassBase::after{content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:2;
+
+    background:
+      radial-gradient(72% 60% at var(--bleedX) var(--bleedY),
+        rgba(var(--rimTint), var(--bleedA)) 0%,
+        rgba(var(--rimTint), var(--bleedB)) 28%,
+        transparent 68%),
+
+      conic-gradient(from 210deg,
+        transparent 0 18%,
+        rgba(var(--rimTint), .12) 22%,
+        transparent 36%,
+        rgba(var(--rimTint), .06) 46%,
+        transparent 62%,
+        rgba(var(--rimTint), .045) 70%,
+        transparent 100%),
+
+      radial-gradient(140% 120% at 50% 120%,
+        var(--botRim1) 0%,
+        var(--botRim2) 22%,
+        transparent 52%),
+
+      radial-gradient(170% 120% at 50% -38%,
+        var(--topRim1) 0%,
+        var(--topRim2) 14%,
+        transparent var(--topRimFade));
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: var(--glassRingThickness);
+    filter: blur(var(--glassRimBlur));
+    opacity:.95;}
+#oknoSection #wtCarouselNav .glassBase .pressGlow{position:absolute;
+    inset:-22px;
+    border-radius: var(--r);
+    pointer-events:none;
+    opacity:0;
+    filter: blur(10px);
+    transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
+    transform: scale(0.995);
+    z-index:0;
+
+    background:
+      radial-gradient(80% 80% at 70% 70%,
+        rgba(var(--rimTint), .18) 0%,
+        rgba(var(--rimTint), .10) 26%,
+        transparent 62%),
+      radial-gradient(100% 90% at 50% 110%,
+        rgba(255,255,255,.20) 0%,
+        transparent 55%);}
+#oknoSection #wtCarouselNav .coreBtn{text-decoration: none;
+      color: inherit;
+
+    --cw: calc(var(--outer) * var(--innerRatio));
+    --ch: calc(var(--outer) * var(--innerRatio));
+    --cr: 50%;
+
+    width: var(--cw);
+    height: var(--ch);
+    border-radius: var(--cr);
+
+    position:relative;
+    z-index:3;
+    border:0;
+    padding:0;
+    cursor:pointer;
+
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+    user-select:none;
+
+    background:
+      radial-gradient(120% 120% at 35% 25%, rgba(255,255,255,.16), transparent 55%),
+      linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
+
+    box-shadow:
+      0 18px 26px rgba(0,0,0,.18),
+      inset 0 16px 22px rgba(0,0,0,.13),
+      inset 0 -14px 20px rgba(255,255,255,.14);
+
+    transform: translateY(0);
+    transition:
+      transform var(--pressTimeOut) cubic-bezier(.2,.8,.2,1),
+      box-shadow var(--pressTimeOut) ease,
+      filter var(--pressTimeOut) ease;
+
+    display:grid;
+    place-items:center;}
+#oknoSection #wtCarouselNav .coreBtn:focus, #oknoSection #wtCarouselNav .coreBtn:focus-visible{outline:none !important;}
+#oknoSection #wtCarouselNav .coreBtn::before{content:"";
+    position:absolute;
+    inset:0;
+    border-radius: inherit;
+    pointer-events:none;
+    background:
+      radial-gradient(120% 120% at 50% 50%,
+        transparent 62%,
+        rgba(0,0,0,.26) 100%);
+    mix-blend-mode: soft-light;
+    opacity:.95;}
+#oknoSection #wtCarouselNav .coreBtn::after{content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: inherit;
+    pointer-events:none;
+
+    background:
+      radial-gradient(140% 120% at 50% 120%,
+        rgba(255,255,255,.52) 0%,
+        rgba(255,255,255,.20) 24%,
+        transparent 52%),
+      radial-gradient(170% 120% at 50% -38%,
+        rgba(0,0,0,.30) 0%,
+        rgba(0,0,0,.12) 14%,
+        transparent 30%);
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: 6px;
+    filter: blur(.78px);
+    opacity:.95;
+    mix-blend-mode: screen;}
+#oknoSection #wtCarouselNav .glassBase:has(.coreBtn:active){filter: brightness(.985);
+    transition: filter var(--pressTimeIn) ease;}
+#oknoSection #wtCarouselNav .glassBase:has(.coreBtn:active) .pressGlow{opacity:1;
+    transform: scale(1.01);
+    transition: opacity var(--pressTimeIn) ease, transform var(--pressTimeIn) ease;}
+#oknoSection #wtCarouselNav .coreBtn:active{transform: translateY(var(--pressY));
+    transition:
+      transform var(--pressTimeIn) cubic-bezier(.2,.8,.2,1),
+      box-shadow var(--pressTimeIn) ease,
+      filter var(--pressTimeIn) ease;
+
+    box-shadow:
+      0 10px 18px rgba(0,0,0,.16),
+      inset 0 20px 26px rgba(0,0,0,.18),
+      inset 0 -10px 16px rgba(255,255,255,.10);
+    filter: brightness(.99) saturate(.98);}
+#oknoSection #wtCarouselNav 
+  .v-blue{--c1:#6f7ed0; --c2:#5462bb; --c3:#4a57ae;
+    --rimTint: 120, 155, 255;
+    --bleedX: 74%; --bleedY: 86%;}
+#oknoSection #wtCarouselNav 
+  .arrow{width: var(--arrowSize);
+    height: var(--arrowSize);
+    display:block;
+    pointer-events:none;
+    filter:
+      drop-shadow(0 10px 10px rgba(0,0,0,.18))
+      drop-shadow(0 2px 2px rgba(0,0,0,.18));}
+#oknoSection #wtCarouselNav .arrow .stroke{stroke-linecap: round;
+    stroke-linejoin: round;
+
+    
+    stroke-dasharray: 72 3;
+    stroke-dashoffset: -2;
+
+    filter: drop-shadow(0 2px 1px rgba(0,0,0,.28));}
+#oknoSection #wtCarouselNav .glassBase:has(.coreBtn:active) .arrow{transform: translateY(1px);}
+#oknoSection #wtCarouselNav 
+body{background:transparent !important;}
+#oknoSection #wtCarouselNav .stage{padding:0 !important;}
+#oknoSection #wtCarouselNav{--wtScale: .26; 
+  width: 100%;
+  display:flex;
+  justify-content:center;
+  margin-top: 10px;}
+#oknoSection #wtCarouselNav .wtNavRow{display:flex;
+  gap: 14px;
+  align-items:center;
+  justify-content: space-between;
+  width: min(520px, 92vw);}
+#oknoSection #wtCarouselNav .wtNavBtn{width: calc(var(--outer) * var(--wtScale));
+  height: calc(var(--outer) * var(--wtScale));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex: 0 0 auto;}
+#oknoSection #wtCarouselNav .glassBase{zoom: var(--wtScale);
+  transform: none;
+  transform-origin: center;}
+@supports not (zoom: 1){#oknoSection #wtCarouselNav .glassBase{zoom: 1;
+    transform: scale(var(--wtScale));
+    transform-origin: center;}}
+#oknoSection #wtCarouselNav button.coreBtn{cursor:pointer;}
+#oknoSection #shareOrb{z-index:15000 !important;}
+#oknoSection img[src$=".gif"], #oknoSection img[src*=".gif?"]{position:relative; z-index:16000 !important;}
+#oknoSection{--bg0:#05050a;
+      --bg1:#0b0b16;
+
+      --glassA: rgba(255,255,255,.075);
+      --glassB: rgba(255,255,255,.035);
+      --stroke: rgba(255,255,255,.12);
+
+      --R: 34px;
+
+      
+      --padTop: var(--padSide);
+      --padSide: 18px;
+      --padBottom: var(--padSide);
+
+      
+      --posterH: 34vh;
+      --posterMin: 180px;
+      --posterMax: 340px;
+
+      --navGapBottom: 10px;}
+#oknoSection, #oknoSection{height:100%;
+      margin:0;
+      overflow-x:hidden;
+      background:
+        radial-gradient(1200px 700px at 50% 18%, rgba(120,150,255,.16), transparent 60%),
+        radial-gradient(900px 600px at 18% 72%, rgba(255,120,210,.09), transparent 62%),
+        radial-gradient(1100px 700px at 80% 78%, rgba(90,255,220,.06), transparent 66%),
+        linear-gradient(180deg, var(--bg1), var(--bg0));
+      color:#eef0ff;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+#oknoSection .stage{min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 22px 14px;
+      position:relative;}
+#oknoSection .window{width: min(1120px, 100%);
+      border-radius: var(--R);
+      background: linear-gradient(180deg, var(--glassA), var(--glassB));
+      border: 1px solid var(--stroke);
+      box-shadow: none , inset 0 1px 0 rgba(255,255,255,.10);
+      backdrop-filter: blur(12px);
+      position:relative;
+      overflow:hidden;}
+#oknoSection .windowInner{padding: var(--padTop) var(--padSide) var(--padBottom);
+      position:relative;}
+#oknoSection .topRow{display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      padding: 0 0 14px;}
+#oknoSection .pastBtn{display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      text-decoration:none;
+      color:#eef0ff;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      font-size:12px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: radial-gradient(120px 60px at 30% 30%, rgba(255,255,255,.12), rgba(255,255,255,.05));
+      box-shadow: 0 18px 55px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;}
+#oknoSection .pastBtn:active{transform: scale(.99);}
+#oknoSection .pastDot{width:10px;height:10px;border-radius:999px;
+      background: rgba(120,150,255,.85);
+      box-shadow: 0 0 22px rgba(120,150,255,.45);
+      flex:0 0 auto;}
+#oknoSection .swiper{width:100%;
+      padding: 8px 14px 8px; 
+      box-sizing:border-box;}
+#oknoSection #carouselSlot{min-height: clamp(var(--posterMin), var(--posterH), var(--posterMax));}
+@media (max-width:520px){#oknoSection .swiper{padding: 6px 10px 6px;}
+#oknoSection{--posterH: 32vh; --posterMin: 170px; --posterMax: 300px;}}
+#oknoSection .swiper-wrapper{align-items:center;}
+#oknoSection .swiper-slide{width: 280px; 
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition: opacity .28s ease, filter .28s ease;}
+#oknoSection .swiper-slide:not(.swiper-slide-active){opacity:.74;
+      filter:saturate(.92) contrast(.95);}
+#oknoSection .poster{height: clamp(var(--posterMin), var(--posterH), var(--posterMax));
+      width:auto;
+      max-width: 80vw;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      background: rgba(255,255,255,.03);
+      object-fit: contain;
+      display:block;}
+#oknoSection .placeholder{padding: 60px 26px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 18px;
+      opacity:.8;}
+#oknoSection #wtCarouselNav{margin-top: var(--navGapBottom);
+      padding: 10px 0 0;}
+#oknoSection #wtCarouselNav .wtNavRow{width: 100%;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      pointer-events:auto;}
+#oknoSection #wtCarouselNav .wtNavBtn{pointer-events:auto;}
+#oknoSection #wtPastPill{--outer: 190px;
+    --innerRatio: .65;
+    --pillW: 440px;
+
+    --glassClearA: rgba(255,255,255,.14);
+    --glassClearB: rgba(255,255,255,.08);
+    --glassMilkA:  rgba(255,255,255,.10);
+    --glassMilkB:  rgba(255,255,255,.12);
+
+    --glassRingThickness: 13px;
+    --glassRimBlur: 1.05px;
+
+    --topRim1: rgba(0,0,0,.28);
+    --topRim2: rgba(0,0,0,.12);
+    --topRimFade: 30%;
+
+    --botRim1: rgba(255,255,255,.74);
+    --botRim2: rgba(255,255,255,.30);
+
+    --bleedA: .14;
+    --bleedB: .07;
+
+    --pressY: 3px;
+    --pressTimeIn: 110ms;
+    --pressTimeOut: 190ms;
+
+    --textColor: rgba(255,255,255,.92);
+    --textSize: 34px;
+    --textScaleX: 1.12;
+    --textWidth: 90%;
+
+    --stroke: rgba(0,0,0,.34);
+    --depth1: rgba(0,0,0,.30);
+    --depth2: rgba(0,0,0,.18);
+    --lacquer: rgba(255,255,255,.28);
+
+    
+    --pillScale: .253;
+    display:flex;
+    align-items:center;}
+#oknoSection #wtPastPill *{box-sizing:border-box;}
+#oknoSection #wtPastPill .glassBase{--w: var(--outer);
+    --h: var(--outer);
+    --r: 50%;
+    --smearInset: 10px;
+
+    --rimTint: 120, 155, 255;
+    --bleedX: 76%;
+    --bleedY: 84%;
+
+    width: var(--w);
+    height: var(--h);
+    border-radius: var(--r);
+    position: relative;
+    display:grid;
+    place-items:center;
+    isolation:isolate;
+
+    background:
+      radial-gradient(120% 120% at 50% 60%, var(--glassMilkA), transparent 62%),
+      radial-gradient(120% 120% at 50% 92%, var(--glassMilkB), transparent 58%),
+      radial-gradient(120% 120% at 35% 25%, var(--glassClearA), transparent 55%),
+      radial-gradient(140% 140% at 65% 70%, var(--glassClearB), transparent 60%),
+      rgba(255,255,255,.08);
+
+    box-shadow:
+      inset 0 18px 26px rgba(0,0,0,.24),
+      inset 0 -22px 30px rgba(255,255,255,.22),
+      0 22px 44px rgba(0,0,0,.18);
+
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    transition: filter var(--pressTimeOut) ease;
+
+    
+    zoom: var(--pillScale);
+    transform-origin: left center;}
+@supports not (zoom: 1){#oknoSection #wtPastPill .glassBase{zoom: 1;
+      transform: scale(var(--pillScale));}}
+#oknoSection #wtPastPill .glassBase::before{content:"";
+    position:absolute;
+    inset: var(--smearInset);
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:1;
+
+    background:
+      radial-gradient(75% 60% at 18% 22%,
+        rgba(255,255,255,.42) 0%,
+        rgba(255,255,255,.18) 35%,
+        transparent 72%),
+      radial-gradient(55% 45% at 28% 32%,
+        rgba(255,255,255,.18) 0%,
+        transparent 72%);
+
+    filter: blur(1.35px);
+    opacity:.95;}
+#oknoSection #wtPastPill .glassBase::after{content:"";
+    position:absolute;
+    inset:-1px;
+    border-radius: var(--r);
+    pointer-events:none;
+    z-index:2;
+
+    background:
+      radial-gradient(72% 60% at var(--bleedX) var(--bleedY),
+        rgba(var(--rimTint), var(--bleedA)) 0%,
+        rgba(var(--rimTint), var(--bleedB)) 28%,
+        transparent 68%),
+
+      conic-gradient(from 210deg,
+        transparent 0 18%,
+        rgba(var(--rimTint), .12) 22%,
+        transparent 36%,
+        rgba(var(--rimTint), .06) 46%,
+        transparent 62%,
+        rgba(var(--rimTint), .045) 70%,
+        transparent 100%),
+
+      radial-gradient(140% 120% at 50% 120%,
+        var(--botRim1) 0%,
+        var(--botRim2) 22%,
+        transparent 52%),
+
+      radial-gradient(170% 120% at 50% -38%,
+        var(--topRim1) 0%,
+        var(--topRim2) 14%,
+        transparent var(--topRimFade));
+
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+
+    padding: var(--glassRingThickness);
+    filter: blur(var(--glassRimBlur));
+    opacity:.95;}
+#oknoSection #wtPastPill .pressGlow{position:absolute;
+    inset:-22px;
+    border-radius: var(--r);
+    pointer-events:none;
+    opacity:0;
+    filter: blur(10px);
+    transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
+    transform: scale(0.995);
+    z-index:0;
+
+    background:
+      radial-gradient(80% 80% at 70% 70%,
+        rgba(var(--rimTint), .18) 0%,
+        rgba(var(--rimTint), .10) 26%,
+        transparent 62%),
+      radial-gradient(100% 90% at 50% 110%,
+        rgba(255,255,255,.20) 0%,
+        transparent 55%);}
+#oknoSection #wtPastPill .coreBtn{--cw: calc(var(--outer) * var(--innerRatio));
+    --ch: calc(var(--outer) * var(--innerRatio));
+    --cr: 50%;
+
+    width: var(--cw);
+    height: var(--ch);
+    border-radius: var(--cr);
+
+    position:relative;
+    z-index:3;
+    border:0;
+    padding:0;
+    cursor:pointer;
+
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+    user-select:none;
+
+    background:
+      radial-gradient(120% 120% at 35% 25%, rgba(255,255,255,.16), transparent 55%),
+      linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
+
+    box-shadow:
+      0 18px 26px rgba(0,0,0,.18),
+      inset 0 16px 22px rgba(0,0,0,.13),
+      inset 0 -14px 20px rgba(255,255,255,.14);
+
+    transform: translateY(0);
+    transition:
+      transform var(--pressTimeOut) cubic-bezier(.2,.8,.2,1),
+      box-shadow var(--pressTimeOut) ease,
+      filter var(--pressTimeOut) ease;
+
+    display:grid;
+    place-items:center;
+
+    
+    text-decoration:none;}
+#oknoSection #wtPastPill .glassBase:has(.coreBtn:active){filter: brightness(.985);
+    transition: filter var(--pressTimeIn) ease;}
+#oknoSection #wtPastPill .glassBase:has(.coreBtn:active) .pressGlow{opacity:1;
+    transform: scale(1.01);
+    transition: opacity var(--pressTimeIn) ease, transform var(--pressTimeIn) ease;}
+#oknoSection #wtPastPill .coreBtn:active{transform: translateY(var(--pressY));
+    transition:
+      transform var(--pressTimeIn) cubic-bezier(.2,.8,.2,1),
+      box-shadow var(--pressTimeIn) ease,
+      filter var(--pressTimeIn) ease;
+
+    box-shadow:
+      0 10px 18px rgba(0,0,0,.16),
+      inset 0 20px 26px rgba(0,0,0,.18),
+      inset 0 -10px 16px rgba(255,255,255,.10);
+    filter: brightness(.99) saturate(.98);}
+#oknoSection #wtPastPill .pill{--w: var(--pillW);
+    --h: var(--outer);
+    --r: calc(var(--outer)/2);
+    --gap: calc(var(--outer) * (1 - var(--innerRatio)) / 2);}
+#oknoSection #wtPastPill .pill .coreBtn{--ch: calc(var(--outer) * var(--innerRatio));
+    --cw: calc(var(--pillW) - (2 * var(--gap)));
+    --cr: calc((var(--outer) * var(--innerRatio)) / 2);}
+#oknoSection #wtPastPill .v-blue{--c1:#6f7ed0; --c2:#5462bb; --c3:#4a57ae;
+    --rimTint: 120, 155, 255;
+    --bleedX: 74%; --bleedY: 86%;}
+#oknoSection #wtPastPill .coreText{position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+
+    width: var(--textWidth);
+    margin: 0 auto;
+
+    color: var(--textColor);
+    font-weight: 720;
+    font-size: var(--textSize);
+    letter-spacing: .55px;
+    line-height: 1;
+    text-transform: lowercase;
+
+    transform: scaleX(var(--textScaleX));
+    transform-origin: center;
+
+    text-shadow:
+      -0.75px 0      0 var(--stroke),
+       0.75px 0      0 var(--stroke),
+       0      -0.75px 0 var(--stroke),
+       0       0.75px 0 var(--stroke),
+      -0.55px -0.55px 0 var(--stroke),
+       0.55px -0.55px 0 var(--stroke),
+      -0.55px  0.55px 0 var(--stroke),
+       0.55px  0.55px 0 var(--stroke),
+      0 -0.55px 0 var(--lacquer),
+      0  1.25px 1.45px var(--depth1),
+      0  3px    8px    var(--depth2);}</style><link rel="stylesheet" href="css/wt-upcoming.css?v=3"/>
+
+<style id="wtOknoUnderframeKill_v2">
+/* Force-remove any extra underframe/panel behind the plastic window */
+#oknoSection{background: transparent !important;}
+#oknoSection::before,#oknoSection::after{content:none !important; display:none !important;}
+#oknoSection .stage{background: transparent !important;}
+#oknoSection .stage::before,#oknoSection .stage::after{content:none !important; display:none !important;}
+#oknoSection .window{background: transparent !important;}
+#oknoSection .window::before,#oknoSection .window::after{content:none !important; display:none !important;}
+/* keep the actual plastic via inner layers; just ensure no grey base */
+#oknoSection .windowInner{background: transparent !important;}
+</style>
+
+<style id="wtLabelTypographyFix">
+/* White label typography: centered, readable, month as wide as day */
+.wtLabelDay{font-size:92px !important; letter-spacing:0 !important; text-align:center !important; width:100%;}
+.wtLabelMonth{font-size:44px !important; margin-top:14px !important; letter-spacing:6px !important; text-align:justify !important;}
+.wtLabelDate{align-items:center !important; justify-content:center !important;}
+</style>
+<style id="wtSheetBackdropFix">
+/* Prevent any grey underlayer from affecting layout (share backdrop must be fixed + hidden by default) */
+#wtSheetBackdrop{position:fixed !important; inset:0 !important; display:none !important; opacity:0 !important; pointer-events:none !important; background:rgba(0,0,0,.35) !important;}
+#wtActionSheet{position:fixed !important; left:0; right:0; bottom:0; z-index:9999;}
+</style>
 
 
 <!-- OVERRIDE v2: vycentrování + odstranění "díry" vlevo (šířka okna téměř edge-to-edge) -->
+<style>
+  /* jistota box modelu */
+  *, *::before, *::after { box-sizing: border-box; }
 
+  /* okno sekce musí být přes celou šířku */
+  #oknoSection{ max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 0 18px !important; }
+
+  /* stage bez asymetrických okrajů */
+  #oknoSection .stage{
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* samotné okno skoro od kraje ke kraji + centrované */
+  #oknoSection .window{
+    width: 96vw !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-self: center !important;
+  }
+</style>
+
+
+<style id="wtOverrides_final">
+/* --- FIXES: label typography + window vertical position (user-defined) --- */
+
+/* 1) White label: always black text, centered, readable */
+.wtLabelWrap{
+  --wtLabelScale: 0.18; /* bigger label without changing graphic */
+}
+.wtLabelScope{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+/* day + month widths aligned */
+.wtLabelDay, .wtLabelMonth{
+  width: 2.25em;        /* common text block width */
+  text-align:center;
+  margin-left:auto;
+  margin-right:auto;
+  color: rgba(0,0,0,.88) !important;
+}
+
+/* day: tabular digits keep equal width (00–31) */
+.wtLabelDay{
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 118px;     /* readable */
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* month: 3 letters compressed to fit same width as day block */
+.wtLabelMonth{
+  font-weight: 700;
+  font-size: 50px;
+  line-height: 1.05;
+  transform: scaleX(.78);
+  transform-origin: center;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* 2) OKNO: move the whole glass window DOWN (tweak only this variable) */
+:root{
+  --wtOknoOffset: 62vh; /* increase = lower; decrease = higher */
+}
+#oknoSection{
+  margin-top: var(--wtOknoOffset) !important;
+}
+
+/* keep window wide */
+#oknoSection .window{
+  width: 96vw !important;
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* 3) Relikt killer: if any extra underlayer exists, hide it */
+#oknoSection .windowUnderframe,
+#oknoSection .underframe,
+#oknoSection .sheetBackdrop,
+#oknoSection .wtSheetBackdrop,
+#oknoSection .wtUnderframe{
+  display:none !important;
+}
+</style>
 
 <!-- OVERRIDE v8: zachovat pozici okna (52vh) + label beze změny velikosti (jen černý text + přesné centrování) -->
+<style id="wtOverride_v8">
+  :root{ --wtOknoOffset: 52vh; } /* zachovat správnou pozici okna */
 
+  /* label: NEMĚNIT velikost; jen pojistka černé barvy a centrování textu */
+  .day, .mon, .wtLabelDay, .wtLabelMonth{
+    color: rgba(18,18,22,.92) !important;
+    text-shadow: none !important;
+    text-align: center !important;
+  }
+  .date, .wtLabelDate{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+  }
+</style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
+<style id="wtOverride_v9">
+  :root{ --wtOknoOffset:35vh; }
 
+  /* NEMĚNNÉ PRAVIDLO: white label musí být čitelné = zvětšit celý label přes scale */
+  .wtLabelWrap{ --wtLabelScale: 0.18 !important; } /* bylo ~0.13 -> výrazně větší */
 
-<link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet"/>
+  /* NEMĚNNÉ PRAVIDLO: černý text v bílém labelu */
+  .wtLabelDay, .wtLabelMonth, .day, .mon{
+    color: rgba(18,18,22,.92) !important;
+    text-shadow: none !important;
+  }
 
-<link href="css/wt-background.css?v=1" rel="stylesheet"/><link href="css/wt-okno.css?v=1" rel="stylesheet"/><link href="css/wt-overrides.css?v=1" rel="stylesheet"/></head>
+  /* NEMĚNNÉ PRAVIDLO: centrování */
+  .wtLabelDate, .date{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+  }
+  .wtLabelDay, .day{ text-align:center !important; width:100% !important; }
+  .wtLabelMonth, .mon{
+    text-align:center !important;
+    width:100% !important;
+    letter-spacing: 4px !important;
+  }
+
+  /* pojistka: kdyby něco přepisovalo velikosti, držíme velké typy */
+  .wtLabelDay{ font-size: 92px !important; line-height: .95 !important; }
+  .wtLabelMonth{ font-size: 44px !important; line-height: .95 !important; margin-top: 10px !important; }
+</style>
+
+<style id="wt-overrides-v4">
+  /* Deterministic overrides (no heuristic edits) */
+  :root{
+    --panelTop: 54vh; /* move panel slightly up to avoid the browser share bar */
+  }
+
+  /* Keep posters with square corners */
+  .wtPoster, .wtPoster img, .wtPosterImg, .wtCardPosterImg{
+    border-radius: 0 !important;
+  }
+
+  /* Wide panel positioning */
+  .wtPanelWrap{ margin-top: var(--panelTop) !important; }
+
+  /* Reveal like wave.today: slower rise from "depth" + gentle overshoot, no snap */
+  .wtReveal{
+    opacity: 0;
+    transform: translateY(180px) scale(0.90);
+    transition: none !important;
+    will-change: transform, opacity;
+  }
+  .wtReveal.isIn{
+    opacity: 1;
+    transform: none;
+    animation: wtRise 1350ms cubic-bezier(.16,1,.3,1) both;
+  }
+  @keyframes wtRise{
+    0%{ opacity:0; transform: translateY(190px) scale(0.89); }
+    70%{ opacity:1; transform: translateY(-10px) scale(1.01); }
+    100%{ opacity:1; transform: translateY(0) scale(1); }
+  }
+
+  /* Label: always black on white, centered, "square" block */
+  .wtLabelScope{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .wtLabelInner{
+    width: 100%;
+    height: 100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap: 10px;
+  }
+  .wtLabelDay{
+    color:#111 !important;
+    font-weight: 800;
+    font-size: 82px !important;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+  }
+  .wtLabelMonth{
+    color:#111 !important;
+    font-weight: 700;
+    font-size: 38px !important;
+    line-height: 1;
+    display:inline-block;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    width: var(--monW, auto);
+    text-align:center;
+  }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+<style id="wtLabelClickScoped">
+  /* pouze date label – žádné zásahy do Share orb / globálních tříd */
+  .wtLabelWrap{ pointer-events:auto !important; }
+  .wtLabelWrap .glassSquare,
+  .wtLabelWrap .pressGlow{ pointer-events:none !important; } /* dekorace nekliká */
+  .wtLabelWrap .coreSquare{ pointer-events:auto !important; cursor:pointer; }
+</style>
+</head>
 <body>
 <!-- ===== WT BACKGROUND MODULE (DOM) ===== -->
 <svg aria-hidden="true" focusable="false" height="0" style="position:absolute;left:-9999px;top:-9999px" width="0">
@@ -137,6 +1100,8 @@
 <div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>
 </div>
 </div>
+
+
 <div aria-hidden="true" id="video-layer">
 <video autoplay="" id="myVideo" loop="" muted="" playsinline="" preload="auto">
 <source src="assets/video/wave.mp4" type="video/mp4"/>
@@ -177,7 +1142,7 @@
 </div>
 </div>
 <div aria-label="Karuzel plakátů" class="swiper" id="coverflow">
-<div aria-label="Slot pro karusel" class="swiper-wrapper" id="carouselSlot"></div>
+<div aria-label="Slot pro karusel" id="carouselSlot" class="swiper-wrapper"></div>
 </div>
 <div aria-label="Ovládání karuzelu" id="wtCarouselNav">
 <div class="wtNavRow">
@@ -188,7 +1153,45 @@
 </div>
 </div>
 </div>
+<script>
+const ARROW = (dir)=>`
+      <div class="glassBase pill v-blue">
+        <div class="pressGlow"></div>
+        <button class="coreBtn" type="button" aria-label="${dir==='prev'?'Předchozí':'Další'}">
+          <svg class="arrow" viewBox="0 0 100 100" aria-hidden="true">
+            <defs>
+              <linearGradient id="gFill${dir}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#1a1a1a" stop-opacity="0.92"/>
+                <stop offset="0.55" stop-color="#0f0f0f" stop-opacity="0.98"/>
+                <stop offset="1" stop-color="#000" stop-opacity="1"/>
+              </linearGradient>
+              <linearGradient id="gHi${dir}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+                <stop offset="0.35" stop-color="#ffffff" stop-opacity="0.06"/>
+                <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            ${dir==='prev'
+              ? '<path d="M64 18 L30 50 L64 82" fill="none" stroke="url(#gFillprev)" stroke-width="18" class="stroke"/><path d="M64 18 L30 50 L64 82" fill="none" stroke="url(#gHiprev)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="72 3" stroke-dashoffset="-2" opacity="0.9"/>'
+              : '<path d="M36 18 L70 50 L36 82" fill="none" stroke="url(#gFillnext)" stroke-width="18" class="stroke"/><path d="M36 18 L70 50 L36 82" fill="none" stroke="url(#gHinext)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="72 3" stroke-dashoffset="-2" opacity="0.9"/>'}
+          </svg>
+        </button>
+      </div>
+    `;
+    
 
+    
+    // vložení TVÝCH tlačítek (jen jednou)
+    const prevSlot = document.querySelector('#wtCarouselNav .wtNavPrev');
+    const nextSlot = document.querySelector('#wtCarouselNav .wtNavNext');
+    if(prevSlot && !prevSlot.innerHTML.trim()) prevSlot.innerHTML = ARROW('prev');
+    if(nextSlot && !nextSlot.innerHTML.trim()) nextSlot.innerHTML = ARROW('next');
+
+    // deterministicky inertní kliky: jen eventy, žádná knihovna, žádné posouvání
+    const fire = (name) => window.dispatchEvent(new CustomEvent('wt:click', { detail: { name } }));
+    document.querySelector('#wtCarouselNav .wtNavPrev')?.addEventListener('click', (e)=>{ e.preventDefault(); fire('prev'); });
+    document.querySelector('#wtCarouselNav .wtNavNext')?.addEventListener('click', (e)=>{ e.preventDefault(); fire('next'); });
+</script>
 </section><div aria-hidden="true" class="wtSpacerBottom"></div></div>
 <!-- přesný konec stránky -->
 <div aria-hidden="true" id="wtBottomSentinel"></div>
@@ -198,8 +1201,8 @@
 <div class="pressGlow"></div>
 <div aria-label="share options" class="coreSquare shareCore" role="menu">
 <button class="shareRow" data-action="share" type="button">Share</button>
-<a class="shareRow" data-action="instagram" href="https://www.instagram.com/wave__today?igsh=Y2xhcGdlMGtlejdx" rel="noopener" style="text-decoration:none;display:block;" target="_blank">Instagram</a>
-<a class="shareRow" data-action="mail" href="mailto:info@wave.today?subject=wave.today&amp;body=https%3A%2F%2Fwave.today" style="text-decoration:none;display:block;">Mail</a>
+<a class="shareRow" data-action="instagram" href="https://www.instagram.com/wave__today?igsh=Y2xhcGdlMGtlejdx" target="_blank" rel="noopener" style="text-decoration:none;display:block;">Instagram</a>
+<a class="shareRow" data-action="mail" href="mailto:info@wave.today?subject=wave.today&body=https%3A%2F%2Fwave.today" style="text-decoration:none;display:block;">Mail</a>
 </div>
 </div>
 </div>
@@ -231,16 +1234,160 @@
 </div>
 </div>
 </div>
+<script>
+    (function(){
+      const ua = navigator.userAgent;
+      const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|CriOS|FxiOS/.test(ua);
+      if(isSafari) document.documentElement.classList.add('is-safari');
+    })();
+  </script>
+<script>
+    const base = document.getElementById("myVideo");
+    const ambient = document.getElementById("bloomVideo");
+    const bloomOv = document.getElementById("bloomOverlay");
+    const vMilk = document.getElementById("vMilk");
+    const vM = document.getElementById("vM");
+    const vC = document.getElementById("vC");
+    const vY = document.getElementById("vY");
+
+    const vids = [base, ambient, bloomOv, vMilk, vM, vC, vY].filter(Boolean);
+
+    window.addEventListener('load', ()=>{
+      vids.forEach(v=>{
+        try{ v.muted = true; v.playsInline = true; v.play().catch(()=>{}); }catch(e){}
+      });
+    });
+
+    function softSync(){
+      const t = base?.currentTime || 0;
+      vids.forEach(v=>{
+        if(v === base) return;
+        if(v.readyState >= 2 && base.readyState >= 2){
+          const d = t - v.currentTime;
+          if(Math.abs(d) > 0.35) v.currentTime = t;
+        }
+      });
+    }
+    setInterval(softSync, 250);
+    window.softSync = softSync;
+  </script>
+<script>
+/* ===== LED PANEL (shadow DOM, exact look from LED.html) ===== */
+(function(){
+  const host = document.getElementById('ledWrapper');
+  if(!host) return;
+
+  // State objects used by applyBG() below
+  window.leds = [{dataset:{on:"0"}}, {dataset:{on:"0"}}, {dataset:{on:"0"}}];
+const leds = window.leds; // make applyBG() use the bridged LED states
 
 
+  const shadow = host.attachShadow ? host.attachShadow({mode:'open'}) : null;
+  const root = shadow || host;
 
+  // Build DOM
+  const style = document.createElement('style');
+  style.textContent = '\n  :host{\n    --bg:#2f2f2f;\n\n    /* Proporce panelu */\n    --panelH: 132px;\n    --panelPadY: 18px;\n    --panelPadX: 44px;\n    --gap: 20px;\n\n    /* sklo panelu */\n    --glassClearA: rgba(255,255,255,.14);\n    --glassClearB: rgba(255,255,255,.08);\n    --glassMilkA:  rgba(255,255,255,.10);\n    --glassMilkB:  rgba(255,255,255,.12);\n\n    --glassRingThickness: 13px;\n    --glassRimBlur: 1.05px;\n\n    --topRim1: rgba(0,0,0,.24);\n    --topRim2: rgba(0,0,0,.09);\n    --topRimFade: 30%;\n\n    --botRim1: rgba(255,255,255,.74);\n    --botRim2: rgba(255,255,255,.30);\n\n    --bleedA: .16;\n    --bleedB: .08;\n\n    /* LED */\n    --led: 86px;\n    --ledRing: 12px;\n\n    /* svit */\n    --haloBoost: 1.65;\n    --coreBoost: 1.25;\n\n    /* vnitřní “lom” v panelu */\n    --panelInterferenceBase: .18;\n    --panelInterferenceStep: .28;\n  }\n\n  *{box-sizing:border-box}\n  html,body{height:100%;margin:0}\n  body{\n    display:grid;\n    place-items:center;\n    background:\n      radial-gradient(1100px 650px at 50% 25%, rgba(255,255,255,.06), transparent 60%),\n      radial-gradient(900px 500px at 20% 80%, rgba(0,255,255,.05), transparent 55%),\n      radial-gradient(900px 500px at 80% 80%, rgba(255,0,200,.05), transparent 55%),\n      radial-gradient(900px 500px at 50% 90%, rgba(255,255,0,.05), transparent 55%),\n      var(--bg);\n    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;\n  }\n\n  /* PANEL */\n  .panel{\n    height: var(--panelH);\n    width: fit-content;\n    padding: var(--panelPadY) var(--panelPadX);\n    border-radius: calc(var(--panelH) / 2);\n    position:relative;\n    display:flex;\n    align-items:center;\n    justify-content:center;\n    isolation:isolate;\n\n    background:\n      radial-gradient(120% 120% at 50% 60%, var(--glassMilkA), transparent 62%),\n      radial-gradient(120% 120% at 50% 92%, var(--glassMilkB), transparent 58%),\n      radial-gradient(120% 120% at 35% 25%, var(--glassClearA), transparent 55%),\n      radial-gradient(140% 140% at 65% 70%, var(--glassClearB), transparent 60%),\n      rgba(255,255,255,.08);\n\n    box-shadow:\n      inset 0 18px 26px rgba(0,0,0,.22),\n      inset 0 -22px 30px rgba(255,255,255,.22),\n      0 22px 54px rgba(0,0,0,.28);\n\n    backdrop-filter: blur(8px);\n    -webkit-backdrop-filter: blur(8px);\n  }\n\n  .panel::before{\n    content:"";\n    position:absolute;\n    inset: 12px;\n    border-radius: inherit;\n    pointer-events:none;\n    z-index: 1;\n    background:\n      radial-gradient(75% 60% at 18% 22%,\n        rgba(255,255,255,.40) 0%,\n        rgba(255,255,255,.16) 35%,\n        transparent 72%),\n      radial-gradient(55% 45% at 28% 32%,\n        rgba(255,255,255,.16) 0%,\n        transparent 72%);\n    filter: blur(1.35px);\n    opacity:.95;\n  }\n\n  .panel::after{\n    content:"";\n    position:absolute;\n    inset:-1px;\n    border-radius: inherit;\n    pointer-events:none;\n    z-index: 6;\n\n    background:\n      /* === FIX: jemné zvýraznění hrany vpravo nahoře (aby se neztrácela) === */\n      radial-gradient(70% 70% at 92% 18%,\n        rgba(255,255,255,.18) 0%,\n        rgba(255,255,255,.08) 34%,\n        transparent 62%),\n      radial-gradient(85% 75% at 88% 20%,\n        rgba(0,0,0,.14) 0%,\n        transparent 58%),\n\n      /* původní rim */\n      radial-gradient(140% 120% at 50% 120%,\n        var(--botRim1) 0%,\n        var(--botRim2) 22%,\n        transparent 52%),\n      radial-gradient(170% 120% at 50% -38%,\n        var(--topRim1) 0%,\n        var(--topRim2) 14%,\n        transparent var(--topRimFade));\n\n    -webkit-mask:\n      linear-gradient(#000 0 0) content-box,\n      linear-gradient(#000 0 0);\n    -webkit-mask-composite: xor;\n    mask-composite: exclude;\n\n    padding: var(--glassRingThickness);\n    filter: blur(var(--glassRimBlur));\n    opacity:.95;\n  }\n\n  .panelLight{\n    position:absolute;\n    inset: 14px;\n    border-radius: inherit;\n    pointer-events:none;\n    z-index: 2;\n    mix-blend-mode: screen;\n    filter: blur(16px);\n    opacity: var(--panelInterferenceBase);\n    transition: opacity .18s ease;\n\n    background:\n      radial-gradient(150px 110px at 22% 56%, rgba(var(--L1), .46), transparent 70%),\n      radial-gradient(150px 110px at 50% 56%, rgba(var(--L2), .46), transparent 70%),\n      radial-gradient(150px 110px at 78% 56%, rgba(var(--L3), .46), transparent 70%),\n      linear-gradient(90deg,\n        rgba(var(--L1), .08),\n        rgba(var(--L2), .10),\n        rgba(var(--L3), .08));\n  }\n\n  .ledRow{\n    display:flex;\n    gap: var(--gap);\n    z-index: 7;\n    position:relative;\n  }\n\n  /* LED */\n  .led{\n    --rimTint: 0, 255, 255;\n    --c1:#e9ffff; --c2:#72f6ff; --c3:#00a7b8;\n    --on:0;\n\n    width: var(--led);\n    height: var(--led);\n    border-radius:50%;\n    position:relative;\n    cursor:pointer;\n    user-select:none;\n    -webkit-tap-highlight-color: transparent;\n    isolation:isolate;\n  }\n\n  .led .halo{\n    position:absolute;\n    inset:-72px;\n    border-radius:50%;\n    pointer-events:none;\n    z-index: 0;\n\n    background:\n      radial-gradient(62% 62% at 50% 58%,\n        rgba(var(--rimTint), calc((.10 + .94*var(--on)) * var(--haloBoost))) 0%,\n        rgba(255,255,255, calc(.08 * var(--on))) 18%,\n        rgba(var(--rimTint), 0) 78%);\n\n    filter: blur(calc(18px + 26px*var(--on)));\n    opacity: calc(.07 + .93*var(--on));\n    mix-blend-mode: screen;\n    transition: opacity .18s ease, filter .18s ease;\n  }\n\n  /* ZAPUŠTĚNÍ (DRŮLEK) */\n  .led .seat{\n    position:absolute;\n    inset:-3px;\n    border-radius:50%;\n    z-index: 1;\n\n    background:\n      radial-gradient(closest-side at 50% 50%,\n        rgba(255,255,255,.30) 0%,\n        rgba(255,255,255,.12) 52%,\n        rgba(255,255,255,0) 60%),\n\n      radial-gradient(110% 92% at 44% 62%,\n        rgba(var(--rimTint), calc(.012 + .16*var(--on))) 0%,\n        rgba(var(--rimTint), calc(.006 + .10*var(--on))) 32%,\n        transparent 58%),\n      radial-gradient(98% 86% at 58% 70%,\n        rgba(var(--rimTint), calc(.010 + .14*var(--on))) 0%,\n        rgba(var(--rimTint), calc(.005 + .09*var(--on))) 28%,\n        transparent 54%),\n      radial-gradient(120% 96% at 52% 64%,\n        rgba(255,255,255, calc(.010 + .08*var(--on))) 0%,\n        rgba(255,255,255,0) 55%),\n\n      radial-gradient(115% 115% at 50% 60%,\n        rgba(255,255,255,.10) 0%,\n        rgba(255,255,255,.05) 30%,\n        rgba(0,0,0,.14) 46%,\n        rgba(0,0,0,.32) 62%,\n        rgba(0,0,0,0) 82%),\n\n      radial-gradient(88% 88% at 50% 92%,\n        rgba(0,0,0,.20),\n        rgba(0,0,0,0) 70%);\n\n    filter: blur(calc(0.55px + 0.15px*var(--on)));\n\n    box-shadow:\n      inset 0 8px 10px rgba(255,255,255,.18),\n      inset 0 -22px 28px rgba(0,0,0,.34),\n      0 6px 10px rgba(0,0,0,.22);\n\n    opacity:.96;\n  }\n\n  /* rim */\n  .led .rim{\n    position:absolute;\n    inset:0;\n    border-radius:50%;\n    z-index: 2;\n    pointer-events:none;\n\n    background:\n      radial-gradient(72% 60% at 76% 84%,\n        rgba(var(--rimTint), calc(var(--bleedA) * (0.45 + 0.95*var(--on)))) 0%,\n        rgba(var(--rimTint), calc(var(--bleedB) * (0.45 + 0.95*var(--on)))) 28%,\n        transparent 68%),\n\n      radial-gradient(140% 120% at 50% 120%,\n        rgba(255,255,255,.70) 0%,\n        rgba(255,255,255,.24) 22%,\n        transparent 52%),\n\n      radial-gradient(170% 120% at 50% -38%,\n        rgba(0,0,0,.24) 0%,\n        rgba(0,0,0,.09) 14%,\n        transparent 30%),\n\n      radial-gradient(110% 110% at 50% 60%,\n        rgba(var(--rimTint), .42) 0%,\n        rgba(var(--rimTint), .20) 44%,\n        rgba(var(--rimTint), .09) 64%,\n        transparent 74%);\n\n    -webkit-mask:\n      linear-gradient(#000 0 0) content-box,\n      linear-gradient(#000 0 0);\n    -webkit-mask-composite: xor;\n    mask-composite: exclude;\n    padding: var(--ledRing);\n\n    filter: blur(1px);\n    opacity:.98;\n  }\n\n  /* plast */\n  .led .lens{\n    position:absolute;\n    left: var(--ledRing);\n    top:  var(--ledRing);\n    width: calc(var(--led) - var(--ledRing)*2);\n    height: calc(var(--led) - var(--ledRing)*2);\n    border-radius:50%;\n    z-index: 3;\n    overflow:hidden;\n\n    background:\n      radial-gradient(18px 18px at 28% 22%,\n        rgba(255,255,255,.72), rgba(255,255,255,0) 65%),\n\n      linear-gradient(180deg,\n        rgba(255,255,255,.62) 0%,\n        rgba(255,255,255,.14) 26%,\n        rgba(255,255,255,.06) 48%,\n        rgba(0,0,0,.10) 100%),\n\n      linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));\n\n    border: 0;\n    outline: 1px solid rgba(255,255,255,.14);\n    outline-offset: -1px;\n\n    -webkit-mask: radial-gradient(circle at 50% 50%, #000 0 92%, transparent 100%);\n    mask: radial-gradient(circle at 50% 50%, #000 0 92%, transparent 100%);\n\n    box-shadow:\n      inset 0 -18px 22px rgba(0,0,0,.34),\n      inset 0  10px 14px rgba(255,255,255,.14),\n      0 10px 16px rgba(0,0,0,.18);\n\n    transition: filter .18s ease, transform .18s ease;\n  }\n\n  /* TĚSNÁ SPÁRA mezi čočkou a sedlem */\n  .led .lens::after{\n    content:"";\n    position:absolute;\n    inset:0;\n    border-radius:50%;\n    pointer-events:none;\n    background:\n      radial-gradient(circle at 50% 50%,\n        transparent 0 88%,\n        rgba(0,0,0,.34) 89%,\n        rgba(0,0,0,.18) 91%,\n        rgba(255,255,255,.10) 93%,\n        transparent 96%);\n    mix-blend-mode: multiply;\n    opacity:.80;\n    filter: blur(.2px);\n  }\n\n  /* odlesky */\n  .led .shine1,.led .shine2{\n    position:absolute;\n    left: 12%;\n    right:12%;\n    border-radius:999px;\n    transform: rotate(-6deg);\n    pointer-events:none;\n  }\n  .led .shine1{\n    top: 10%;\n    height: 46%;\n    background: radial-gradient(76% 90% at 50% 0%,\n      rgba(255,255,255,.92),\n      rgba(255,255,255,0) 74%);\n    opacity:.62;\n    filter: blur(1.2px);\n  }\n  .led .shine2{\n    top: 27%;\n    left: 18%;\n    right:18%;\n    height: 28%;\n    background: radial-gradient(82% 110% at 50% 0%,\n      rgba(255,255,255,.86),\n      rgba(255,255,255,0) 76%);\n    opacity:.56;\n    filter: blur(1.2px);\n  }\n\n  /* vnitřní svit */\n  .led .innerGlow{\n    position:absolute;\n    inset:-14px;\n    border-radius:50%;\n    pointer-events:none;\n    z-index: 4;\n\n    background:\n      radial-gradient(42% 38% at 52% 60%,\n        rgba(255,255,255, calc((.12 + .86*var(--on)) * var(--coreBoost))) 0%,\n        rgba(255,255,255,0) 62%),\n      radial-gradient(58% 56% at 50% 66%,\n        rgba(var(--rimTint), calc(.12 + .98*var(--on))) 0%,\n        rgba(var(--rimTint), 0) 70%);\n\n    opacity: calc(.10 + .90*var(--on));\n    filter: blur(calc(2px + 8px*var(--on)));\n    mix-blend-mode: screen;\n    transition: opacity .18s ease, filter .18s ease;\n  }\n\n  .led[data-on="1"]{ --on:1; }\n  .led[data-on="1"] .lens{\n    filter: saturate(1.28) brightness(1.14);\n    transform: translateY(-1px);\n  }\n  .led[data-on="0"]{ --on:0; }\n\n  /* Barvy – pořadí: Yellow, Magenta, Cyan */\n  .y{ --rimTint: 255, 235,  70; --c1:#fffbe6; --c2:#fff06a; --c3:#c7a800; }\n  .m{ --rimTint: 255,  60, 220; --c1:#ffe9fd; --c2:#ff62e9; --c3:#b0008f; }\n  .c{ --rimTint:  40, 210, 255; --c1:#ecfdff; --c2:#7eefff; --c3:#00a8c7; }\n';
 
-<script src="js/wt-safari-guard.js?v=1"></script><script src="js/wt-video-sync.js?v=1"></script><script src="js/wt-led-panel.js?v=1"></script><script src="js/wt-bg-apply.js?v=1"></script><script src="js/wt-carousel-nav.js?v=1"></script><script src="js/wt-label-guard.js?v=1"></script><script src="js/share.js?v=1"></script>
-<script src="js/share-actions.js"></script>
+  const wrap = document.createElement('div');
+  wrap.innerHTML = '<div class="panel" id="panel">\n<div class="panelLight" id="panelLight"></div>\n<div class="ledRow">\n<div aria-label="Yellow" class="led y" data-on="0">\n<div class="halo"></div><div class="seat"></div><div class="rim"></div>\n<div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>\n</div>\n<div aria-label="Magenta" class="led m" data-on="0">\n<div class="halo"></div><div class="seat"></div><div class="rim"></div>\n<div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>\n</div>\n<div aria-label="Cyan" class="led c" data-on="0">\n<div class="halo"></div><div class="seat"></div><div class="rim"></div>\n<div class="lens"><div class="innerGlow"></div><div class="shine1"></div><div class="shine2"></div></div>\n</div>\n</div>\n</div>';
+
+  if(shadow){
+    shadow.appendChild(style);
+    shadow.appendChild(wrap);
+  } else {
+    // Fallback without shadow (old browsers): scope by prefixing in CSS is not done here; shadow should exist on modern Safari/Android.
+    host.appendChild(style);
+    host.appendChild(wrap);
+  }
+
+  const panel = root.getElementById ? root.getElementById('panel') : (shadow? shadow.querySelector('#panel') : host.querySelector('#panel'));
+  const panelLight = root.getElementById ? root.getElementById('panelLight') : (shadow? shadow.querySelector('#panelLight') : host.querySelector('#panelLight'));
+  const ledEls = [...(shadow ? shadow.querySelectorAll('.led') : host.querySelectorAll('.led'))];
+
+  function tint(el){
+    const v = getComputedStyle(el).getPropertyValue('--rimTint').trim();
+    return v || "255,255,255";
+  }
+  function rootVar(name){
+    // Vars live on :host now
+    const v = getComputedStyle(host).getPropertyValue(name).trim();
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function updatePanelLight(){
+    const t = ledEls.map(tint);
+    if(panel){
+      panel.style.setProperty('--L1', t[0]);
+      panel.style.setProperty('--L2', t[1]);
+      panel.style.setProperty('--L3', t[2]);
+    }
+    const k = ledEls.reduce((n,l)=> n + (l.dataset.on==="1"), 0);
+    const base = rootVar('--panelInterferenceBase');
+    const step = rootVar('--panelInterferenceStep');
+    if(panelLight) panelLight.style.opacity = (base + step * k).toFixed(2);
+  }
+
+  ledEls.forEach((el,i)=>{
+    el.addEventListener('click', ()=>{
+      el.dataset.on = (el.dataset.on === '1') ? '0' : '1';
+      window.leds[i].dataset.on = el.dataset.on;   // bridge to applyBG()
+      updatePanelLight();
+      if(typeof window.applyBG === 'function') window.applyBG();
+    });
+  });
+
+  updatePanelLight();
+  if(typeof window.applyBG === 'function') window.applyBG();
+})();
+</script>
+<script>
+    /* LED -> Background */
+    function setLayer(v, on){
+      if(!v) return;
+      v.style.visibility = on ? "visible" : "hidden";
+      v.style.opacity = on ? "" : "0";
+      if(on){ v.play().catch(()=>{}); } else { try{ v.pause(); }catch(e){} }
+    }
+    const sand = document.querySelector('.sandGlass');
+
+    function applyBG(){
+      const sandOn = (window.leds?.[0]?.dataset?.on === "1");
+      const led2On  = (window.leds?.[1]?.dataset?.on === "1");
+      const led3On  = (window.leds?.[2]?.dataset?.on === "1");
+
+      if(sand) sand.style.display = sandOn ? "block" : "none";
+
+      setLayer(vMilk, led2On);
+      setLayer(vM, led2On);
+      setLayer(vC, led2On);
+      setLayer(vY, led2On);
+
+      setLayer(ambient, led3On);
+      setLayer(bloomOv, led3On);
+
+      window.softSync && window.softSync();
+    }
+    window.applyBG = applyBG;
+    applyBG();
+  </script>
+<script src="js/share.js?v=1"></script>
+  <script src="js/share-actions.js"></script>
 <script src="js/qr.js?v=1"></script>
-<script defer="" src="js/wt-upcoming.js?v=3"></script>
+<script src="js/wt-upcoming.js?v=3" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="js/past-events-coverflow.js"></script>
-
+<script id="wtLabelClickStopNav">
+  // Zabráníme tomu, aby klik na label spustil klik na plakát.
+  // (funguje i kdyby se později měnilo DOM – používáme delegaci)
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('.wtLabelWrap .coreSquare');
+    if(!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // tady můžeš později navázat vlastní akci (modal, share, filtr...)
+    // console.log('Label click', btn);
+  }, true);
+</script>
 </body>
 </html>
