@@ -96,7 +96,7 @@
 
 /* ===== Glass label (fits into card) ===== */
 :root{
-  --sqOuter: 360px;
+  --sqOuter: 100%;
   --innerRatio: .78;
   --sqR: 34px;
   --coreRk: 1.55;
