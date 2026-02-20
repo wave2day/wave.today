@@ -7,7 +7,7 @@
 .wtUpcomingItem{
   position:relative;
   width:100%;
-  max-width:640px;        /* změň na 480/640/720 podle chuti */
+  max-width:560px;        /* změň na 480/640/720 podle chuti */
   margin-left:auto;
   margin-right:auto;
 }
