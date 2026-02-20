@@ -42,14 +42,17 @@
 
 /* ===== Overlay flip card (center) ===== */
 #wtOverlay{
-  position:fixed;
-  inset:0;
-  display:none;
-  place-items:center;
-  z-index:1000000;
-  pointer-events:none;
-  opacity:0;
-  transition:opacity 180ms ease;
+  position: fixed;
+  inset: 0;
+  display: none;           /* toggled by JS */
+  place-items: center;
+  z-index: 9999;
+  padding: 16px;
+  box-sizing: border-box;
+
+  background: rgba(0,0,0,.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 #wtOverlay.is-open{
   display:grid;
@@ -59,12 +62,11 @@
 #wtOverlay .backdrop{ position:absolute; inset:0; background:transparent; }
 
 #wtCard{
-  position:relative;
-  width:min(78vw, 280px);
-  aspect-ratio:1;
-  perspective:1100px;
-  pointer-events:auto;
-  transform:translateZ(0);
+  position: relative;
+  width: min(70vw, 240px);  /* mobile-friendly size, centered */
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
 }
 
 #wtInner{
@@ -319,21 +321,6 @@ content:"";
     mix-blend-mode: normal;
 }
 
-.qrWrap{
-position:absolute;
-    inset:0;
-    display:grid;
-    place-items:center;
-    pointer-events:none;
-    z-index:10;
-}
-.qrWrap .qrSvg{
-width:88%;
-    height:88%;
-    display:block;
-    shape-rendering: crispEdges;
-}
-
 .qr_coreSquare:hover{
 transform: translateY(-1px);
     box-shadow:
@@ -363,4 +350,21 @@ transform: translateY(var(--pressY));
       inset 0 -10px 16px rgba(255,255,255,.12),
       inset 0 0 0 1px rgba(0,0,0,.16);
     filter: brightness(.995) saturate(.98);
+}
+
+.wtOverlay--open{
+  display: grid !important;
+}
+
+.qrWrap{
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.qrWrap .qrSvg{
+  width: 88%;
+  height: 88%;
+  display: block;
 }
