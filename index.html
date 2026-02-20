@@ -424,7 +424,8 @@ body{background:transparent !important;}
       backdrop-filter: blur(12px);
       position:relative;
       overflow:hidden;}
-
+#oknoSection .windowInner{padding: var(--padTop) var(--padSide) var(--padBottom);
+      position:relative;}
 #oknoSection .topRow{display:flex;
       align-items:center;
       justify-content:flex-start;
@@ -739,8 +740,29 @@ body{background:transparent !important;}
       0  1.25px 1.45px var(--depth1),
       0  3px    8px    var(--depth2);}</style><link rel="stylesheet" href="css/wt-upcoming.css?v=3"/>
 
+<style id="wtOknoUnderframeKill_v2">
+/* Force-remove any extra underframe/panel behind the plastic window */
+#oknoSection{background: transparent !important;}
+#oknoSection::before,#oknoSection::after{content:none !important; display:none !important;}
+#oknoSection .stage{background: transparent !important;}
+#oknoSection .stage::before,#oknoSection .stage::after{content:none !important; display:none !important;}
+#oknoSection .window{background: transparent !important;}
+#oknoSection .window::before,#oknoSection .window::after{content:none !important; display:none !important;}
+/* keep the actual plastic via inner layers; just ensure no grey base */
+#oknoSection .windowInner{background: transparent !important;}
+</style>
 
-
+<style id="wtLabelTypographyFix">
+/* White label typography: centered, readable, month as wide as day */
+.wtLabelDay{font-size:92px !important; letter-spacing:0 !important; text-align:center !important; width:100%;}
+.wtLabelMonth{font-size:44px !important; margin-top:14px !important; letter-spacing:6px !important; text-align:justify !important;}
+.wtLabelDate{align-items:center !important; justify-content:center !important;}
+</style>
+<style id="wtSheetBackdropFix">
+/* Prevent any grey underlayer from affecting layout (share backdrop must be fixed + hidden by default) */
+#wtSheetBackdrop{position:fixed !important; inset:0 !important; display:none !important; opacity:0 !important; pointer-events:none !important; background:rgba(0,0,0,.35) !important;}
+#wtActionSheet{position:fixed !important; left:0; right:0; bottom:0; z-index:9999;}
+</style>
 
 
 <!-- OVERRIDE v2: vycentrování + odstranění "díry" vlevo (šířka okna téměř edge-to-edge) -->
@@ -760,11 +782,86 @@ body{background:transparent !important;}
     margin-right: 0 !important;
   }
 
- 
+  /* samotné okno skoro od kraje ke kraji + centrované */
+  #oknoSection .window{
+    width: 96vw !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-self: center !important;
+  }
 </style>
 
 
+<style id="wtOverrides_final">
+/* --- FIXES: label typography + window vertical position (user-defined) --- */
 
+/* 1) White label: always black text, centered, readable */
+.wtLabelWrap{
+  --wtLabelScale: 0.18; /* bigger label without changing graphic */
+}
+.wtLabelScope{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+/* day + month widths aligned */
+.wtLabelDay, .wtLabelMonth{
+  width: 2.25em;        /* common text block width */
+  text-align:center;
+  margin-left:auto;
+  margin-right:auto;
+  color: rgba(0,0,0,.88) !important;
+}
+
+/* day: tabular digits keep equal width (00–31) */
+.wtLabelDay{
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 118px;     /* readable */
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* month: 3 letters compressed to fit same width as day block */
+.wtLabelMonth{
+  font-weight: 700;
+  font-size: 50px;
+  line-height: 1.05;
+  transform: scaleX(.78);
+  transform-origin: center;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* 2) OKNO: move the whole glass window DOWN (tweak only this variable) */
+:root{
+  --wtOknoOffset: 62vh; /* increase = lower; decrease = higher */
+}
+#oknoSection{
+  margin-top: var(--wtOknoOffset) !important;
+}
+
+/* keep window wide */
+#oknoSection .window{
+  width: 96vw !important;
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* 3) Relikt killer: if any extra underlayer exists, hide it */
+#oknoSection .windowUnderframe,
+#oknoSection .underframe,
+#oknoSection .sheetBackdrop,
+#oknoSection .wtSheetBackdrop,
+#oknoSection .wtUnderframe{
+  display:none !important;
+}
+</style>
 
 <!-- OVERRIDE v8: zachovat pozici okna (52vh) + label beze změny velikosti (jen černý text + přesné centrování) -->
 <style id="wtOverride_v8">
