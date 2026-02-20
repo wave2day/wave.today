@@ -404,11 +404,3 @@
   letter-spacing: 0.08em;
 }
 
-/* Desktop: proměnné se zvětší, ale s limity (poměr zůstává) */
-@media (min-width: 900px){
-  .wtUpcomingItem{
-    --wtLabel: clamp(64px, 9vw, 96px);
-    --wtDay: clamp(20px, 2.6vw, 32px);
-    --wtMonth: clamp(11px, 1.2vw, 14px);
-  }
-}
