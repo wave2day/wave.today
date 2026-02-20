@@ -783,75 +783,7 @@ body{background:transparent !important;}
 </style>
 
 
-<style id="wtOverrides_final">
-/* --- FIXES: label typography + window vertical position (user-defined) --- */
 
-/* 1) White label: always black text, centered, readable */
-.wtLabelWrap{
-  --wtLabelScale: 0.18; /* bigger label without changing graphic */
-}
-.wtLabelScope{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-}
-
-/* day + month widths aligned */
-.wtLabelDay, .wtLabelMonth{
-  width: 2.25em;        /* common text block width */
-  text-align:center;
-  margin-left:auto;
-  margin-right:auto;
-  color: rgba(0,0,0,.88) !important;
-}
-
-/* day: tabular digits keep equal width (00–31) */
-.wtLabelDay{
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  font-size: 118px;     /* readable */
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-
-/* month: 3 letters compressed to fit same width as day block */
-.wtLabelMonth{
-  font-weight: 700;
-  font-size: 50px;
-  line-height: 1.05;
-  transform: scaleX(.78);
-  transform-origin: center;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-/* 2) OKNO: move the whole glass window DOWN (tweak only this variable) */
-:root{
-  --wtOknoOffset: 62vh; /* increase = lower; decrease = higher */
-}
-#oknoSection{
-  margin-top: var(--wtOknoOffset) !important;
-}
-
-/* keep window wide */
-#oknoSection .window{
-  width: 96vw !important;
-  max-width: 1200px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* 3) Relikt killer: if any extra underlayer exists, hide it */
-#oknoSection .windowUnderframe,
-#oknoSection .underframe,
-#oknoSection .sheetBackdrop,
-#oknoSection .wtSheetBackdrop,
-#oknoSection .wtUnderframe{
-  display:none !important;
-}
-</style>
 
 <!-- OVERRIDE v8: zachovat pozici okna (52vh) + label beze změny velikosti (jen černý text + přesné centrování) -->
 <style id="wtOverride_v8">
