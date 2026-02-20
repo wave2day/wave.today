@@ -231,7 +231,14 @@
     transform: scale(0.995);
     z-index:0;
 
-    
+    background:
+      radial-gradient(80% 80% at 70% 70%,
+        rgba(var(--rimTint), .18) 0%,
+        rgba(var(--rimTint), .10) 26%,
+        transparent 62%),
+      radial-gradient(100% 90% at 50% 110%,
+        rgba(255,255,255,.20) 0%,
+        transparent 55%);}
 #oknoSection #wtCarouselNav .coreBtn{text-decoration: none;
       color: inherit;
 
@@ -400,7 +407,7 @@ body{background:transparent !important;}
         radial-gradient(1200px 700px at 50% 18%, rgba(120,150,255,.16), transparent 60%),
         radial-gradient(900px 600px at 18% 72%, rgba(255,120,210,.09), transparent 62%),
         radial-gradient(1100px 700px at 80% 78%, rgba(90,255,220,.06), transparent 66%),
-        background: rgba(255,255,255,.04);
+        linear-gradient(180deg, var(--bg1), var(--bg0));
       color:#eef0ff;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
 #oknoSection .stage{min-height:100%;
@@ -413,8 +420,8 @@ body{background:transparent !important;}
       border-radius: var(--R);
       background: linear-gradient(180deg, var(--glassA), var(--glassB));
       border: 1px solid var(--stroke);
-box-shadow: 0 26px 90px rgba(0,0,0,.62);
-      backdrop-filter: none;
+      box-shadow: 0 26px 90px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.10);
+      backdrop-filter: blur(12px);
       position:relative;
       overflow:hidden;}
 #oknoSection .windowInner{padding: var(--padTop) var(--padSide) var(--padBottom);
@@ -739,7 +746,7 @@ box-shadow: 0 26px 90px rgba(0,0,0,.62);
 #oknoSection::before,#oknoSection::after{content:none !important; display:none !important;}
 #oknoSection .stage{background: transparent !important;}
 #oknoSection .stage::before,#oknoSection .stage::after{content:none !important; display:none !important;}
-
+#oknoSection .window{background: transparent !important;}
 #oknoSection .window::before,#oknoSection .window::after{content:none !important; display:none !important;}
 /* keep the actual plastic via inner layers; just ensure no grey base */
 #oknoSection .windowInner{background: transparent !important;}
