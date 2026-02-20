@@ -862,28 +862,9 @@ body{background:transparent !important;}
   display:none !important;
 }
 </style>
-
-<!-- OVERRIDE v8: zachovat pozici okna (52vh) + label beze změny velikosti (jen černý text + přesné centrování) -->
-<style id="wtOverride_v8">
-  :root{ --wtOknoOffset: 52vh; } /* zachovat správnou pozici okna */
-
-  /* label: NEMĚNIT velikost; jen pojistka černé barvy a centrování textu */
-  .day, .mon, .wtLabelDay, .wtLabelMonth{
-    color: rgba(18,18,22,.92) !important;
-    text-shadow: none !important;
-    text-align: center !important;
-  }
-  .date, .wtLabelDate{
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:center !important;
-    justify-content:center !important;
-    text-align:center !important;
-  }
-</style>
 <!-- OVERRIDE v9: LABEL musí být VELKÝ (scale) + černý text + vycentrovaný; okno zůstává 52vh -->
 <style id="wtOverride_v9">
-  :root{ --wtOknoOffset:35vh; }
+  :root{ --wtOknoOffset:30vh; }
 
   /* NEMĚNNÉ PRAVIDLO: white label musí být čitelné = zvětšit celý label přes scale */
   .wtLabelWrap{ --wtLabelScale: 0.18 !important; } /* bylo ~0.13 -> výrazně větší */
