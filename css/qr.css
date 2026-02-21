@@ -360,3 +360,14 @@
       inset 0 0 0 1px rgba(0,0,0,.16);
     filter: brightness(.995) saturate(.98);
   }
+/* === Scale 360px label into card size (keeps whitelabel look) === */
+#wtCard{
+  --cardSize: clamp(220px, 78vw, 280px);
+  width: var(--cardSize);
+}
+
+/* scale the label so 360px design fits the card */
+#wtCard .glassSquare{
+  transform: scale(calc(var(--cardSize) / 360px));
+  transform-origin: center;
+}
