@@ -740,17 +740,6 @@ body{background:transparent !important;}
       0  1.25px 1.45px var(--depth1),
       0  3px    8px    var(--depth2);}</style><link rel="stylesheet" href="css/wt-upcoming.css?v=3"/>
 
-<style id="wtOknoUnderframeKill_v2">
-/* Force-remove any extra underframe/panel behind the plastic window */
-#oknoSection{background: transparent !important;}
-#oknoSection::before,#oknoSection::after{content:none !important; display:none !important;}
-#oknoSection .stage{background: transparent !important;}
-#oknoSection .stage::before,#oknoSection .stage::after{content:none !important; display:none !important;}
-#oknoSection .window{background: transparent !important;}
-#oknoSection .window::before,#oknoSection .window::after{content:none !important; display:none !important;}
-/* keep the actual plastic via inner layers; just ensure no grey base */
-#oknoSection .windowInner{background: transparent !important;}
-</style>
 
 <style id="wtLabelTypographyFix">
 /* White label typography: centered, readable, month as wide as day */
@@ -766,33 +755,6 @@ body{background:transparent !important;}
 
 
 <!-- OVERRIDE v2: vycentrování + odstranění "díry" vlevo (šířka okna téměř edge-to-edge) -->
-<style>
-  /* jistota box modelu */
-  *, *::before, *::after { box-sizing: border-box; }
-
-  /* okno sekce musí být přes celou šířku */
-  #oknoSection{ max-width: none !important; width: 100% !important; margin: 0 !important; padding: 0 0 18px !important; }
-
-  /* stage bez asymetrických okrajů */
-  #oknoSection .stage{
-    width: 100% !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-
-  /* samotné okno skoro od kraje ke kraji + centrované */
-  #oknoSection .window{
-    width: 96vw !important;
-    max-width: 1200px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    justify-self: center !important;
-  }
-</style>
-
-
 
 <style id="wtOverrides_final">
 
