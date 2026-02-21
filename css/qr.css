@@ -371,3 +371,5 @@
   transform: scale(calc(var(--cardSize) / 360px));
   transform-origin: center;
 }
+/* TEST: musí být vidět okamžitě */
+#wtCard{ outline: 4px solid red !important; }
