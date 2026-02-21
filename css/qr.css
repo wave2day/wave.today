@@ -373,3 +373,22 @@
 }
 /* TEST: musí být vidět okamžitě */
 #wtCard{ outline: 4px solid red !important; }
+/* === QR label se přizpůsobí velikosti karty === */
+
+#wtCard{
+  --cardSize: clamp(220px, 78vw, 280px);
+  width: var(--cardSize);
+  height: var(--cardSize);
+}
+
+/* sklo vyplní kartu */
+#wtCard .glassSquare{
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* vnitřní core zůstane ve správném poměru */
+#wtCard .qr_coreSquare{
+  width: 78% !important;
+  height: 78% !important;
+}
