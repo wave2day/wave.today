@@ -59,12 +59,24 @@
 #wtOverlay .backdrop{ position:absolute; inset:0; background:transparent; }
 
 #wtCard{
-  position:relative;
-  width:min(78vw, 280px);
+  position:fixed;
+  left:50%;
+  top:50%;
+  width:360px;
+  height:360px;
   aspect-ratio:1;
+  transform:translate(-50%, -50%) translateZ(0);
   perspective:1100px;
   pointer-events:auto;
-  transform:translateZ(0);
+  z-index:1000001;
+}
+
+
+@media (max-width:700px){
+  #wtCard{
+    transform:translate(-50%, -50%) scale(.62) translateZ(0);
+    transform-origin:center;
+  }
 }
 
 #wtInner{
