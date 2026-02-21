@@ -392,3 +392,52 @@
   width: 78% !important;
   height: 78% !important;
 }
+/* === WHITELABEL MATCH: cardSize řídí celý design (proporce + rohy + tloušťky) === */
+#wtCard{
+  --cardSize: clamp(220px, 78vw, 280px);
+  width: var(--cardSize) !important;
+  height: var(--cardSize) !important;
+
+  /* scale faktor vůči whitelabel 360px */
+  --s: calc(var(--cardSize) / 360px);
+
+  /* přepočet klíčových proměnných */
+  --sqOuter: var(--cardSize);
+  --sqR: calc(34px * var(--s));
+  --glassRingThickness: calc(13px * var(--s));
+  --glassRimBlur: calc(1.05px * var(--s));
+}
+
+/* glass musí vyplnit kartu */
+#wtCard .glassSquare{
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: var(--sqR) !important;
+}
+
+/* highlight vrstva (pevné px → škálovat) */
+#wtCard .glassSquare::before{
+  inset: calc(12px * var(--s)) !important;
+  border-radius: calc(var(--sqR) - (6px * var(--s))) !important;
+  filter: blur(calc(1.35px * var(--s))) !important;
+}
+
+/* rim vrstva (padding + blur → škálovat) */
+#wtCard .glassSquare::after{
+  border-radius: var(--sqR) !important;
+  padding: var(--glassRingThickness) !important;
+  filter: blur(var(--glassRimBlur)) !important;
+}
+
+/* press glow (inset + blur + radius → škálovat) */
+#wtCard .qr_pressGlow{
+  inset: calc(-28px * var(--s)) !important;
+  filter: blur(calc(12px * var(--s))) !important;
+  border-radius: calc(var(--sqR) + (14px * var(--s))) !important;
+}
+
+/* core: vnitřní outline padding + blur → škálovat */
+#wtCard .qr_coreSquare::after{
+  padding: calc(6px * var(--s)) !important;
+  filter: blur(calc(.78px * var(--s))) !important;
+}
