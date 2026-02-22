@@ -133,8 +133,8 @@
   --pressTimeOut: 190ms;
 }
 .glassSquare{
-    /* ↓ méně do růžova, víc chladný tón (jemně do modra) */
-    --rimTint: 140, 140, 140;  
+    /*  chladný tón (jemně do modra) */
+    --rimTint: 150, 150, 150;  
     --bleedX: 84%;
     --bleedY: 20%;
 
