@@ -62,8 +62,8 @@
   position:fixed;
   left:50%;
   top:50%;
-  width:360px;
-  height:360px;
+  width:260px;
+  height:260px;
   aspect-ratio:1;
   transform:translate(-50%, -50%) translateZ(0);
   perspective:1100px;
@@ -74,8 +74,8 @@
 /* MOBIL: žádné scale — jen reálné menší pixely (stabilní rohy) */
 @media (max-width:500px){
   #wtCard{
-    width:320px;
-    height:320px;
+    width:260px;
+    height:260px;
     transform:translate(-50%, -50%) translateZ(0);
     transform-origin:center;
   }
@@ -115,7 +115,7 @@
   --sqR: 34px;
   --coreRk: 1.55;
 
-  --glassRing: 13px;
+  --glassRing: 18px;
   --pressY: 3px;
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
@@ -123,7 +123,7 @@
 
 /* MOBIL: sklo fyzicky menší (zase bez scale) */
 @media (max-width:500px){
-  :root{ --sqOuter: 320px; }
+  :root{ --sqOuter: 260px; }
 }
 
 .glassSquare{
