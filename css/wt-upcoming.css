@@ -34,11 +34,11 @@
 /* white label */
 .wtLabelWrap{
   position:absolute;
-  top:20px;
-  left:20px;
+  top:10px;
+  left:10px;
   z-index:5;
   pointer-events:auto;
-  transform: scale
+  transform: scale(var(--wtLabelScale, 0.13));
   transform-origin: top left;
 }
 .wtLabelWrap{cursor:pointer;}
@@ -71,7 +71,7 @@
 
   /* stejné měřítko / styl */
   --sqOuter: 360px;
-  --innerRatio: .6;
+  --innerRatio: .78;
 
   --sqR: 34px;
   --coreRk: 1.55;
