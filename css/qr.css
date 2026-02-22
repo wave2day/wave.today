@@ -123,7 +123,7 @@
 
   --topRim1: rgba(0,0,0,.28);
   --topRim2: rgba(0,0,0,.12);
-  --topRimFade: 30%;
+  --topRimFade: 50%;
   
   --botRim1: rgba(255,255,255,.74);
   --botRim2: rgba(255,255,255,.30);
@@ -172,8 +172,8 @@
 .glassSquare::before{
     content:"";
     position:absolute;
-    inset: 12px;
-    border-radius: calc(var(--sqR) - 6px);
+    inset: 13px;
+    border-radius: calc(var(--sqR) - 7px);
     pointer-events:none;
     z-index:1;
 
@@ -255,7 +255,7 @@
 .qr_coreSquare{
     width:  calc(var(--sqOuter) - (2 * var(--gap)));
     height: calc(var(--sqOuter) - (2 * var(--gap)));
-    border-radius: max(14px, var(--coreR));
+    border-radius: max(16px, var(--coreR));
 
     position:relative;
     z-index:3;
