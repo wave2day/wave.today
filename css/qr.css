@@ -134,7 +134,7 @@
 }
 .glassSquare{
     /* ↓ méně do růžova, víc chladný tón (jemně do modra) */
-    --rimTint: 147, 147, 147;  
+    --rimTint: 140, 140, 140;  
     --bleedX: 84%;
     --bleedY: 20%;
 
