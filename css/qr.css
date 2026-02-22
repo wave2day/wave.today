@@ -109,7 +109,7 @@
 /* ===== Glass label (fits into card) ===== */
 :root{
   --sqOuter: 360px;
-  --innerRatio: .78;
+  --innerRatio: .7;
   --sqR: 34px;
   --coreRk: 1.55;
 
