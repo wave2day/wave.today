@@ -125,8 +125,8 @@
   --botRim1: rgba(255,255,255,.74);
   --botRim2: rgba(255,255,255,.30);
 
-  --bleedA: .085;
-  --bleedB: .040;
+  --bleedA: .85;
+  --bleedB: .50;
 
   --pressY: 3px;
   --pressTimeIn: 110ms;
@@ -134,9 +134,9 @@
 }
 .glassSquare{
     /* ↓ méně do růžova, víc chladný tón (jemně do modra) */
-    --rimTint: 170, 190, 255;   /* bylo 210,140,255 */
-    --bleedX: 78%;
-    --bleedY: 86%;
+    --rimTint: 147, 147, 147;  
+    --bleedX: 84%;
+    --bleedY: 20%;
 
     --gap: calc(var(--sqOuter) * (1 - var(--innerRatio)) / 2);
     --coreR: calc(var(--sqR) - (var(--gap) * var(--coreRk)));
