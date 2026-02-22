@@ -38,7 +38,7 @@
   left:20px;
   z-index:5;
   pointer-events:auto;
-  transform: scale(var(--wtLabelScale, 0.3));
+  transform: scale(var(--wtLabelScale, 0.5));
   transform-origin: top left;
 }
 .wtLabelWrap{cursor:pointer;}
@@ -71,7 +71,7 @@
 
   /* stejné měřítko / styl */
   --sqOuter: 360px;
-  --innerRatio: .78;
+  --innerRatio: .6;
 
   --sqR: 34px;
   --coreRk: 1.55;
