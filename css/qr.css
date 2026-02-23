@@ -132,7 +132,7 @@
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
 }
-.glassSquare{
+#wtCard .glassSquare{
     /*  chladný tón (jemně do modra) */
     --rimTint: 150, 150, 150;  
     --bleedX: 84%;
@@ -166,7 +166,7 @@
 
     transition: filter var(--pressTimeOut) ease;
   }
-.glassSquare::before{
+#wtCard .glassSquare::before{
     content:"";
     position:absolute;
     inset: 12px;
@@ -186,7 +186,7 @@
     filter: blur(1.35px);
     opacity:.95;
   }
-.glassSquare::after{
+#wtCard .glassSquare::after{
     content:"";
     position:absolute;
     inset:-1px;
@@ -229,7 +229,7 @@
     filter: blur(var(--glassRimBlur));
     opacity:.95;
   }
-.qr_pressGlow{
+#wtCard .qr_pressGlow{
     position:absolute;
     inset:-28px;
     border-radius: calc(var(--sqR) + 14px);
@@ -249,7 +249,7 @@
         rgba(255,255,255,.16) 0%,
         transparent 55%);
   }
-.qr_coreSquare{
+#wtCard .qr_coreSquare{
     width:  calc(var(--sqOuter) - (2 * var(--gap)));
     height: calc(var(--sqOuter) - (2 * var(--gap)));
     border-radius: max(14px, var(--coreR));
@@ -287,7 +287,7 @@
       box-shadow var(--pressTimeOut) ease,
       filter var(--pressTimeOut) ease;
   }
-.qr_coreSquare::before{
+#wtCard .qr_coreSquare::before{
     content:"";
     position:absolute;
     inset:0;
@@ -300,7 +300,7 @@
     mix-blend-mode: soft-light;
     opacity:.96;
   }
-.qr_coreSquare::after{
+#wtCard .qr_coreSquare::after{
     content:"";
     position:absolute;
     inset:-1px;
@@ -328,7 +328,7 @@
     opacity:.95;
     mix-blend-mode: normal;
   }
-.qrWrap{
+#wtCard .qrWrap{
     position:absolute;
     inset:0;
     display:grid;
@@ -336,13 +336,13 @@
     pointer-events:none;
     z-index:10;
   }
-.qrWrap .qrSvg{
+#wtCard .qrWrap .qrSvg{
     width:88%;
     height:88%;
     display:block;
     shape-rendering: crispEdges;
   }
-.qr_coreSquare:hover{
+#wtCard .qr_coreSquare:hover{
     transform: translateY(-1px);
     box-shadow:
       0 22px 30px rgba(0,0,0,.20),
@@ -350,16 +350,16 @@
       inset 0 -14px 20px rgba(255,255,255,.18),
       inset 0 0 0 1px rgba(0,0,0,.16);
   }
-.glassSquare:has(.qr_coreSquare:active){
+#wtCard .glassSquare:has(.qr_coreSquare:active){
     filter: brightness(.985);
     transition: filter var(--pressTimeIn) ease;
   }
-.glassSquare:has(.qr_coreSquare:active) .qr_pressGlow{
+#wtCard .glassSquare:has(.qr_coreSquare:active) .qr_pressGlow{
     opacity:1;
     transform: scale(1.01);
     transition: opacity var(--pressTimeIn) ease, transform var(--pressTimeIn) ease;
   }
-.qr_coreSquare:active{
+#wtCard .qr_coreSquare:active{
     transform: translateY(var(--pressY));
     transition:
       transform var(--pressTimeIn) cubic-bezier(.2,.8,.2,1),
