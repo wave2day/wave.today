@@ -1,32 +1,9 @@
 /* =====================================================
    UPCOMING – PLAKÁTY + SKLO (ČISTÉ)
-   Sklo BEZE ZMĚNY
-   Přidáno pouze řízení velikosti: mobil / tablet / desktop
+   Vzato PŘÍMO z tvého wt-upcoming.css.
+   Sklo (glassSquare + ::before + ::after + pressGlow) je BEZE ZMĚNY.
+   Odstraněno: coreSquare + datum + click/has pravidla navázaná na coreSquare.
 ===================================================== */
-
-/* =====================================================
-   GLASS SIZE CONTROL
-===================================================== */
-
-/* mobil */
-:root{
-  --wtLabelScale: 0.13;
-}
-
-/* tablet */
-@media (min-width: 700px){
-  :root{
-    --wtLabelScale: 0.16;
-  }
-}
-
-/* desktop */
-@media (min-width: 1024px){
-  :root{
-    --wtLabelScale: 0.25;
-  }
-}
-
 
 #wtNewEventsSlot{display:block;width:100%;}
 
@@ -35,7 +12,7 @@
 .wtUpcomingItem{
   position:relative;
   width:100%;
-  max-width:640px;
+  max-width:640px;        /* změň na 480/640/720 podle chuti */
   margin-left:auto;
   margin-right:auto;
 }
@@ -52,19 +29,21 @@
   pointer-events:auto;
   cursor:pointer;
 
-  transform: scale(var(--wtLabelScale));
+  transform: scale(var(--wtLabelScale, 0.13));
   transform-origin: top left;
 }
 
 .wtLabelScope{
   --bg:#9c9c9c;
 
+  /* stejné měřítko / styl */
   --sqOuter: 360px;
   --innerRatio: .78;
 
   --sqR: 34px;
   --coreRk: 1.55;
 
+  /* sklo */
   --glassClearA: rgba(255,255,255,.14);
   --glassClearB: rgba(255,255,255,.08);
   --glassMilkA:  rgba(255,255,255,.10);
@@ -80,12 +59,15 @@
   --botRim1: rgba(255,255,255,.74);
   --botRim2: rgba(255,255,255,.30);
 
+  /* jen jemný nádech ve skle */
   --bleedA: .085;
   --bleedB: .040;
 
+  /* text */
   --t1: rgba(255,255,255,.92);
   --t2: rgba(255,255,255,.58);
 
+  /* press */
   --pressY: 3px;
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
@@ -94,6 +76,7 @@
 .wtUpcoming .wtLabelScope *{box-sizing:border-box;}
 
 .wtUpcoming .wtLabelScope .glassSquare{
+  /* méně do růžova, víc chladný tón (jemně do modra) */
   --rimTint: 170, 190, 255;
   --bleedX: 78%;
   --bleedY: 86%;
@@ -211,101 +194,4 @@
     radial-gradient(120% 100% at 50% 120%,
       rgba(255,255,255,.16) 0%,
       transparent 55%);
-}
-/* =====================================================
-   WHITE CARD + DATE (LOCKED)
-   Kartička má vlastní velikost, datum je na ni pevně navázané
-   ALWAYS BLACK
-===================================================== */
-
-/* 1) Ovládání kartičky a typografie (jen tady) */
-:root{
-  /* velikost kartičky vůči sklu (0.60–0.90 typicky) */
-  --wtCardRatio: 0.78;
-
-  /* poměry uvnitř kartičky (počítá se z její velikosti) */
-  --wtCardPadRatio: 0.14;   /* okraje uvnitř kartičky */
-  --wtDayRatio: 0.48;       /* velikost dne vůči kartičce */
-  --wtMonthRatio: 0.11;     /* velikost měsíce vůči kartičce */
-  --wtMonthGapRatio: 0.06;  /* mezera mezi dnem a měsícem */
-}
-
-/* volitelně: na desktopu větší kartička (jen když budeš chtít) */
-@media (min-width: 1024px){
-  :root{
-    --wtCardRatio: 0.82;
-  }
-}
-
-/* 2) Výpočty velikosti kartičky (zůstává uvnitř skla) */
-.wtLabelScope{
-  --wtCardGap: calc(var(--sqOuter) * (1 - var(--wtCardRatio)) / 2);
-  --wtCoreSize: calc(var(--sqOuter) - (2 * var(--wtCardGap)));
-  --wtCoreR: calc(var(--sqR) - (var(--wtCardGap) * var(--coreRk)));
-}
-
-/* 3) Bílá kartička uvnitř skla */
-.wtUpcoming .wtLabelScope .coreSquare{
-  width: var(--wtCoreSize);
-  height: var(--wtCoreSize);
-  border-radius: max(14px, var(--wtCoreR));
-
-  position: absolute;
-  inset: 0;
-  margin: auto;
-
-  z-index: 3;
-  border: 0;
-  padding: 0;
-
-  background: #fff;
-  box-shadow:
-    0 18px 26px rgba(0,0,0,.18),
-    inset 0 16px 22px rgba(0,0,0,.14),
-    inset 0 -14px 20px rgba(255,255,255,.18),
-    inset 0 0 0 1px rgba(0,0,0,.14);
-}
-
-/* 4) Datum uvnitř kartičky – nic nelítá ven */
-.wtUpcoming .wtLabelScope .coreSquare .wtDate{
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-
-  padding: calc(var(--wtCoreSize) * var(--wtCardPadRatio));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-
-  overflow: hidden;
-}
-
-/* DEN – vždy černý */
-.wtUpcoming .wtLabelScope .coreSquare .wtDay{
-  display: block;
-  color: #000;
-
-  font-weight: 900;
-  font-size: calc(var(--wtCoreSize) * var(--wtDayRatio));
-  line-height: 0.95;
-  font-variant-numeric: tabular-nums;
-}
-
-/* MĚSÍC – vždy černý, nepřeleze */
-.wtUpcoming .wtLabelScope .coreSquare .wtMonth{
-  display: block;
-  color: #000;
-
-  margin-top: calc(var(--wtCoreSize) * var(--wtMonthGapRatio));
-  font-weight: 800;
-  font-size: calc(var(--wtCoreSize) * var(--wtMonthRatio));
-  line-height: 1;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-
-  white-space: nowrap;
-  max-width: 100%;
-  overflow: hidden;
 }
