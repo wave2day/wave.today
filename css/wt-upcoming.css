@@ -19,12 +19,12 @@
 .wtLabelWrap{
   position:absolute;
   top:10px;
-  left:20px;
+  left:10px;
   z-index:50;
   pointer-events:auto;
   cursor:pointer;
 
-  transform: scale(var(--wtLabelScale, 0.3));
+  transform: scale(var(--wtLabelScale, 0.13));
   transform-origin: top left;
 }
 
@@ -39,7 +39,6 @@
   pointer-events:none;
 }
 
-.
 /* ===== Label glass-scope variables ===== */
 .wtLabelScope{
   --bg:#9c9c9c;
@@ -311,9 +310,9 @@
 .wtUpcoming .wtLabelScope .mon{
   margin-top: 10px;
   font-weight: 780;
-  font-size: 38px;
+  font-size: 18px;
   letter-spacing: 3px;
-  color: rgba(18,18,22,.88);
+  color: rgba(18,18,22,.52);
 }
 
 /* Hover/active */
@@ -396,9 +395,28 @@
   70%{ opacity:1; transform: translateY(-10px) scale(1.01); }
   100%{ opacity:1; transform: translateY(0) scale(1); }
 }
-/* ===== LABEL FIX (single source, supports .day/.mon AND .wtLabelDay/.wtLabelMonth) ===== */
 
-/* Keep date text stacked + centered inside the white core */
+/* ===== LABEL UNIFIED (single source of truth; no HTML changes required) =====
+   Tuning knobs (edit values only):
+   --wtLabelScale  : overall label scale (default 0.13)
+   --wtDaySize     : day font size (default 76px)
+   --wtMonSize     : month font size (default 18px)
+   --wtMonAlpha    : month opacity (0..1, default 0.52)
+*/
+
+:root{
+  --wtLabelScale: 0.13;
+  --wtDaySize: 76px;
+  --wtMonSize: 18px;
+  --wtMonAlpha: 0.52;
+}
+
+.wtLabelWrap{
+  transform: scale(var(--wtLabelScale)) !important;
+  transform-origin: top left;
+}
+
+/* The overlay that positions the date content */
 .wtUpcoming .wtLabelScope .date{
   position:absolute;
   inset:0;
@@ -415,20 +433,21 @@
 .wtUpcoming .wtLabelScope .day{
   display:block;
   font-weight: 850;
-  font-size: 76px;
+  font-size: var(--wtDaySize);
   letter-spacing: .2px;
   line-height: 1;
   color: rgba(18,18,22,.88);
+  font-variant-numeric: tabular-nums;
 }
 .wtUpcoming .wtLabelScope .mon{
   display:block;
   margin-top: 10px;
   font-weight: 780;
-  font-size: 18px;
+  font-size: var(--wtMonSize);
   letter-spacing: 3px;
   line-height: 1;
   text-transform: uppercase;
-  color: rgba(18,18,22,.52);
+  color: rgba(18,18,22,var(--wtMonAlpha));
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
@@ -437,8 +456,8 @@
 
 /* Alternative markup (.wtLabelDay/.wtLabelMonth) if present */
 .wtLabelInner{
-  width:100%;
-  height:100%;
+  width: 100%;
+  height: 100%;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -446,24 +465,26 @@
   gap:10px;
   text-align:center;
 }
+
 .wtLabelDay{
   display:block;
   font-weight: 850;
-  font-size: 76px;
+  font-size: var(--wtDaySize);
   letter-spacing: .2px;
   line-height: 1;
   color: rgba(18,18,22,.88);
   font-variant-numeric: tabular-nums;
 }
+
 .wtLabelMonth{
   display:block;
   margin-top: 10px;
   font-weight: 780;
-  font-size: 18px;
+  font-size: var(--wtMonSize);
   letter-spacing: 3px;
   line-height: 1;
   text-transform: uppercase;
-  color: rgba(18,18,22,.52);
+  color: rgba(18,18,22,var(--wtMonAlpha));
   white-space: nowrap;
   max-width: 100%;
   overflow: hidden;
