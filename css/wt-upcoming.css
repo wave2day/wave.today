@@ -18,7 +18,7 @@
 /* ===== White date label (base layout) ===== */
 .wtLabelWrap{
   position:absolute;
-  top:20px;
+  top:10px;
   left:20px;
   z-index:50;
   pointer-events:auto;
