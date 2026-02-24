@@ -1,43 +1,69 @@
 /* =====================================================
-   UPCOMING – PLAKÁTY + SKLO (ČISTÉ)
-   Vzato PŘÍMO z tvého wt-upcoming.css.
-   Sklo (glassSquare + ::before + ::after + pressGlow) je BEZE ZMĚNY.
-   Odstraněno: coreSquare + datum + click/has pravidla navázaná na coreSquare.
+   WT UPCOMING – PLAKÁTY + GLASS LABEL (GLASS ONLY, CLEAN)
+   - Odstraněno KOMPLETNĚ vše kolem datumu / bílé kartičky / coreSquare
+   - Zůstává jen: layout plakátů + skleněný label (glassSquare + ::before/::after + pressGlow)
+   - Velikost a odsazení labelu se počítá z ŠÍŘKY plakátu (container units),
+     takže se to při LANDSCAPE / "Desktop site" nebude rozhazovat podle viewportu.
 ===================================================== */
 
+/* --- základní wrapper slotu --- */
 #wtNewEventsSlot{display:block;width:100%;}
 
-.wtUpcomingList{display:flex;flex-direction:column;gap:18px;padding:0 14px;}
+/* UPCOMING list = vždy pod sebou */
+.wtUpcomingList{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  padding:0 14px;
+}
 
+/* ITEM: full width on mobile, max width + centered on desktop */
 .wtUpcomingItem{
   position:relative;
   width:100%;
-  max-width:640px;        /* změň na 480/640/720 podle chuti */
+  max-width:640px; /* změň na 480/640/720 podle chuti */
   margin-left:auto;
   margin-right:auto;
+
+  /* klíč: ať se label škáluje podle ŠÍŘKY PLAKÁTU, ne podle viewportu */
+  container-type:inline-size;
 }
 
 .wtUpcomingLink{display:block;text-decoration:none;}
-
 .wtUpcomingPoster{width:100%;height:auto;display:block;border-radius:0 !important;}
 
+/* =====================================================
+   GLASS LABEL – pozice (počítáno z plakátu)
+===================================================== */
 .wtLabelWrap{
   position:absolute;
-  top:20px;
-  left:20px;
   z-index:50;
   pointer-events:auto;
   cursor:pointer;
 
-  transform: scale(var(--wtLabelScale, 0.13));
-  transform-origin: top left;
+  /* odsazení od rohu plakátu (stejné v portrait/landscape) */
+  top:  clamp(10px, 2.2cqi, 18px);
+  left: clamp(10px, 2.2cqi, 18px);
 }
 
-.wtLabelScope{
-  --bg:#9c9c9c;
+/* fallback pro prohlížeče bez container units */
+@supports not (width: 1cqi){
+  .wtLabelWrap{
+    top:  clamp(10px, 2.2vw, 18px);
+    left: clamp(10px, 2.2vw, 18px);
+  }
+}
 
-  /* stejné měřítko / styl */
-  --sqOuter: 360px;
+/* =====================================================
+   GLASS (scope = proměnné + samotné sklo)
+===================================================== */
+.wtLabelScope{
+  /* jediná věc, kterou budeš ladit nejčastěji: velikost skla */
+  --sqOuter: clamp(92px, 18cqi, 140px);
+
+  /* fallback když nejdou container units */
+  /* (přepíše se v @supports not (1cqi) níž) */
+
   --innerRatio: .78;
 
   --sqR: 34px;
@@ -63,18 +89,20 @@
   --bleedA: .085;
   --bleedB: .040;
 
-  /* text */
-  --t1: rgba(255,255,255,.92);
-  --t2: rgba(255,255,255,.58);
-
   /* press */
-  --pressY: 3px;
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
 }
 
+@supports not (width: 1cqi){
+  .wtLabelScope{
+    --sqOuter: clamp(92px, 18vw, 140px);
+  }
+}
+
 .wtUpcoming .wtLabelScope *{box-sizing:border-box;}
 
+/* --- GLASS SQUARE (beze změny layoutu skla) --- */
 .wtUpcoming .wtLabelScope .glassSquare{
   /* méně do růžova, víc chladný tón (jemně do modra) */
   --rimTint: 170, 190, 255;
@@ -195,3 +223,7 @@
       rgba(255,255,255,.16) 0%,
       transparent 55%);
 }
+
+/* volitelné: jemný "press" efekt (když budeš chtít později zapojit :active / .isPressed) */
+.wtUpcoming .wtLabelScope.isPressed .pressGlow{opacity:1; transform: scale(1);}
+.wtUpcoming .wtLabelScope.isPressed .glassSquare{filter: brightness(.98);}
