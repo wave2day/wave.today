@@ -212,3 +212,100 @@
       rgba(255,255,255,.16) 0%,
       transparent 55%);
 }
+/* =====================================================
+   WHITE CARD + DATE (LOCKED)
+   Kartička má vlastní velikost, datum je na ni pevně navázané
+   ALWAYS BLACK
+===================================================== */
+
+/* 1) Ovládání kartičky a typografie (jen tady) */
+:root{
+  /* velikost kartičky vůči sklu (0.60–0.90 typicky) */
+  --wtCardRatio: 0.78;
+
+  /* poměry uvnitř kartičky (počítá se z její velikosti) */
+  --wtCardPadRatio: 0.14;   /* okraje uvnitř kartičky */
+  --wtDayRatio: 0.48;       /* velikost dne vůči kartičce */
+  --wtMonthRatio: 0.11;     /* velikost měsíce vůči kartičce */
+  --wtMonthGapRatio: 0.06;  /* mezera mezi dnem a měsícem */
+}
+
+/* volitelně: na desktopu větší kartička (jen když budeš chtít) */
+@media (min-width: 1024px){
+  :root{
+    --wtCardRatio: 0.82;
+  }
+}
+
+/* 2) Výpočty velikosti kartičky (zůstává uvnitř skla) */
+.wtLabelScope{
+  --wtCardGap: calc(var(--sqOuter) * (1 - var(--wtCardRatio)) / 2);
+  --wtCoreSize: calc(var(--sqOuter) - (2 * var(--wtCardGap)));
+  --wtCoreR: calc(var(--sqR) - (var(--wtCardGap) * var(--coreRk)));
+}
+
+/* 3) Bílá kartička uvnitř skla */
+.wtUpcoming .wtLabelScope .coreSquare{
+  width: var(--wtCoreSize);
+  height: var(--wtCoreSize);
+  border-radius: max(14px, var(--wtCoreR));
+
+  position: absolute;
+  inset: 0;
+  margin: auto;
+
+  z-index: 3;
+  border: 0;
+  padding: 0;
+
+  background: #fff;
+  box-shadow:
+    0 18px 26px rgba(0,0,0,.18),
+    inset 0 16px 22px rgba(0,0,0,.14),
+    inset 0 -14px 20px rgba(255,255,255,.18),
+    inset 0 0 0 1px rgba(0,0,0,.14);
+}
+
+/* 4) Datum uvnitř kartičky – nic nelítá ven */
+.wtUpcoming .wtLabelScope .coreSquare .wtDate{
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+
+  padding: calc(var(--wtCoreSize) * var(--wtCardPadRatio));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  overflow: hidden;
+}
+
+/* DEN – vždy černý */
+.wtUpcoming .wtLabelScope .coreSquare .wtDay{
+  display: block;
+  color: #000;
+
+  font-weight: 900;
+  font-size: calc(var(--wtCoreSize) * var(--wtDayRatio));
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+}
+
+/* MĚSÍC – vždy černý, nepřeleze */
+.wtUpcoming .wtLabelScope .coreSquare .wtMonth{
+  display: block;
+  color: #000;
+
+  margin-top: calc(var(--wtCoreSize) * var(--wtMonthGapRatio));
+  font-weight: 800;
+  font-size: calc(var(--wtCoreSize) * var(--wtMonthRatio));
+  line-height: 1;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+}
