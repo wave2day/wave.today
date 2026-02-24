@@ -1,130 +1,89 @@
-/* =====================================================
-   WT UPCOMING — PLAKÁTY + GLASS LABEL (GLASS-ONLY) — REBUILD v2
-   CÍL: NESAHAT do vzhledu skla. Mění se jen:
-   - pozice (top/left)
-   - měřítko (transform: scale) přes container queries podle šířky plakátu
-   Sklo (glassSquare + ::before + ::after + pressGlow) je 1:1 podle tvého bloku.
-===================================================== */
+/* =========================================
+   UPCOMING – GLASS ONLY (stabilní verze)
+   Reference = plakát
+   Žádné viewport výpočty
+========================================= */
 
-#wtNewEventsSlot{display:block;width:100%;}
+#wtNewEventsSlot{
+  display:block;
+  width:100%;
+}
 
-.wtUpcomingList{display:flex;flex-direction:column;gap:18px;padding:0 14px;}
+.wtUpcomingList{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  padding:0 14px;
+}
 
+/* PLAKÁT */
 .wtUpcomingItem{
   position:relative;
   width:100%;
   max-width:640px;
   margin-left:auto;
   margin-right:auto;
-
-  /* škálování labelu se řídí šířkou TÉHLE karty (plakátu), ne viewportem */
-  container-type:inline-size;
 }
 
-.wtUpcomingLink{display:block;text-decoration:none;}
-.wtUpcomingPoster{width:100%;height:auto;display:block;border-radius:0 !important;}
+.wtUpcomingLink{
+  display:block;
+  text-decoration:none;
+}
 
-/* =====================================================
-   WRAP: pozice + jediné měřítko skla
-   - drží konstantní proporce (všechno se škáluje jako celek)
-===================================================== */
+.wtUpcomingPoster{
+  width:100%;
+  height:auto;
+  display:block;
+}
+
+/* =========================================
+   LABEL – velikost a pozice
+   VŠECHNO z procent šířky plakátu
+========================================= */
+
 .wtLabelWrap{
   position:absolute;
   z-index:50;
-  pointer-events:auto;
   cursor:pointer;
 
-  /* default (když container queries nejsou) */
-  --wtLabelScale: .13;
-  --wtLabelOffset: 10px;
+  /* vzdálenost od rohu plakátu */
+  top:3%;
+  left:3%;
 
-  top: var(--wtLabelOffset);
-  left: var(--wtLabelOffset);
+  /* velikost labelu */
+  width:14%;
 
-  transform: scale(var(--wtLabelScale));
-  transform-origin: top left;
+  /* čtverec */
+  aspect-ratio:1/1;
+
+  /* žádné škálování */
+  transform:none;
 }
 
-/* Container rules: škála/offset podle šířky plakátu (NE podle zařízení) */
-@container (max-width: 360px){
-  .wtLabelWrap{ --wtLabelScale:.12; --wtLabelOffset:10px; }
-}
-@container (min-width: 361px) and (max-width: 440px){
-  .wtLabelWrap{ --wtLabelScale:.13; --wtLabelOffset:10px; }
-}
-@container (min-width: 441px) and (max-width: 540px){
-  .wtLabelWrap{ --wtLabelScale:.145; --wtLabelOffset:12px; }
-}
-@container (min-width: 541px){
-  .wtLabelWrap{ --wtLabelScale:.155; --wtLabelOffset:14px; }
+/* vnitřní kontejnery vyplní wrapper */
+.wtLabelScope,
+.wtLabelScope .glassSquare{
+  width:100%;
+  height:100%;
+  box-sizing:border-box;
 }
 
-/* =====================================================
-   SCOPE proměnných (tvoje původní nastavení)
-===================================================== */
-.wtLabelScope{
-  --bg:#9c9c9c;
+/* =========================================
+   SKLO – PŮVODNÍ VZHLED (BEZ ZMĚNY)
+========================================= */
 
-  /* stejné měřítko / styl */
-  --sqOuter: 360px;
-  --innerRatio: .78;
-
-  --sqR: 34px;
-  --coreRk: 1.55;
-
-  /* sklo */
-  --glassClearA: rgba(255,255,255,.14);
-  --glassClearB: rgba(255,255,255,.08);
-  --glassMilkA:  rgba(255,255,255,.10);
-  --glassMilkB:  rgba(255,255,255,.12);
-
-  --glassRingThickness: 13px;
-  --glassRimBlur: 1.05px;
-
-  --topRim1: rgba(0,0,0,.28);
-  --topRim2: rgba(0,0,0,.12);
-  --topRimFade: 30%;
-
-  --botRim1: rgba(255,255,255,.74);
-  --botRim2: rgba(255,255,255,.30);
-
-  /* jen jemný nádech ve skle */
-  --bleedA: .085;
-  --bleedB: .040;
-
-  /* press */
-  --pressY: 3px;
-  --pressTimeIn: 110ms;
-  --pressTimeOut: 190ms;
-}
-
-.wtUpcoming .wtLabelScope *{box-sizing:border-box;}
-
-/* =====================================================
-   SKLO — BEZE ZMĚNY (1:1 z tvého bloku)
-===================================================== */
-.wtUpcoming .wtLabelScope .glassSquare{
-  /* méně do růžova, víc chladný tón (jemně do modra) */
-  --rimTint: 170, 190, 255;
-  --bleedX: 78%;
-  --bleedY: 86%;
-
-  --gap: calc(var(--sqOuter) * (1 - var(--innerRatio)) / 2);
-  --coreR: calc(var(--sqR) - (var(--gap) * var(--coreRk)));
-
-  width: var(--sqOuter);
-  height: var(--sqOuter);
-  border-radius: var(--sqR);
+.wtLabelScope .glassSquare{
+  border-radius:18px;
   position:relative;
   display:grid;
   place-items:center;
   isolation:isolate;
 
   background:
-    radial-gradient(120% 140% at 50% 62%, var(--glassMilkA), transparent 62%),
-    radial-gradient(120% 160% at 50% 92%, var(--glassMilkB), transparent 58%),
-    radial-gradient(120% 140% at 28% 20%, var(--glassClearA), transparent 55%),
-    radial-gradient(140% 160% at 70% 74%, var(--glassClearB), transparent 60%),
+    radial-gradient(120% 140% at 50% 62%, rgba(255,255,255,.10), transparent 62%),
+    radial-gradient(120% 160% at 50% 92%, rgba(255,255,255,.12), transparent 58%),
+    radial-gradient(120% 140% at 28% 20%, rgba(255,255,255,.14), transparent 55%),
+    radial-gradient(140% 160% at 70% 74%, rgba(255,255,255,.08), transparent 60%),
     rgba(255,255,255,.08);
 
   box-shadow:
@@ -132,99 +91,53 @@
     inset 0 -22px 30px rgba(255,255,255,.22),
     0 26px 54px rgba(0,0,0,.20);
 
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-
-  transition: filter var(--pressTimeOut) ease;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
 }
 
-.wtUpcoming .wtLabelScope .glassSquare::before{
+.wtLabelScope .glassSquare::before{
   content:"";
   position:absolute;
-  inset: 12px;
-  border-radius: calc(var(--sqR) - 6px);
+  inset:8%;
+  border-radius:inherit;
   pointer-events:none;
-  z-index:1;
 
   background:
     radial-gradient(70% 90% at 16% 18%,
       rgba(255,255,255,.42) 0%,
       rgba(255,255,255,.18) 35%,
-      transparent 72%),
-    radial-gradient(44% 60% at 26% 30%,
-      rgba(255,255,255,.18) 0%,
       transparent 72%);
-
-  filter: blur(1.35px);
+  filter:blur(1.2px);
   opacity:.95;
 }
 
-.wtUpcoming .wtLabelScope .glassSquare::after{
+.wtLabelScope .glassSquare::after{
   content:"";
   position:absolute;
   inset:-1px;
-  border-radius: var(--sqR);
+  border-radius:inherit;
   pointer-events:none;
-  z-index:2;
 
   background:
-    radial-gradient(72% 120% at var(--bleedX) var(--bleedY),
-      rgba(var(--rimTint), var(--bleedA)) 0%,
-      rgba(var(--rimTint), var(--bleedB)) 28%,
-      transparent 68%),
-
-    conic-gradient(from 210deg,
-      transparent 0 18%,
-      rgba(var(--rimTint), .09) 22%,
-      transparent 36%,
-      rgba(var(--rimTint), .045) 46%,
-      transparent 62%,
-      rgba(var(--rimTint), .032) 70%,
-      transparent 100%),
-
     radial-gradient(140% 120% at 50% 120%,
-      var(--botRim1) 0%,
-      var(--botRim2) 22%,
+      rgba(255,255,255,.74) 0%,
+      rgba(255,255,255,.30) 22%,
       transparent 52%),
 
     radial-gradient(170% 120% at 50% -38%,
       rgba(0,0,0,.30) 0%,
       rgba(0,0,0,.12) 14%,
-      transparent var(--topRimFade));
-
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-
-  padding: var(--glassRingThickness);
-  filter: blur(var(--glassRimBlur));
-  opacity:.95;
+      transparent 30%);
 }
 
-.wtUpcoming .wtLabelScope .pressGlow{
-  position:absolute;
-  inset:-28px;
-  border-radius: calc(var(--sqR) + 14px);
-  pointer-events:none;
-  opacity:0;
-  filter: blur(12px);
-  transform: scale(.995);
-  transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
-  z-index:0;
+/* =========================================
+   BEZPEČNOST – vypnout staré datum/kartičky
+========================================= */
 
-  background:
-    radial-gradient(86% 86% at 70% 74%,
-      rgba(255,255,255,.18) 0%,
-      rgba(255,255,255,.10) 30%,
-      transparent 65%),
-    radial-gradient(120% 100% at 50% 120%,
-      rgba(255,255,255,.16) 0%,
-      transparent 55%);
+.coreSquare,
+.dateSquare,
+.wtDay,
+.wtMonth,
+.wtLabelDate{
+  display:none !important;
 }
-
-.wtUpcoming .wtLabelScope.isPressed .pressGlow{opacity:1;transform:scale(1.01);}
-
-/* Bezpečnost: cokoli datumového, co někde zůstalo, pryč */
-.wtLabelDate, .coreSquare, .dateSquare, .wtDay, .wtMonth{display:none !important;}
