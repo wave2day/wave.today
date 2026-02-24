@@ -1,9 +1,32 @@
 /* =====================================================
    UPCOMING – PLAKÁTY + SKLO (ČISTÉ)
-   Vzato PŘÍMO z tvého wt-upcoming.css.
-   Sklo (glassSquare + ::before + ::after + pressGlow) je BEZE ZMĚNY.
-   Odstraněno: coreSquare + datum + click/has pravidla navázaná na coreSquare.
+   Sklo BEZE ZMĚNY
+   Přidáno pouze řízení velikosti: mobil / tablet / desktop
 ===================================================== */
+
+/* =====================================================
+   GLASS SIZE CONTROL
+===================================================== */
+
+/* mobil */
+:root{
+  --wtLabelScale: 0.13;
+}
+
+/* tablet */
+@media (min-width: 700px){
+  :root{
+    --wtLabelScale: 0.16;
+  }
+}
+
+/* desktop */
+@media (min-width: 1024px){
+  :root{
+    --wtLabelScale: 0.19;
+  }
+}
+
 
 #wtNewEventsSlot{display:block;width:100%;}
 
@@ -12,7 +35,7 @@
 .wtUpcomingItem{
   position:relative;
   width:100%;
-  max-width:640px;        /* změň na 480/640/720 podle chuti */
+  max-width:640px;
   margin-left:auto;
   margin-right:auto;
 }
@@ -29,21 +52,19 @@
   pointer-events:auto;
   cursor:pointer;
 
-  transform: scale(var(--wtLabelScale, 0.13));
+  transform: scale(var(--wtLabelScale));
   transform-origin: top left;
 }
 
 .wtLabelScope{
   --bg:#9c9c9c;
 
-  /* stejné měřítko / styl */
   --sqOuter: 360px;
   --innerRatio: .78;
 
   --sqR: 34px;
   --coreRk: 1.55;
 
-  /* sklo */
   --glassClearA: rgba(255,255,255,.14);
   --glassClearB: rgba(255,255,255,.08);
   --glassMilkA:  rgba(255,255,255,.10);
@@ -59,15 +80,12 @@
   --botRim1: rgba(255,255,255,.74);
   --botRim2: rgba(255,255,255,.30);
 
-  /* jen jemný nádech ve skle */
   --bleedA: .085;
   --bleedB: .040;
 
-  /* text */
   --t1: rgba(255,255,255,.92);
   --t2: rgba(255,255,255,.58);
 
-  /* press */
   --pressY: 3px;
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
@@ -76,7 +94,6 @@
 .wtUpcoming .wtLabelScope *{box-sizing:border-box;}
 
 .wtUpcoming .wtLabelScope .glassSquare{
-  /* méně do růžova, víc chladný tón (jemně do modra) */
   --rimTint: 170, 190, 255;
   --bleedX: 78%;
   --bleedY: 86%;
