@@ -1,13 +1,11 @@
-/* =========================================
-   UPCOMING – GLASS ONLY (stabilní verze)
-   Reference = plakát
-   Žádné viewport výpočty
-========================================= */
+/* =====================================================
+   WT UPCOMING — PLAKÁTY + GLASS LABEL (GLASS-ONLY / % z plakátu)
+   - Jediná logika pro pozici + velikost: % z plakátu
+   - Žádné scale(), žádné cqw/cqi, žádné breakpointy
+   - Sklo (vzhled) ponecháno, jen se natáhne do wrapperu
+===================================================== */
 
-#wtNewEventsSlot{
-  display:block;
-  width:100%;
-}
+#wtNewEventsSlot{display:block;width:100%;}
 
 .wtUpcomingList{
   display:flex;
@@ -16,64 +14,60 @@
   padding:0 14px;
 }
 
-/* PLAKÁT */
 .wtUpcomingItem{
   position:relative;
   width:100%;
-  max-width:640px;
+  max-width:640px;         /* klidně změň podle chuti */
   margin-left:auto;
   margin-right:auto;
 }
 
-.wtUpcomingLink{
-  display:block;
-  text-decoration:none;
-}
+.wtUpcomingLink{display:block;text-decoration:none;}
+.wtUpcomingPoster{width:100%;height:auto;display:block;border-radius:0 !important;}
 
-.wtUpcomingPoster{
-  width:100%;
-  height:auto;
-  display:block;
-}
-
-/* =========================================
-   LABEL – velikost a pozice
-   VŠECHNO z procent šířky plakátu
-========================================= */
-
+/* =====================================================
+   LABEL WRAP — pozice + velikost jen z plakátu (%)
+===================================================== */
 .wtLabelWrap{
   position:absolute;
-  z-index:50;
-  cursor:pointer;
-
-  /* vzdálenost od rohu plakátu */
   top:3%;
   left:3%;
-
-  /* velikost labelu */
   width:14%;
-
-  /* čtverec */
   aspect-ratio:1/1;
 
-  /* žádné škálování */
-  transform:none;
+  z-index:50;
+  pointer-events:auto;
+  cursor:pointer;
+
+  transform:none !important;
 }
 
-/* vnitřní kontejnery vyplní wrapper */
-.wtLabelScope,
-.wtLabelScope .glassSquare{
+/* Scope jen vyplní wrapper */
+.wtLabelScope{
   width:100%;
   height:100%;
-  box-sizing:border-box;
 }
 
-/* =========================================
-   SKLO – PŮVODNÍ VZHLED (BEZ ZMĚNY)
-========================================= */
+/* =====================================================
+   GLASS — vzhled (natáhnutý do wrapperu)
+   Pozn.: rozměry uvnitř jsou relativní k velikosti wrapperu přes procenta,
+   blury zůstávají v px (jinak by to v CSS nešlo škálovat korektně).
+===================================================== */
+
+.wtLabelScope *{box-sizing:border-box;}
 
 .wtLabelScope .glassSquare{
-  border-radius:18px;
+  /* tón skla */
+  --rimTint: 170, 190, 255;
+  --bleedX: 78%;
+  --bleedY: 86%;
+
+  width:100%;
+  height:100%;
+
+  /* radius jako podíl z velikosti labelu (34px z 360px ≈ 9.444%) */
+  border-radius:9.444%;
+
   position:relative;
   display:grid;
   place-items:center;
@@ -91,34 +85,58 @@
     inset 0 -22px 30px rgba(255,255,255,.22),
     0 26px 54px rgba(0,0,0,.20);
 
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  transition: filter 190ms ease;
 }
 
+/* vnitřní highlight: inset 12px z 360px ≈ 3.333% */
 .wtLabelScope .glassSquare::before{
   content:"";
   position:absolute;
-  inset:8%;
-  border-radius:inherit;
+  inset:3.333%;
+  border-radius:calc(9.444% - 1.667%); /* (34-6)px z 360px */
   pointer-events:none;
+  z-index:1;
 
   background:
     radial-gradient(70% 90% at 16% 18%,
       rgba(255,255,255,.42) 0%,
       rgba(255,255,255,.18) 35%,
+      transparent 72%),
+    radial-gradient(44% 60% at 26% 30%,
+      rgba(255,255,255,.18) 0%,
       transparent 72%);
-  filter:blur(1.2px);
+
+  filter: blur(1.35px);
   opacity:.95;
 }
 
+/* rim / ring: padding 13px z 360px ≈ 3.611% */
 .wtLabelScope .glassSquare::after{
   content:"";
   position:absolute;
-  inset:-1px;
-  border-radius:inherit;
+  inset:-0.277%;                 /* -1px z 360px */
+  border-radius:9.444%;
   pointer-events:none;
+  z-index:2;
 
   background:
+    radial-gradient(72% 120% at var(--bleedX) var(--bleedY),
+      rgba(var(--rimTint), .085) 0%,
+      rgba(var(--rimTint), .040) 28%,
+      transparent 68%),
+
+    conic-gradient(from 210deg,
+      transparent 0 18%,
+      rgba(var(--rimTint), .09) 22%,
+      transparent 36%,
+      rgba(var(--rimTint), .045) 46%,
+      transparent 62%,
+      rgba(var(--rimTint), .032) 70%,
+      transparent 100%),
+
     radial-gradient(140% 120% at 50% 120%,
       rgba(255,255,255,.74) 0%,
       rgba(255,255,255,.30) 22%,
@@ -128,16 +146,28 @@
       rgba(0,0,0,.30) 0%,
       rgba(0,0,0,.12) 14%,
       transparent 30%);
+
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+
+  padding:3.611%;
+  filter: blur(1.05px);
+  opacity:.95;
 }
 
-/* =========================================
-   BEZPEČNOST – vypnout staré datum/kartičky
-========================================= */
-
+/* =====================================================
+   SAFETY: vypnout datum / bílou kartičku (cokoliv starého)
+===================================================== */
 .coreSquare,
+.whiteCard,
 .dateSquare,
+.wtLabelDate,
 .wtDay,
 .wtMonth,
-.wtLabelDate{
+.wtDate,
+.wtEventDate{
   display:none !important;
 }
