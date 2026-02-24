@@ -23,7 +23,7 @@
 /* desktop */
 @media (min-width: 1024px){
   :root{
-    --wtLabelScale: 0.19;
+    --wtLabelScale: 0.25;
   }
 }
 
