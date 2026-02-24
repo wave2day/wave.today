@@ -1,15 +1,13 @@
 /* =====================================================
-   WT UPCOMING – PLAKÁTY + SKLO (GLASS-ONLY)
-   Cíl:
-   - pouze plakáty + skleněný label (glassSquare)
-   - ŽÁDNÁ bílá kartička / coreSquare / datum (všechno pryč)
-   - velikost i pozice labelu se počítá ze ŠÍŘKY PLAKÁTU (cqw)
+   WT UPCOMING — PLAKÁTY + GLASS LABEL (GLASS-ONLY)
+   - ŽÁDNÁ bílá kartička / coreSquare / datum (odstraněno)
+   - Velikost labelu se řídí ŠÍŘKOU plakátu (container queries / cqw),
+     takže se to nerozsype v landscape ani při "Desktop site".
 ===================================================== */
 
-/* Slot */
 #wtNewEventsSlot{display:block;width:100%;}
 
-/* Seznam */
+/* UPCOMING list = vždy pod sebou */
 .wtUpcomingList{
   display:flex;
   flex-direction:column;
@@ -17,7 +15,7 @@
   padding:0 14px;
 }
 
-/* Jeden plakát */
+/* ITEM: full width on mobile, max width + centered */
 .wtUpcomingItem{
   position:relative;
   width:100%;
@@ -25,48 +23,35 @@
   margin-left:auto;
   margin-right:auto;
 
-  /* klíč: cqw se počítá z šířky plakátu (ne viewportu) */
+  /* klíčové: label se škáluje podle šířky TÉHLE karty */
   container-type:inline-size;
 }
 
-/* Link + obrázek */
 .wtUpcomingLink{display:block;text-decoration:none;}
 .wtUpcomingPoster{width:100%;height:auto;display:block;border-radius:0 !important;}
 
-/* =====================================================
-   LABEL WRAP – pozice + měřítko
-   top i left = stejná hodnota z plakátu
-   size = z plakátu
-===================================================== */
+/* ===== GLASS LABEL wrapper (pozice) ===== */
 .wtLabelWrap{
   position:absolute;
   z-index:50;
-
-  /* jedna hodnota pro horní i levý okraj */
-  --wtPad: clamp(8px, 3cqw, 22px);
-
-  /* výsledná velikost labelu (na plakátu) */
-  --wtLabelSize: clamp(92px, 16cqw, 150px);
-
-  top: var(--wtPad);
-  left: var(--wtPad);
-
-  transform-origin: top left;
-  transform: scale(calc(var(--wtLabelSize) / 360px));
-
   pointer-events:auto;
   cursor:pointer;
+
+  /* stejné odsazení shora i zleva – navázané na šířku plakátu */
+  top:  clamp(10px, 2.2cqw, 18px);
+  left: clamp(10px, 2.2cqw, 18px);
 }
 
-/* scope pro proměnné labelu */
+/* ===== Scope proměnných pro label ===== */
 .wtLabelScope{
-  --bg:#9c9c9c;
+  /* velikost skla = % šířky plakátu (cqw) + clamp pro strop/podlahu */
+  --sqOuter: clamp(120px, 22cqw, 160px);
 
-  /* label je navržený pro 360px a škáluje se přes .wtLabelWrap */
-  --sqOuter: 360px;
+  /* vnitřní poměr (sklo-ring vs vnitřek) */
   --innerRatio: .78;
 
-  --sqR: 34px;
+  /* radius rohu (lehce reaguje na velikost) */
+  --sqR: clamp(18px, 6.0cqw, 30px);
   --coreRk: 1.55;
 
   /* sklo */
@@ -75,7 +60,7 @@
   --glassMilkA:  rgba(255,255,255,.10);
   --glassMilkB:  rgba(255,255,255,.12);
 
-  --glassRingThickness: 13px;
+  --glassRingThickness: clamp(8px, 2.2cqw, 13px);
   --glassRimBlur: 1.05px;
 
   --topRim1: rgba(0,0,0,.28);
@@ -85,7 +70,7 @@
   --botRim1: rgba(255,255,255,.74);
   --botRim2: rgba(255,255,255,.30);
 
-  /* jen jemný nádech ve skle */
+  /* jemný nádech ve skle */
   --bleedA: .085;
   --bleedB: .040;
 
@@ -93,14 +78,19 @@
   --pressY: 3px;
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
+
+  /* proporční paddingy (aby sklo zůstalo stejné při různých velikostech) */
+  --insetA: calc(var(--sqOuter) * 0.0333); /* ~12px při 360px */
+  --insetB: calc(var(--sqOuter) * 0.003);  /* ~1px při 360px */
+  --glowPad: calc(var(--sqOuter) * 0.0778); /* ~28px při 360px */
 }
 
-.wtLabelScope, .wtLabelScope *{box-sizing:border-box;}
+.wtUpcoming .wtLabelScope *,
+.wtLabelScope *{box-sizing:border-box;}
 
-/* =====================================================
-   GLASS SQUARE – BEZE ZMĚNY (viz původní sklo)
-===================================================== */
-.wtLabelScope .glassSquare{
+/* ===== Glass square ===== */
+.wtUpcoming .wtLabelScope .glassSquare{
+  /* méně do růžova, víc chladný tón (jemně do modra) */
   --rimTint: 170, 190, 255;
   --bleedX: 78%;
   --bleedY: 86%;
@@ -134,10 +124,10 @@
   transition: filter var(--pressTimeOut) ease;
 }
 
-.wtLabelScope .glassSquare::before{
+.wtUpcoming .wtLabelScope .glassSquare::before{
   content:"";
   position:absolute;
-  inset: 12px;
+  inset: var(--insetA);
   border-radius: calc(var(--sqR) - 6px);
   pointer-events:none;
   z-index:1;
@@ -155,10 +145,10 @@
   opacity:.95;
 }
 
-.wtLabelScope .glassSquare::after{
+.wtUpcoming .wtLabelScope .glassSquare::after{
   content:"";
   position:absolute;
-  inset:-1px;
+  inset: calc(var(--insetB) * -1);
   border-radius: var(--sqR);
   pointer-events:none;
   z-index:2;
@@ -199,9 +189,9 @@
   opacity:.95;
 }
 
-.wtLabelScope .pressGlow{
+.wtUpcoming .wtLabelScope .pressGlow{
   position:absolute;
-  inset:-28px;
+  inset: calc(var(--glowPad) * -1);
   border-radius: calc(var(--sqR) + 14px);
   pointer-events:none;
   opacity:0;
@@ -220,15 +210,15 @@
       transparent 55%);
 }
 
-/* =====================================================
-   TVRDÝ KILL SWITCH – i kdyby HTML pořád obsahovalo coreSquare/datum,
-   tady se to NIKDY nezobrazí.
-===================================================== */
-.coreSquare,
-.whiteCard,
-.dateSquare,
-.wtDay,
-.wtMonth,
-.date,
-.day,
-.mon{display:none !important;}
+/* Volitelné: "stisk" pokud máš v HTML/JS třídu .isPressed */
+.wtUpcoming .wtLabelScope.isPressed .glassSquare{
+  filter: brightness(.98) contrast(1.02);
+}
+
+.wtUpcoming .wtLabelScope.isPressed .pressGlow{
+  opacity:1;
+  transform: scale(1.01);
+}
+
+/* Bezpečnost: pokud někde zůstaly staré datumové elementy, schovej je */
+.wtLabelDate, .coreSquare, .dateSquare, .wtDay, .wtMonth{display:none !important;}
