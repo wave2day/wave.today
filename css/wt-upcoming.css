@@ -23,8 +23,6 @@
   z-index:50;
   pointer-events:auto;
   cursor:pointer;
-
-  transform: scale(var(--wtLabelScale, 0.13));
   transform-origin: top left;
 }
 
