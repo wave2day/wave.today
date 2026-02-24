@@ -47,9 +47,9 @@
 .wtLabelWrap{
   position:absolute;
   top:10px;
-  left:10px;
+  left:20px;
   z-index:50;
-  transform:scale(0.13);
+  transform:scale(0.3m);
   transform-origin:top left;
   pointer-events:auto;
 }
