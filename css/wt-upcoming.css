@@ -24,7 +24,7 @@
   pointer-events:auto;
   cursor:pointer;
 
-  transform: scale(var(--wtLabelScale, 0.13));
+  transform: scale(var(--wtLabelScale, 0.3));
   transform-origin: top left;
 }
 
@@ -311,9 +311,9 @@
 .wtUpcoming .wtLabelScope .mon{
   margin-top: 10px;
   font-weight: 780;
-  font-size: 18px;
+  font-size: 38px;
   letter-spacing: 3px;
-  color: rgba(18,18,22,.52);
+  color: rgba(18,18,22,.88);
 }
 
 /* Hover/active */
