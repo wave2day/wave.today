@@ -1,20 +1,17 @@
 /* =====================================================
-   WT UPCOMING — PLAKÁTY + SKLO (NAVÁZANÉ NA PLAKÁT)
-   CÍL:
-   - Skleněný label je VŽDY počítaný z plakátu (žádné vw/vh)
-   - Funguje stejně v portrait / landscape / desktop (protože se váže na plakát)
-   - Bez bílé kartičky a bez datumu (vypnuto i kdyby HTML generovalo)
+   WT UPCOMING — PLAKÁTY + SKLO (FIX: žádné transform scale)
+   - Sklo NAVÁZANÉ NA PLAKÁT přes width v % (žádné viewporty)
+   - Žádná bílá kartička, žádný datum (vše vypnuto)
+   - Sklo se nezvětší na půl obrazovky (to dělal špatný scale calc)
 
-   OVLÁDÁNÍ (3 věci):
-   1) top: 3%     -> odsazení shora z plakátu
-   2) left: 3%    -> odsazení zleva z plakátu
-   3) --labelSize: 18 -> velikost skla v % šířky plakátu
+   OVLÁDÁNÍ (3 věci) v .wtLabelWrap:
+   1) top: 3%         -> odsazení shora z plakátu
+   2) left: 3%        -> odsazení zleva z plakátu
+   3) width: 18%      -> velikost skla jako % šířky plakátu
 ===================================================== */
 
-/* slot */
 #wtNewEventsSlot{display:block;width:100%;}
 
-/* list */
 .wtUpcomingList{
   display:flex;
   flex-direction:column;
@@ -22,7 +19,6 @@
   padding:0 14px;
 }
 
-/* item = plakátový kontejner (DŮLEŽITÉ: relative) */
 .wtUpcomingItem{
   position:relative;
   width:100%;
@@ -31,14 +27,11 @@
   margin-right:auto;
 }
 
-/* link + poster */
 .wtUpcomingLink{display:block;text-decoration:none;}
 .wtUpcomingPoster{width:100%;height:auto;display:block;border-radius:0 !important;}
 
 /* =====================================================
-   LABEL WRAP — NAVÁZANÉ NA PLAKÁT (PERCENT)
-   - pozice a velikost jsou procenta z plakátu
-   - sklo je nativně 360px, wrapper ho škáluje
+   LABEL WRAP — procenta z plakátu
 ===================================================== */
 .wtLabelWrap{
   position:absolute;
@@ -46,43 +39,39 @@
   cursor:pointer;
   pointer-events:auto;
 
-  /* 1) odsazení z plakátu */
   top: 3%;
   left: 3%;
 
-  /* 3) velikost skla = % šířky plakátu */
-  --labelSize: 18; /* % */
-
-  /* scale = (cílová velikost v px) / 360px */
-  transform: scale(calc((var(--labelSize) / 100) * (100% / 360px)));
-  transform-origin: top left;
+  width: 18%;
+  aspect-ratio: 1 / 1;
 }
 
-/* klik zůstane na wrapperu, dekorace ne */
+.wtLabelScope{width:100%;height:100%;}
+
 .wtLabelWrap .glassSquare,
 .wtLabelWrap .pressGlow{pointer-events:none !important;}
 
 /* =====================================================
-   SCOPE VARIABLES (sklo) — BEZE ZMĚNY
+   SCOPE VARIABLES — přepočet px/360 -> %
 ===================================================== */
 .wtLabelScope{
-  --bg:#9c9c9c;
-
-  /* stejné měřítko / styl */
-  --sqOuter: 360px;
+  --sqOuter: 100%;
   --innerRatio: .78;
 
-  --sqR: 34px;
-  --coreRk: 1.55;
+  --sqR: calc(var(--sqOuter) * 0.094444);         /* 34/360 */
+  --inset12: calc(var(--sqOuter) * 0.033333);     /* 12/360 */
+  --ring: calc(var(--sqOuter) * 0.036111);        /* 13/360 */
+  --rimBlur: calc(var(--sqOuter) * 0.002917);     /* 1.05/360 */
+  --pressInset: calc(var(--sqOuter) * -0.077778); /* -28/360 */
+  --pressRadd: calc(var(--sqOuter) * 0.038889);   /* 14/360 */
+  --beforeRsub: calc(var(--sqOuter) * 0.016667);  /* 6/360 */
+  --beforeBlur: calc(var(--sqOuter) * 0.00375);   /* 1.35/360 */
+  --pressBlur: calc(var(--sqOuter) * 0.033333);   /* 12/360 */
 
-  /* sklo */
   --glassClearA: rgba(255,255,255,.14);
   --glassClearB: rgba(255,255,255,.08);
   --glassMilkA:  rgba(255,255,255,.10);
   --glassMilkB:  rgba(255,255,255,.12);
-
-  --glassRingThickness: 13px;
-  --glassRimBlur: 1.05px;
 
   --topRim1: rgba(0,0,0,.28);
   --topRim2: rgba(0,0,0,.12);
@@ -91,32 +80,19 @@
   --botRim1: rgba(255,255,255,.74);
   --botRim2: rgba(255,255,255,.30);
 
-  /* jen jemný nádech ve skle */
   --bleedA: .085;
   --bleedB: .040;
-
-  /* press */
-  --pressY: 3px;
-  --pressTimeIn: 110ms;
-  --pressTimeOut: 190ms;
 }
 
 .wtUpcoming .wtLabelScope *{box-sizing:border-box;}
 
-/* =====================================================
-   GLASS SQUARE (BEZE ZMĚNY)
-===================================================== */
 .wtUpcoming .wtLabelScope .glassSquare{
-  /* méně do růžova, víc chladný tón (jemně do modra) */
   --rimTint: 170, 190, 255;
   --bleedX: 78%;
   --bleedY: 86%;
 
-  --gap: calc(var(--sqOuter) * (1 - var(--innerRatio)) / 2);
-  --coreR: calc(var(--sqR) - (var(--gap) * var(--coreRk)));
-
-  width: var(--sqOuter);
-  height: var(--sqOuter);
+  width: 100%;
+  height: 100%;
   border-radius: var(--sqR);
   position:relative;
   display:grid;
@@ -137,15 +113,13 @@
 
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-
-  transition: filter var(--pressTimeOut) ease;
 }
 
 .wtUpcoming .wtLabelScope .glassSquare::before{
   content:"";
   position:absolute;
-  inset: 12px;
-  border-radius: calc(var(--sqR) - 6px);
+  inset: var(--inset12);
+  border-radius: calc(var(--sqR) - var(--beforeRsub));
   pointer-events:none;
   z-index:1;
 
@@ -158,7 +132,7 @@
       rgba(255,255,255,.18) 0%,
       transparent 72%);
 
-  filter: blur(1.35px);
+  filter: blur(var(--beforeBlur));
   opacity:.95;
 }
 
@@ -201,23 +175,19 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 
-  padding: var(--glassRingThickness);
-  filter: blur(var(--glassRimBlur));
+  padding: var(--ring);
+  filter: blur(var(--rimBlur));
   opacity:.95;
 }
 
-/* =====================================================
-   PRESS GLOW (BEZE ZMĚNY)
-===================================================== */
 .wtUpcoming .wtLabelScope .pressGlow{
   position:absolute;
-  inset:-28px;
-  border-radius: calc(var(--sqR) + 14px);
+  inset: var(--pressInset);
+  border-radius: calc(var(--sqR) + var(--pressRadd));
   pointer-events:none;
   opacity:0;
-  filter: blur(12px);
+  filter: blur(var(--pressBlur));
   transform: scale(.995);
-  transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
   z-index:0;
 
   background:
@@ -231,7 +201,7 @@
 }
 
 /* =====================================================
-   HARD OFF: bílá kartička + datum (kdyby to HTML pořád generovalo)
+   HARD OFF: bílá kartička + datum (kdyby HTML pořád generovalo)
 ===================================================== */
 .wtUpcoming .wtLabelScope .coreSquare,
 .wtUpcoming .wtLabelScope .date,
