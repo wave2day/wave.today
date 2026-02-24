@@ -1,15 +1,15 @@
 /* =====================================================
-   WT UPCOMING – PLAKÁTY + SKLO (REBUILD / ČISTÉ)
+   WT UPCOMING – PLAKÁTY + SKLO (GLASS-ONLY)
    Cíl:
-   - ŽÁDNÉ přepínání podle viewportu (žádné mobil/desktop/landscape větve).
-   - Velikost i pozice labelu se počítá výhradně ze ŠÍŘKY PLAKÁTU.
-   - Sklo (glassSquare + ::before + ::after + pressGlow) je převzaté beze změn.
+   - pouze plakáty + skleněný label (glassSquare)
+   - ŽÁDNÁ bílá kartička / coreSquare / datum (všechno pryč)
+   - velikost i pozice labelu se počítá ze ŠÍŘKY PLAKÁTU (cqw)
 ===================================================== */
 
 /* Slot */
 #wtNewEventsSlot{display:block;width:100%;}
 
-/* List */
+/* Seznam */
 .wtUpcomingList{
   display:flex;
   flex-direction:column;
@@ -17,61 +17,52 @@
   padding:0 14px;
 }
 
-/* Item = plakát (REFERENCE pro výpočty labelu) */
+/* Jeden plakát */
 .wtUpcomingItem{
   position:relative;
   width:100%;
-  max-width:640px; /* můžeš změnit na 480/640/720 */
+  max-width:640px;
   margin-left:auto;
   margin-right:auto;
 
-  /* DŮLEŽITÉ: cqw = % šířky PLAKÁTU (ne viewportu) */
+  /* klíč: cqw se počítá z šířky plakátu (ne viewportu) */
   container-type:inline-size;
 }
 
+/* Link + obrázek */
 .wtUpcomingLink{display:block;text-decoration:none;}
-
-.wtUpcomingPoster{
-  width:100%;
-  height:auto;
-  display:block;
-  border-radius:0 !important;
-}
+.wtUpcomingPoster{width:100%;height:auto;display:block;border-radius:0 !important;}
 
 /* =====================================================
-   LABEL WRAP – stabilní pozice + stabilní velikost
-   Ladíš jen dvě hodnoty:
-   - --padCqw (offset od rohu)
-   - --sizeCqw (velikost labelu vůči plakátu)
+   LABEL WRAP – pozice + měřítko
+   top i left = stejná hodnota z plakátu
+   size = z plakátu
 ===================================================== */
-
 .wtLabelWrap{
   position:absolute;
   z-index:50;
+
+  /* jedna hodnota pro horní i levý okraj */
+  --wtPad: clamp(8px, 3cqw, 22px);
+
+  /* výsledná velikost labelu (na plakátu) */
+  --wtLabelSize: clamp(92px, 16cqw, 150px);
+
+  top: var(--wtPad);
+  left: var(--wtPad);
+
+  transform-origin: top left;
+  transform: scale(calc(var(--wtLabelSize) / 360px));
+
   pointer-events:auto;
   cursor:pointer;
-
-  /* 1 hodnota pro top i left = vždy stejně daleko od okraje */
-  --padCqw: 3cqw;
-  top: var(--padCqw);
-  left: var(--padCqw);
-
-  /* velikost labelu jako % šířky plakátu */
-  --sizeCqw: 15cqw;
-
-  /* 360 = design size glassSquare (viz --sqOuter níže) */
-  transform: scale(calc(var(--sizeCqw) / 360));
-  transform-origin: top left;
 }
 
-/* scope wrapper (jen pro box-sizing pravidlo níže) */
-.wtUpcoming .wtLabelScope *{box-sizing:border-box;}
-
-
+/* scope pro proměnné labelu */
 .wtLabelScope{
   --bg:#9c9c9c;
 
-  /* stejné měřítko / styl */
+  /* label je navržený pro 360px a škáluje se přes .wtLabelWrap */
   --sqOuter: 360px;
   --innerRatio: .78;
 
@@ -98,19 +89,18 @@
   --bleedA: .085;
   --bleedB: .040;
 
-  /* text */
-  --t1: rgba(255,255,255,.92);
-  --t2: rgba(255,255,255,.58);
-
   /* press */
   --pressY: 3px;
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
 }
 
-/* ===== Glass square ===== */
-.wtUpcoming .wtLabelScope .glassSquare{
-  /* méně do růžova, víc chladný tón (jemně do modra) */
+.wtLabelScope, .wtLabelScope *{box-sizing:border-box;}
+
+/* =====================================================
+   GLASS SQUARE – BEZE ZMĚNY (viz původní sklo)
+===================================================== */
+.wtLabelScope .glassSquare{
   --rimTint: 170, 190, 255;
   --bleedX: 78%;
   --bleedY: 86%;
@@ -144,7 +134,7 @@
   transition: filter var(--pressTimeOut) ease;
 }
 
-.wtUpcoming .wtLabelScope .glassSquare::before{
+.wtLabelScope .glassSquare::before{
   content:"";
   position:absolute;
   inset: 12px;
@@ -165,7 +155,7 @@
   opacity:.95;
 }
 
-.wtUpcoming .wtLabelScope .glassSquare::after{
+.wtLabelScope .glassSquare::after{
   content:"";
   position:absolute;
   inset:-1px;
@@ -209,8 +199,7 @@
   opacity:.95;
 }
 
-/* ===== Press glow ===== */
-.wtUpcoming .wtLabelScope .pressGlow{
+.wtLabelScope .pressGlow{
   position:absolute;
   inset:-28px;
   border-radius: calc(var(--sqR) + 14px);
@@ -231,193 +220,15 @@
       transparent 55%);
 }
 
-/* ===== Core square ===== */
-.wtUpcoming .wtLabelScope .coreSquare{
-  width:  calc(var(--sqOuter) - (2 * var(--gap)));
-  height: calc(var(--sqOuter) - (2 * var(--gap)));
-  border-radius: max(14px, var(--coreR));
-
-  position:relative;
-  z-index:3;
-  border:0;
-  padding:0;
-  cursor:pointer;
-
-  outline:none !important;
-  -webkit-tap-highlight-color: transparent;
-  user-select:none;
-
-  /* BÍLÝ PLAST (jen barvy) */
-  --c1:#ffffff;
-  --c2:#f1f1f6;
-  --c3:#d9d9e2;
-
-  background:
-    radial-gradient(120% 140% at 28% 18%, rgba(255,255,255,.20), transparent 55%),
-    linear-gradient(180deg, var(--c1), var(--c2) 55%, var(--c3));
-
-  box-shadow:
-    0 18px 26px rgba(0,0,0,.18),
-    inset 0 16px 22px rgba(0,0,0,.16),
-    inset 0 -14px 20px rgba(255,255,255,.18),
-    inset 0 0 0 1px rgba(0,0,0,.16);
-
-  transform: translateY(0);
-  transition:
-    transform var(--pressTimeOut) cubic-bezier(.2,.8,.2,1),
-    box-shadow var(--pressTimeOut) ease,
-    filter var(--pressTimeOut) ease;
-}
-
-.wtUpcoming .wtLabelScope .coreSquare:focus,
-.wtUpcoming .wtLabelScope .coreSquare:focus-visible{outline:none !important;}
-
-.wtUpcoming .wtLabelScope .coreSquare::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  border-radius: inherit;
-  pointer-events:none;
-  background:
-    radial-gradient(120% 140% at 50% 50%,
-      transparent 60%,
-      rgba(0,0,0,.32) 100%);
-  mix-blend-mode: soft-light;
-  opacity:.96;
-}
-
-.wtUpcoming .wtLabelScope .coreSquare::after{
-  content:"";
-  position:absolute;
-  inset:-1px;
-  border-radius: inherit;
-  pointer-events:none;
-
-  background:
-    radial-gradient(140% 120% at 50% 120%,
-      rgba(255,255,255,.70) 0%,
-      rgba(255,255,255,.30) 26%,
-      transparent 56%),
-    radial-gradient(170% 120% at 50% -38%,
-      rgba(0,0,0,.34) 0%,
-      rgba(0,0,0,.14) 16%,
-      transparent 34%);
-
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-
-  padding: 6px;
-  filter: blur(.78px);
-  opacity:.95;
-  mix-blend-mode: normal;
-}
-
-.wtUpcoming .wtLabelScope .date{
-  position:absolute;
-  inset:0;
-  display:grid;
-  place-items:center;
-  pointer-events:none;
-  z-index:4;
-  text-align:center;
-  text-shadow: 0 2px 10px rgba(0,0,0,.10);
-}
-
-.wtUpcoming .wtLabelScope .day{
-  font-weight: 850;
-  font-size: 76px;
-  letter-spacing: .2px;
-  line-height: 1;
-  color: rgba(18,18,22,.88);
-}
-.wtUpcoming .wtLabelScope .mon{
-  margin-top: 10px;
-  font-weight: 780;
-  font-size: 38px;
-  letter-spacing: 3px;
-  color: rgba(18,18,22,.88);
-}
-
-/* Hover/active */
-.wtUpcoming .wtLabelScope .coreSquare:hover{
-  transform: translateY(-1px);
-  box-shadow:
-    0 22px 30px rgba(0,0,0,.20),
-    inset 0 14px 20px rgba(0,0,0,.14),
-    inset 0 -14px 20px rgba(255,255,255,.18),
-    inset 0 0 0 1px rgba(0,0,0,.16);
-}
-
-.wtUpcoming .wtLabelScope .glassSquare:has(.coreSquare:active){
-  filter: brightness(.985);
-  transition: filter var(--pressTimeIn) ease;
-}
-.wtUpcoming .wtLabelScope .glassSquare:has(.coreSquare:active) .pressGlow{
-  opacity:1;
-  transform: scale(1.01);
-  transition: opacity var(--pressTimeIn) ease, transform var(--pressTimeIn) ease;
-}
-.wtUpcoming .wtLabelScope .coreSquare:active{
-  transform: translateY(var(--pressY));
-  transition:
-    transform var(--pressTimeIn) cubic-bezier(.2,.8,.2,1),
-    box-shadow var(--pressTimeIn) ease,
-    filter var(--pressTimeIn) ease;
-  box-shadow:
-    0 10px 18px rgba(0,0,0,.16),
-    inset 0 20px 26px rgba(0,0,0,.20),
-    inset 0 -10px 16px rgba(255,255,255,.12),
-    inset 0 0 0 1px rgba(0,0,0,.16);
-  filter: brightness(.995) saturate(.98);
-}
-
-/* === PATCH: label klik nesmí otevřít plakát === */
-.wtWhiteLabel{ pointer-events: auto !important; }
-.wtWhiteLabel iframe{ pointer-events: none !important; }
-.wtLabelHitArea{
-  position:absolute;
-  inset:0;
-  background:transparent;
-  pointer-events:auto;
-  cursor:pointer;
-  z-index: 7;
-}
-
-/* Label click scoping (bez zásahů do Share orb / globálních tříd) */
-.wtLabelWrap .glassSquare,
-.wtLabelWrap .pressGlow{ pointer-events:none !important; } /* dekorace nekliká */
-.wtLabelWrap .coreSquare{ pointer-events:auto !important; cursor:pointer; }
-
-/* ===== Deterministic overrides (moved from index.html) ===== */
-:root{
-  --panelTop: 54vh; /* move panel slightly up to avoid the browser share bar */
-}
-
-/* Keep posters with square corners */
-.wtPoster, .wtPoster img, .wtPosterImg, .wtCardPosterImg{
-  border-radius: 0 !important;
-}
-
-/* Wide panel positioning */
-.wtPanelWrap{ margin-top: var(--panelTop) !important; }
-
-/* Reveal like wave.today: slower rise from "depth" + gentle overshoot, no snap */
-.wtReveal{
-  opacity: 0;
-  transform: translateY(180px) scale(0.90);
-  transition: none !important;
-  will-change: transform, opacity;
-}
-.wtReveal.isIn{
-  opacity: 1;
-  transform: none;
-  animation: wtRise 1350ms cubic-bezier(.16,1,.3,1) both;
-}
-@keyframes wtRise{
-  0%{ opacity:0; transform: translateY(190px) scale(0.89); }
-  70%{ opacity:1; transform: translateY(-10px) scale(1.01); }
-  100%{ opacity:1; transform: translateY(0) scale(1); }
-}
+/* =====================================================
+   TVRDÝ KILL SWITCH – i kdyby HTML pořád obsahovalo coreSquare/datum,
+   tady se to NIKDY nezobrazí.
+===================================================== */
+.coreSquare,
+.whiteCard,
+.dateSquare,
+.wtDay,
+.wtMonth,
+.date,
+.day,
+.mon{display:none !important;}
