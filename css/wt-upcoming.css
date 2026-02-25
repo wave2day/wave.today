@@ -1,14 +1,13 @@
 /* =====================================================
-   WT UPCOMING – PLAKÁTY + GLASS ONLY (REBUILD)
-   Cíl: sklo je vždy stejné RELATIVNĚ k PLAKÁTU (container),
-        ne podle viewportu => landscape/desktop se nerozsype.
-   Bez: white card / core / datum
+   WT UPCOMING – PLAKÁTY + GLASS ONLY (REBUILD, FIX SHAPE)
+   - Sklo se škáluje podle ŠÍŘKY PLAKÁTU (container)
+   - Tvar skla zůstává 1:1 jako originál (žádný "hovnoid")
+   - Bez white card / core / datum uvnitř skla
+   - Tvrdě schované "velké datum" overlay v itemu
 ===================================================== */
 
-/* slot */
 #wtNewEventsSlot{display:block;width:100%;}
 
-/* seznam plakátů */
 .wtUpcomingList{
   display:flex;
   flex-direction:column;
@@ -16,7 +15,6 @@
   padding:0 14px;
 }
 
-/* položka (PLAKÁT) = kontejner pro container queries */
 .wtUpcomingItem{
   position:relative;
   width:100%;
@@ -24,7 +22,7 @@
   margin-left:auto;
   margin-right:auto;
 
-  /* KLÍČ: kontejner podle inline-size (šířky položky = šířka plakátu) */
+  /* klíč: škálování podle plakátu */
   container-type:inline-size;
   container-name:wtPoster;
 }
@@ -38,7 +36,7 @@
 }
 
 /* =====================================================
-   GLASS WRAP (pozice + škálování)
+   GLASS WRAP (pozice)
 ===================================================== */
 
 .wtLabelWrap{
@@ -47,18 +45,17 @@
   pointer-events:auto;
   cursor:pointer;
 
-  /* fallback (když container queries nejsou) */
+  /* fallback */
   top:12px;
   left:12px;
 }
 
-/* Moderní: vše z plakátu (container units) */
 @supports (container-type: inline-size){
   .wtUpcomingItem .wtLabelWrap{
-    /* 1) odsazení od kraje plakátu */
+    /* odsazení od kraje plakátu */
     --wtGlassInset: clamp(10px, 2.2cqi, 18px);
 
-    /* 2) výsledná velikost skla (v px), škáluje se s šířkou plakátu */
+    /* velikost skla */
     --wtGlassSize: clamp(64px, 15.5cqi, 128px);
 
     top: var(--wtGlassInset);
@@ -67,14 +64,14 @@
 }
 
 /* =====================================================
-   GLASS SCOPE (proměnné skla) – sklo samotné BEZE ZMĚNY
-   Jen: šířku/výšku řídíme přes --wtGlassSize (když existuje)
+   GLASS SCOPE (ORIGINÁLNÍ PROMĚNNÉ)
+   Sklo samotné nechávám stejné – jen přepočítám poměrově
 ===================================================== */
 
 .wtLabelScope{
   --bg:#9c9c9c;
 
-  /* default “design” rozměr skla (když není container) */
+  /* ORIGINÁL design jednotka */
   --sqOuter: 360px;
   --innerRatio: .78;
 
@@ -97,22 +94,42 @@
   --botRim1: rgba(255,255,255,.74);
   --botRim2: rgba(255,255,255,.30);
 
-  /* jen jemný nádech ve skle */
   --bleedA: .085;
   --bleedB: .040;
 
-  /* press */
   --pressY: 3px;
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
 }
 
-/* bezpečně jen pro tento modul */
 .wtUpcoming .wtLabelScope *{box-sizing:border-box;}
 
-/* GLASS */
+/* =====================================================
+   POMĚROVÉ ŠKÁLOVÁNÍ (FIX: zachování tvaru)
+   Originál je navržen na 360px:
+   - radius 34 -> 34/360 = 0.094444...
+   - ring 13 -> 13/360 = 0.036111...
+   - before inset 12 -> 12/360 = 0.033333...
+   - before blur 1.35 -> 1.35/360 = 0.00375
+   - press inset -28 -> -28/360 = -0.077777...
+   - press blur 12 -> 12/360 = 0.033333...
+===================================================== */
+
+@supports (container-type: inline-size){
+  .wtUpcomingItem .wtLabelScope{
+    /* přepnout základní velikost na vypočtenou */
+    --sqOuter: var(--wtGlassSize);
+
+    /* vše poměrově z --sqOuter */
+    --sqR: calc(var(--sqOuter) * 0.0944444444);
+    --glassRingThickness: calc(var(--sqOuter) * 0.0361111111);
+
+    /* blur necháme poměrově taky */
+    --glassRimBlur: calc(var(--sqOuter) * 0.0029166667); /* 1.05/360 */
+  }
+}
+
 .wtUpcoming .wtLabelScope .glassSquare{
-  /* jemný chladnější rim tint */
   --rimTint: 170, 190, 255;
   --bleedX: 78%;
   --bleedY: 86%;
@@ -146,11 +163,14 @@
   transition: filter var(--pressTimeOut) ease;
 }
 
+/* before inset + blur poměrově (jen když běží container) */
 .wtUpcoming .wtLabelScope .glassSquare::before{
   content:"";
   position:absolute;
+
   inset: 12px;
   border-radius: calc(var(--sqR) - 6px);
+
   pointer-events:none;
   z-index:1;
 
@@ -165,6 +185,14 @@
 
   filter: blur(1.35px);
   opacity:.95;
+}
+
+@supports (container-type: inline-size){
+  .wtUpcomingItem .wtLabelScope .glassSquare::before{
+    inset: calc(var(--sqOuter) * 0.0333333333); /* 12/360 */
+    border-radius: calc(var(--sqR) - calc(var(--sqOuter) * 0.0166666667)); /* 6/360 */
+    filter: blur(calc(var(--sqOuter) * 0.00375)); /* 1.35/360 */
+  }
 }
 
 .wtUpcoming .wtLabelScope .glassSquare::after{
@@ -232,30 +260,16 @@
       transparent 55%);
 }
 
-/* =====================================================
-   PROPOJENÍ: velikost glassSquare přes --wtGlassSize
-   (jen když běží container queries)
-===================================================== */
 @supports (container-type: inline-size){
-  .wtUpcomingItem .wtLabelScope{
-    /* přepočet: design 360px -> reálná velikost */
-    --sqOuter: var(--wtGlassSize);
-    --sqR: clamp(16px, 4.2cqi, 34px);
-    --glassRingThickness: clamp(7px, 1.7cqi, 13px);
-  }
-  .wtUpcomingItem .wtLabelScope .glassSquare::before{
-    inset: clamp(7px, 1.9cqi, 12px);
-    border-radius: calc(var(--sqR) - clamp(3px, .8cqi, 6px));
-  }
   .wtUpcomingItem .wtLabelScope .pressGlow{
-    inset: clamp(-18px, -4.0cqi, -28px);
-    border-radius: calc(var(--sqR) + clamp(8px, 2.0cqi, 14px));
+    inset: calc(var(--sqOuter) * -0.0777777778); /* -28/360 */
+    border-radius: calc(var(--sqR) + calc(var(--sqOuter) * 0.0388888889)); /* 14/360 */
+    filter: blur(calc(var(--sqOuter) * 0.0333333333)); /* 12/360 */
   }
 }
 
 /* =====================================================
-   TVRDÉ VYPNUTÍ VŠECH „DATUM“ RELIKTŮ UVNITŘ LABELU
-   (ať tam nezůstává žádný malý text)
+   Vypnutí všech reliktů dat / whitecard uvnitř labelu
 ===================================================== */
 .wtLabelWrap :is(
   .coreSquare,
@@ -269,4 +283,18 @@
   display:none !important;
   visibility:hidden !important;
   opacity:0 !important;
+}
+
+/* =====================================================
+   Vypnutí toho VELKÉHO data, co ti pořád leze na plakát
+   (tohle očividně není uvnitř skla, ale někde v itemu)
+===================================================== */
+.wtUpcomingItem :is(
+  .wtDate, .wtDay, .wtMonth,
+  .date, .day, .month,
+  [class*="wtDate"], [class*="wtDay"], [class*="wtMonth"],
+  [class*="date"], [class*="month"]
+){
+  /* nechci to řešit selektivně bez HTML, tak to tvrdě shazuju jen v itemu */
+  display:none !important;
 }
