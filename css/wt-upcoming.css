@@ -1,71 +1,80 @@
 /* =====================================================
-   WT UPCOMING — GLASS ONLY (VYCHÁZÍ Z wt-upcoming-2.css)
-   - ZACHOVÁNO: plakáty + sklo (glassSquare + ::before + ::after + pressGlow) BEZE ZMĚNY
-   - ZACHOVÁNO: animace najíždění (.wtReveal + @keyframes wtRise)
-   - ODSTRANĚNO: úplně všechno kolem datumu / dne / měsíce / coreSquare / white card
-   - PŘIDÁNO: tvrdé vypnutí (display:none) na všechny datumové relikty, kdyby je HTML/JS pořád generovalo
+   WT UPCOMING – PLAKÁTY + GLASS ONLY (REBUILD)
+   Cíl: sklo je vždy stejné RELATIVNĚ k PLAKÁTU (container),
+        ne podle viewportu => landscape/desktop se nerozsype.
+   Bez: white card / core / datum
 ===================================================== */
 
+/* slot */
 #wtNewEventsSlot{display:block;width:100%;}
 
-/* UPCOMING list = vždy pod sebou */
-.wtUpcomingList{display:flex;flex-direction:column;gap:18px;padding:0 14px;}
+/* seznam plakátů */
+.wtUpcomingList{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  padding:0 14px;
+}
 
-/* ITEM: full width on mobile, max width + centered on desktop */
+/* položka (PLAKÁT) = kontejner pro container queries */
 .wtUpcomingItem{
   position:relative;
   width:100%;
-  max-width:640px;        /* změň na 480/640/720 podle chuti */
+  max-width:640px;
   margin-left:auto;
   margin-right:auto;
+
+  /* KLÍČ: kontejner podle inline-size (šířky položky = šířka plakátu) */
+  container-type:inline-size;
+  container-name:wtPoster;
 }
 
 .wtUpcomingLink{display:block;text-decoration:none;}
-.wtUpcomingPoster{width:100%;height:auto;display:block;border-radius:0 !important;}
+.wtUpcomingPoster{
+  width:100%;
+  height:auto;
+  display:block;
+  border-radius:0 !important;
+}
 
-/* ===== White date label (base layout) ===== */
+/* =====================================================
+   GLASS WRAP (pozice + škálování)
+===================================================== */
+
 .wtLabelWrap{
   position:absolute;
-  top:20px;
-  left:20px;
   z-index:50;
   pointer-events:auto;
   cursor:pointer;
 
-  transform: scale(var(--wtLabelScale, 0.15));
-  transform-origin: top left;
+  /* fallback (když container queries nejsou) */
+  top:12px;
+  left:12px;
 }
 
-.wtLabelDate{
-  position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  pointer-events:none;
+/* Moderní: vše z plakátu (container units) */
+@supports (container-type: inline-size){
+  .wtUpcomingItem .wtLabelWrap{
+    /* 1) odsazení od kraje plakátu */
+    --wtGlassInset: clamp(10px, 2.2cqi, 18px);
+
+    /* 2) výsledná velikost skla (v px), škáluje se s šířkou plakátu */
+    --wtGlassSize: clamp(64px, 15.5cqi, 128px);
+
+    top: var(--wtGlassInset);
+    left: var(--wtGlassInset);
+  }
 }
 
-.wtLabelDay{font-weight:800; line-height:1; font-variant-numeric: tabular-nums;}
-.wtLabelMonth{
-  margin-top: 10px;
-  font-weight:750;
-  line-height:1;
-  text-transform: uppercase;
-  display:block;
-  width: var(--monW, 2ch);
-  margin-left:auto;
-  margin-right:auto;
-  text-align: justify;
-}
-.wtLabelMonth::after{content:""; display:inline-block; width:100%;}
+/* =====================================================
+   GLASS SCOPE (proměnné skla) – sklo samotné BEZE ZMĚNY
+   Jen: šířku/výšku řídíme přes --wtGlassSize (když existuje)
+===================================================== */
 
-/* ===== Label glass-scope variables ===== */
 .wtLabelScope{
   --bg:#9c9c9c;
 
-  /* stejné měřítko / styl */
+  /* default “design” rozměr skla (když není container) */
   --sqOuter: 360px;
   --innerRatio: .78;
 
@@ -92,21 +101,18 @@
   --bleedA: .085;
   --bleedB: .040;
 
-  /* text */
-  --t1: rgba(255,255,255,.92);
-  --t2: rgba(255,255,255,.58);
-
   /* press */
   --pressY: 3px;
   --pressTimeIn: 110ms;
   --pressTimeOut: 190ms;
 }
 
+/* bezpečně jen pro tento modul */
 .wtUpcoming .wtLabelScope *{box-sizing:border-box;}
 
-/* ===== Glass square ===== */
+/* GLASS */
 .wtUpcoming .wtLabelScope .glassSquare{
-  /* méně do růžova, víc chladný tón (jemně do modra) */
+  /* jemný chladnější rim tint */
   --rimTint: 170, 190, 255;
   --bleedX: 78%;
   --bleedY: 86%;
@@ -205,7 +211,6 @@
   opacity:.95;
 }
 
-/* ===== Press glow ===== */
 .wtUpcoming .wtLabelScope .pressGlow{
   position:absolute;
   inset:-28px;
@@ -227,42 +232,41 @@
       transparent 55%);
 }
 
-/* Wide panel positioning */
-.wtPanelWrap{ margin-top: var(--panelTop) !important; }
-
-/* Reveal like wave.today: slower rise from "depth" + gentle overshoot, no snap */
-.wtReveal{
-  opacity: 0;
-  transform: translateY(180px) scale(0.90);
-  transition: none !important;
-  will-change: transform, opacity;
+/* =====================================================
+   PROPOJENÍ: velikost glassSquare přes --wtGlassSize
+   (jen když běží container queries)
+===================================================== */
+@supports (container-type: inline-size){
+  .wtUpcomingItem .wtLabelScope{
+    /* přepočet: design 360px -> reálná velikost */
+    --sqOuter: var(--wtGlassSize);
+    --sqR: clamp(16px, 4.2cqi, 34px);
+    --glassRingThickness: clamp(7px, 1.7cqi, 13px);
+  }
+  .wtUpcomingItem .wtLabelScope .glassSquare::before{
+    inset: clamp(7px, 1.9cqi, 12px);
+    border-radius: calc(var(--sqR) - clamp(3px, .8cqi, 6px));
+  }
+  .wtUpcomingItem .wtLabelScope .pressGlow{
+    inset: clamp(-18px, -4.0cqi, -28px);
+    border-radius: calc(var(--sqR) + clamp(8px, 2.0cqi, 14px));
+  }
 }
-.wtReveal.isIn{
-  opacity: 1;
-  transform: none;
-  animation: wtRise 1350ms cubic-bezier(.16,1,.3,1) both;
-}
-@keyframes wtRise{
-  0%{ opacity:0; transform: translateY(190px) scale(0.89); }
 
 /* =====================================================
-   HARD OFF — datum / bílá kartička / coreSquare (kdyby to HTML pořád generovalo)
+   TVRDÉ VYPNUTÍ VŠECH „DATUM“ RELIKTŮ UVNITŘ LABELU
+   (ať tam nezůstává žádný malý text)
 ===================================================== */
-.wtLabelDate,
-.wtLabelDay,
-.wtLabelMonth,
-.wtLabelInner,
-.wtLabelHitArea,
-.dateSquare,
-.date,
-.day,
-.mon,
-.coreSquare,
-.whiteCard,
-.coreText,
-.wtEventDate,
-.wtDate,
-.wtDay,
-.wtMonth{
+.wtLabelWrap :is(
+  .coreSquare,
+  .whiteCard,
+  .dateSquare,
+  .wtDay, .wtMonth,
+  .wtDate,
+  [data-date],
+  [class*="date"], [class*="month"]
+){
   display:none !important;
+  visibility:hidden !important;
+  opacity:0 !important;
 }
