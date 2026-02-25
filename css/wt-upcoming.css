@@ -279,38 +279,37 @@
 }
 
 /* =====================================================
-   WHITE DATE CARD — VLOŽENÍ DO GLASS (STEJNÁ LOGIKA ŠKÁLOVÁNÍ)
-   - Nešahá na glass vzhled
-   - Vše se odvozuje z --sqOuter (tedy z --wtGlassSize)
-   HTML uvnitř .glassSquare:
-     <div class="wtCardSlot">
-       <div class="dateCard">
-         <div class="dateSquare">
-           <div class="day">25</div>
-           <div class="month">FEB</div>
-         </div>
-       </div>
-     </div>
+   ADDON: WHITE DATE CARD (Soubor B) – vložení DO SKLA
+   Referenční základ zůstává: wt-upcoming__skloiodskokBEST.css
+   Požadavek: velikost + proporce se odvozují z --sqOuter (glass),
+   aby to drželo na mobile/landscape/desktop.
+   Pozn.: Tenhle blok NEVYŽADUJE žádné nové JS. Umí zobrazit datum,
+   pokud v DOM existují elementy pro den/měsíc.
 ===================================================== */
 
-/* slot uvnitř skla – vždy nad pseudo-elementy (které mají pointer-events:none) */
+/* SLOT (volitelné) – když chceš kartu držet uprostřed skla */
 .wtLabelScope .glassSquare .wtCardSlot{
   position:absolute;
   inset:0;
   z-index:3;
   display:grid;
   place-items:center;
-  pointer-events:none; /* ať klik/tap pořád chytá wrapper, ne karta */
+  pointer-events:none;
 }
 
-/* velikost bílé kartičky: poměr vůči sklu (default 0.76) */
+/* default poměr karty vůči sklu (≈ 260/360) */
 .wtLabelScope{
-  --cardRatio: 0.76;
+  --cardRatio: 0.7222222222; /* 260/360 */
+  --dateSizeRatio: 0.36;     /* 36% (z tvého Souboru B) */
 }
 
-/* samotná bílá kartička */
-.wtLabelScope .dateCard{
-  position:relative;
+/* KARTA (běží i bez .wtCardSlot – stačí když je .dateCard uvnitř .glassSquare) */
+.wtLabelScope .glassSquare .dateCard{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
   width: calc(var(--sqOuter) * var(--cardRatio));
   aspect-ratio: 1 / 1;
 
@@ -322,42 +321,48 @@
     inset 0 calc(var(--sqOuter) * -0.0166666667) calc(var(--sqOuter) * 0.0388888889) rgba(0,0,0,0.08), /* -6/360 , 14/360 */
     0 calc(var(--sqOuter) * 0.0277777778) calc(var(--sqOuter) * 0.0666666667) rgba(0,0,0,0.18); /* 10/360 , 24/360 */
 
-  overflow:hidden;
+  overflow: hidden;
 
-  /* velikost datumového bloku (≈ 36 % plochy kartičky) */
-  --date-size: 36%;
+  /* velikost datumového bloku */
+  --date-size: calc(var(--dateSizeRatio) * 100%);
+  z-index:3;
+  pointer-events:none;
 }
 
-/* datumový čtverec (uvnitř bílé karty) */
-.wtLabelScope .dateCard .dateSquare{
-  position:absolute;
-  top:50%;
-  left:50%;
+/* datumový čtverec */
+.wtLabelScope .glassSquare .dateCard .dateSquare{
+  position: absolute;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
 
   width: var(--date-size);
   aspect-ratio: 1 / 1;
-  overflow:hidden;
+  overflow: hidden;
 
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  color:#000;
+  color: #000;
 }
 
-/* společné */
-.wtLabelScope .dateSquare .day,
-.wtLabelScope .dateSquare .month{
-  position:absolute;
-  left:50%;
-  line-height:1;
-  white-space:nowrap;
-  transform-origin:50% 50%;
+/* společné: podporujeme jak .day/.month, tak legacy třídy (pokud JS plní jiné) */
+.wtLabelScope .glassSquare .dateSquare .day,
+.wtLabelScope .glassSquare .dateSquare .month,
+.wtLabelScope .glassSquare .dateSquare .wtLabelDay,
+.wtLabelScope .glassSquare .dateSquare .wtLabelMonth,
+.wtLabelScope .glassSquare .dateSquare .mon{
+  position: absolute;
+  left: 50%;
+  line-height: 1;
+  white-space: nowrap;
+  transform-origin: 50% 50%;
 }
 
 /* DEN */
-.wtLabelScope .dateSquare .day{
+.wtLabelScope .glassSquare .dateSquare .day,
+.wtLabelScope .glassSquare .dateSquare .wtLabelDay{
   top: calc(100% * -0.1056);
   font-size: calc(100% * 0.8515);
-  font-weight:800;
+  font-weight: 800;
 
   transform: translateX(-50%) scaleX(1.07);
 
@@ -366,13 +371,18 @@
 }
 
 /* MĚSÍC */
-.wtLabelScope .dateSquare .month{
+.wtLabelScope .glassSquare .dateSquare .month,
+.wtLabelScope .glassSquare .dateSquare .wtLabelMonth,
+.wtLabelScope .glassSquare .dateSquare .mon{
   bottom: calc(100% * -0.0594);
   font-size: calc(100% * 0.4092);
-  font-weight:700;
+  font-weight: 700;
 
   transform: translateX(-50%) scaleX(1.21);
-  transform-origin:50% 100%;
+  transform-origin: 50% 100%;
 
-  letter-spacing:0;
+  letter-spacing: 0;
 }
+
+/* pojistka: kdyby se karta vkládala bez .wtCardSlot, ale někam jinam pod .wtLabelScope */
+.wtLabelScope .dateCard{ z-index:3; }
