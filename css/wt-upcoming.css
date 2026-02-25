@@ -1,12 +1,30 @@
-/* wt-upcoming-glass-responsive.css
-   - VZHLED skla: převzatý z pruhlednyanajizdi (A)
-   - VELIKOST skla (mobil = landscape = desktop): container/cqi logika z 2345 (B)
-   - Obsahuje i reveal animaci plakátů (wtReveal + wtRise)
-   - Žádné globální "HARD OFF", žádné panelové zásahy
-*/
-#wtNewEventsSlot{display:block;width:100%;}
+/* =====================================================
+   WT UPCOMING — REVEAL + GLASS (LOCKED SHAPE)
+   Základ (neměnit logiku):
+   1) Plakáty + reveal (.wtReveal + .isIn + wtRise)
+   2) Glass komponenta (stejný vzhled jako glass_only.html),
+      škálovaná podle ŠÍŘKY PLAKÁTU (container / cqi)
+===================================================== */
 
+/* ---------- WRAPPER / BEZPEČNOST PROTI X-OVERFLOW ---------- */
+#wtNewEventsSlot{
+  display:block;
+  width:100%;
+  overflow-x: clip;
+}
+@supports not (overflow-x: clip){
+  #wtNewEventsSlot{ overflow-x: hidden; }
+}
+#wtNewEventsSlot,
+#wtNewEventsSlot *{
+  box-sizing:border-box;
+}
+
+/* ---------- LIST PLAKÁTŮ ---------- */
 .wtUpcomingList{
+  margin:0;
+  list-style:none;
+
   display:flex;
   flex-direction:column;
   gap:18px;
@@ -20,61 +38,49 @@
   margin-left:auto;
   margin-right:auto;
 
-  /* klíč: škálování podle plakátu */
+  /* klíč pro konstantní poměr skla napříč mobil/landscape/desktop */
   container-type:inline-size;
   container-name:wtPoster;
 }
 
-.wtUpcomingLink{display:block;text-decoration:none;}
+.wtUpcomingLink{ display:block; text-decoration:none; }
 
 .wtUpcomingPoster{
   width:100%;
+  max-width:100%;
   height:auto;
   display:block;
-  border-radius:0 !important;
+  border-radius:0;
+}
+
+/* ---------- REVEAL (KICK) ---------- */
+.wtReveal{
+  opacity:0;
+  transform: translateY(180px) scale(0.90);
+  will-change: transform, opacity;
+}
+
+.wtReveal.isIn{
+  opacity:1;
+  transform:none;
+  animation: wtRise 1350ms cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes wtRise{
+  0%{
+    opacity:0;
+    transform: translateY(190px) scale(0.89);
+  }
+  100%{
+    opacity:1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* =====================================================
-   WT UPCOMING – PLAKÁTY + GLASS ONLY (REBUILD, FIX SHAPE)
-   - Sklo se škáluje podle ŠÍŘKY PLAKÁTU (container)
-   - Tvar skla zůstává 1:1 jako originál (žádný "hovnoid")
-   - Bez white card / core / datum uvnitř skla
-   - Tvrdě schované "velké datum" overlay v itemu
+   GLASS — POZICE NAD PLAKÁTEM
+   (HTML předpoklad: .wtLabelWrap uvnitř .wtUpcomingItem)
 ===================================================== */
-
-#wtNewEventsSlot{display:block;width:100%;}
-
-.wtUpcomingList{
-  display:flex;
-  flex-direction:column;
-  gap:18px;
-  padding:0 14px;
-}
-
-.wtUpcomingItem{
-  position:relative;
-  width:100%;
-  max-width:640px;
-  margin-left:auto;
-  margin-right:auto;
-
-  /* klíč: škálování podle plakátu */
-  container-type:inline-size;
-  container-name:wtPoster;
-}
-
-.wtUpcomingLink{display:block;text-decoration:none;}
-.wtUpcomingPoster{
-  width:100%;
-  height:auto;
-  display:block;
-  border-radius:0 !important;
-}
-
-/* =====================================================
-   GLASS WRAP (pozice)
-===================================================== */
-
 .wtLabelWrap{
   position:absolute;
   z-index:50;
@@ -88,25 +94,23 @@
 
 @supports (container-type: inline-size){
   .wtUpcomingItem .wtLabelWrap{
-    /* odsazení od kraje plakátu */
     --wtGlassInset: clamp(10px, 2.2cqi, 18px);
+    --wtGlassSize:  clamp(64px, 15.5cqi, 128px);
 
-    /* velikost skla */
-    --wtGlassSize: clamp(64px, 15.5cqi, 128px);
-
-    top: var(--wtGlassInset);
+    top:  var(--wtGlassInset);
     left: var(--wtGlassInset);
   }
+}
 
+/* =====================================================
+   GLASS — LOCKED KOMPONENTA (STEJNÝ VZHLED JAKO glass_only.html)
+   Všechno je scoped do .wtLabelScope, aby to nelítalo po webu.
+   Škálování: jen přes proměnné + poměrové přepočty (container).
+===================================================== */
 .wtLabelScope{
-  --bg:#9c9c9c;
-
-  /* stejné měřítko / styl */
+  /* rozměry komponenty (originál design jednotka) */
   --sqOuter: 360px;
-  --innerRatio: .78;
-
   --sqR: 34px;
-  --coreRk: 1.55;
 
   /* sklo */
   --glassClearA: rgba(255,255,255,.14);
@@ -124,31 +128,28 @@
   --botRim1: rgba(255,255,255,.74);
   --botRim2: rgba(255,255,255,.30);
 
-  /* jen jemný nádech ve skle */
+  /* jemný “tint” ve skle */
   --bleedA: .085;
   --bleedB: .040;
-
-  /* text */
-  --t1: rgba(255,255,255,.92);
-  --t2: rgba(255,255,255,.58);
-
-  /* press */
-  --pressY: 3px;
-  --pressTimeIn: 110ms;
-  --pressTimeOut: 190ms;
 }
 
-.wtUpcoming .wtLabelScope *{box-sizing:border-box;}
+/* přepnutí základní velikosti na velikost podle PLAKÁTU */
+@supports (container-type: inline-size){
+  .wtUpcomingItem .wtLabelScope{
+    --sqOuter: var(--wtGlassSize);
 
-/* ===== Glass square ===== */
-.wtUpcoming .wtLabelScope .glassSquare{
-  /* méně do růžova, víc chladný tón (jemně do modra) */
+    /* poměrově z 360px originálu */
+    --sqR:               calc(var(--sqOuter) * 0.0944444444); /* 34/360 */
+    --glassRingThickness:calc(var(--sqOuter) * 0.0361111111); /* 13/360 */
+    --glassRimBlur:      calc(var(--sqOuter) * 0.0029166667); /* 1.05/360 */
+  }
+}
+
+/* ========== GLASS SQUARE (originál) ========== */
+.wtLabelScope .glassSquare{
   --rimTint: 170, 190, 255;
   --bleedX: 78%;
   --bleedY: 86%;
-
-  --gap: calc(var(--sqOuter) * (1 - var(--innerRatio)) / 2);
-  --coreR: calc(var(--sqR) - (var(--gap) * var(--coreRk)));
 
   width: var(--sqOuter);
   height: var(--sqOuter);
@@ -172,11 +173,9 @@
 
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-
-  transition: filter var(--pressTimeOut) ease;
 }
 
-.wtUpcoming .wtLabelScope .glassSquare::before{
+.wtLabelScope .glassSquare::before{
   content:"";
   position:absolute;
   inset: 12px;
@@ -197,7 +196,16 @@
   opacity:.95;
 }
 
-.wtUpcoming .wtLabelScope .glassSquare::after{
+/* poměrové škálování odlesků (aby tvar zůstal 1:1) */
+@supports (container-type: inline-size){
+  .wtUpcomingItem .wtLabelScope .glassSquare::before{
+    inset: calc(var(--sqOuter) * 0.0333333333); /* 12/360 */
+    border-radius: calc(var(--sqR) - calc(var(--sqOuter) * 0.0166666667)); /* 6/360 */
+    filter: blur(calc(var(--sqOuter) * 0.00375)); /* 1.35/360 */
+  }
+}
+
+.wtLabelScope .glassSquare::after{
   content:"";
   position:absolute;
   inset:-1px;
@@ -239,189 +247,4 @@
   padding: var(--glassRingThickness);
   filter: blur(var(--glassRimBlur));
   opacity:.95;
-}
-
-/* ===== Press glow ===== */
-.wtUpcoming .wtLabelScope .pressGlow{
-  position:absolute;
-  inset:-28px;
-  border-radius: calc(var(--sqR) + 14px);
-  pointer-events:none;
-  opacity:0;
-  filter: blur(12px);
-  transform: scale(.995);
-  transition: opacity var(--pressTimeOut) ease, transform var(--pressTimeOut) ease;
-  z-index:0;
-
-  background:
-    radial-gradient(86% 86% at 70% 74%,
-      rgba(255,255,255,.18) 0%,
-      rgba(255,255,255,.10) 30%,
-      transparent 65%),
-    radial-gradient(120% 100% at 50% 120%,
-      rgba(255,255,255,.16) 0%,
-      transparent 55%);
-}
-
-/* =====================================================
-   WT UPCOMING – PLAKÁTY + GLASS ONLY (REBUILD, FIX SHAPE)
-   - Sklo se škáluje podle ŠÍŘKY PLAKÁTU (container)
-   - Tvar skla zůstává 1:1 jako originál (žádný "hovnoid")
-   - Bez white card / core / datum uvnitř skla
-   - Tvrdě schované "velké datum" overlay v itemu
-===================================================== */
-
-#wtNewEventsSlot{display:block;width:100%;}
-
-.wtUpcomingList{
-  display:flex;
-  flex-direction:column;
-  gap:18px;
-  padding:0 14px;
-}
-
-.wtUpcomingItem{
-  position:relative;
-  width:100%;
-  max-width:640px;
-  margin-left:auto;
-  margin-right:auto;
-
-  /* klíč: škálování podle plakátu */
-  container-type:inline-size;
-  container-name:wtPoster;
-}
-
-.wtUpcomingLink{display:block;text-decoration:none;}
-.wtUpcomingPoster{
-  width:100%;
-  height:auto;
-  display:block;
-  border-radius:0 !important;
-}
-
-/* =====================================================
-   GLASS WRAP (pozice)
-===================================================== */
-
-.wtLabelWrap{
-  position:absolute;
-  z-index:50;
-  pointer-events:auto;
-  cursor:pointer;
-
-  /* fallback */
-  top:15px;
-  left:15px;
-}
-
-@supports (container-type: inline-size){
-  .wtUpcomingItem .wtLabelWrap{
-    /* odsazení od kraje plakátu */
-    --wtGlassInset: clamp(10px, 2.2cqi, 18px);
-
-    /* velikost skla */
-    --wtGlassSize: clamp(64px, 15.5cqi, 128px);
-
-    top: var(--wtGlassInset);
-    left: var(--wtGlassInset);
-  }
-}
-
-/* =====================================================
-   GLASS SCOPE (ORIGINÁLNÍ PROMĚNNÉ)
-   Sklo samotné nechávám stejné – jen přepočítám poměrově
-===================================================== */
-
-.wtLabelScope{
-  --bg:#9c9c9c;
-
-  /* ORIGINÁL design jednotka */
-  --sqOuter: 360px;
-  --innerRatio: .78;
-
-  --sqR: 34px;
-  --coreRk: 1.55;
-
-  /* sklo */
-  --glassClearA: rgba(255,255,255,.14);
-  --glassClearB: rgba(255,255,255,.08);
-  --glassMilkA:  rgba(255,255,255,.10);
-  --glassMilkB:  rgba(255,255,255,.12);
-
-  --glassRingThickness: 13px;
-  --glassRimBlur: 1.05px;
-
-  --topRim1: rgba(0,0,0,.28);
-  --topRim2: rgba(0,0,0,.12);
-  --topRimFade: 30%;
-
-  --botRim1: rgba(255,255,255,.74);
-  --botRim2: rgba(255,255,255,.30);
-
-  --bleedA: .085;
-  --bleedB: .040;
-
-  --pressY: 3px;
-  --pressTimeIn: 110ms;
-  --pressTimeOut: 190ms;
-}
-
-.wtUpcoming .wtLabelScope *{box-sizing:border-box;}
-
-/* =====================================================
-   POMĚROVÉ ŠKÁLOVÁNÍ (FIX: zachování tvaru)
-   Originál je navržen na 360px:
-   - radius 34 -> 34/360 = 0.094444...
-   - ring 13 -> 13/360 = 0.036111...
-   - before inset 12 -> 12/360 = 0.033333...
-   - before blur 1.35 -> 1.35/360 = 0.00375
-   - press inset -28 -> -28/360 = -0.077777...
-   - press blur 12 -> 12/360 = 0.033333...
-===================================================== */
-
-@supports (container-type: inline-size){
-  .wtUpcomingItem .wtLabelScope{
-    /* přepnout základní velikost na vypočtenou */
-    --sqOuter: var(--wtGlassSize);
-
-    /* vše poměrově z --sqOuter */
-    --sqR: calc(var(--sqOuter) * 0.0944444444);
-    --glassRingThickness: calc(var(--sqOuter) * 0.0361111111);
-
-    /* blur necháme poměrově taky */
-    --glassRimBlur: calc(var(--sqOuter) * 0.0029166667); /* 1.05/360 */
-  }
-
-@supports (container-type: inline-size){
-  .wtUpcomingItem .wtLabelScope .glassSquare::before{
-    inset: calc(var(--sqOuter) * 0.0333333333); /* 12/360 */
-    border-radius: calc(var(--sqR) - calc(var(--sqOuter) * 0.0166666667)); /* 6/360 */
-    filter: blur(calc(var(--sqOuter) * 0.00375)); /* 1.35/360 */
-  }
-}
-
-@supports (container-type: inline-size){
-  .wtUpcomingItem .wtLabelScope .pressGlow{
-    inset: calc(var(--sqOuter) * -0.0777777778); /* -28/360 */
-    border-radius: calc(var(--sqR) + calc(var(--sqOuter) * 0.0388888889)); /* 14/360 */
-    filter: blur(calc(var(--sqOuter) * 0.0333333333)); /* 12/360 */
-  }
-}
-
-.wtReveal{
-  opacity: 0;
-  transform: translateY(180px) scale(0.90);
-  transition: none !important;
-  will-change: transform, opacity;
-}
-.wtReveal.isIn{
-  opacity: 1;
-  transform: none;
-  animation: wtRise 1350ms cubic-bezier(.16,1,.3,1) both;
-}
-@keyframes wtRise{
-  0%{ opacity:0; transform: translateY(190px) scale(0.89); }
-  70%{ opacity:1; transform: translateY(-10px) scale(1.01); }
-  100%{ opacity:1; transform: translateY(0) scale(1); }
 }
