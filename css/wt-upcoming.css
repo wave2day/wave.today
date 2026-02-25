@@ -46,8 +46,8 @@
   cursor:pointer;
 
   /* fallback */
-  top:12px;
-  left:12px;
+  top:15px;
+  left:15px;
 }
 
 @supports (container-type: inline-size){
@@ -268,33 +268,3 @@
   }
 }
 
-/* =====================================================
-   Vypnutí všech reliktů dat / whitecard uvnitř labelu
-===================================================== */
-.wtLabelWrap :is(
-  .coreSquare,
-  .whiteCard,
-  .dateSquare,
-  .wtDay, .wtMonth,
-  .wtDate,
-  [data-date],
-  [class*="date"], [class*="month"]
-){
-  display:none !important;
-  visibility:hidden !important;
-  opacity:0 !important;
-}
-
-/* =====================================================
-   Vypnutí toho VELKÉHO data, co ti pořád leze na plakát
-   (tohle očividně není uvnitř skla, ale někde v itemu)
-===================================================== */
-.wtUpcomingItem :is(
-  .wtDate, .wtDay, .wtMonth,
-  .date, .day, .month,
-  [class*="wtDate"], [class*="wtDay"], [class*="wtMonth"],
-  [class*="date"], [class*="month"]
-){
-  /* nechci to řešit selektivně bez HTML, tak to tvrdě shazuju jen v itemu */
-  display:none !important;
-}
