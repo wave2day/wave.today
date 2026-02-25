@@ -18,6 +18,9 @@
   max-width:640px;        /* změň na 480/640/720 podle chuti */
   margin-left:auto;
   margin-right:auto;
+  /* škálování podle plakátu (logika ze souboru B) */
+  container-type: inline-size;
+  container-name: wtPoster;
 }
 
 .wtUpcomingLink{display:block;text-decoration:none;}
@@ -25,15 +28,27 @@
 
 /* ===== White date label (base layout) ===== */
 .wtLabelWrap{
+  /* fallback (bez container queries) */
+  --wtGlassInset: 12px;
+  --wtGlassSize: 96px;
+
   position:absolute;
-  top:10px;
-  left:10px;
+  top: var(--wtGlassInset);
+  left: var(--wtGlassInset);
   z-index:50;
   pointer-events:auto;
   cursor:pointer;
 
   transform: scale(var(--wtLabelScale, 0.13));
-  transform-origin: top left;
+}
+
+
+
+@supports (container-type: inline-size){
+  .wtUpcomingItem .wtLabelWrap{
+    --wtGlassInset: clamp(10px, 2.2cqi, 18px);
+    --wtGlassSize:  clamp(64px, 15.5cqi, 128px);
+  }
 }
 
 .wtLabelDate{
@@ -102,6 +117,8 @@
   --pressTimeOut: 190ms;
 }
 
+/* === škálování skla podle --wtGlassSize (logika ze souboru B) === */
+.wtLabelWrap .wtLabelScope{ --sqOuter: var(--wtGlassSize, 360px); }
 .wtUpcoming .wtLabelScope *{box-sizing:border-box;}
 
 /* ===== Glass square ===== */
@@ -244,6 +261,9 @@
 }
 @keyframes wtRise{
   0%{ opacity:0; transform: translateY(190px) scale(0.89); }
+  70%{ opacity:1; transform: translateY(-10px) scale(1.01); }
+  100%{ opacity:1; transform: translateY(0) scale(1); }
+}
 
 /* =====================================================
    HARD OFF — datum / bílá kartička / coreSquare (kdyby to HTML pořád generovalo)
@@ -265,4 +285,26 @@
 .wtDay,
 .wtMonth{
   display:none !important;
+}
+
+
+/* =====================================================
+   RESPONSIVE SIZE PATCH (A look + B sizing)
+===================================================== */
+@supports (container-type: inline-size){
+  .wtUpcomingItem .wtLabelScope{
+    --sqR: calc(var(--sqOuter) * 0.0944444444);               /* 34/360 */
+    --glassRingThickness: calc(var(--sqOuter) * 0.0361111111); /* 13/360 */
+    --glassRimBlur: calc(var(--sqOuter) * 0.0029166667);       /* 1.05/360 */
+  }
+  .wtUpcomingItem .wtLabelScope .glassSquare::before{
+    inset: calc(var(--sqOuter) * 0.0333333333); /* 12/360 */
+    border-radius: calc(var(--sqR) - calc(var(--sqOuter) * 0.0166666667)); /* 6/360 */
+    filter: blur(calc(var(--sqOuter) * 0.00375)); /* 1.35/360 */
+  }
+  .wtUpcomingItem .wtLabelScope .pressGlow{
+    inset: calc(var(--sqOuter) * -0.0777777778); /* -28/360 */
+    border-radius: calc(var(--sqR) + calc(var(--sqOuter) * 0.0388888889)); /* 14/360 */
+    filter: blur(calc(var(--sqOuter) * 0.0333333333)); /* 12/360 */
+  }
 }
