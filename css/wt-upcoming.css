@@ -444,3 +444,104 @@
   width: var(--monW, auto);
   text-align:center;
 }
+/* =====================================
+   SWAP SKIN: glass-scope card -> WHITE DATE CARD look
+   (NO HTML changes)
+===================================== */
+
+/* 0) vypni “Deterministic overrides” pro label text,
+      protože ti to natvrdo přepisuje typografii (82px/38px) */
+.wtLabelScope .wtLabelDay,
+.wtLabelScope .wtLabelMonth{
+  font-size: unset !important;
+  letter-spacing: unset !important;
+  margin-top: 0 !important;
+  width: auto !important;
+  text-align: unset !important;
+}
+
+/* 1) kartička = coreSquare (to je “ta bílá kartička”) */
+.wtUpcoming .wtLabelScope{
+  --card-size: 260px;
+  --date-size: 36%;
+}
+
+/* pokud coreSquare má svoje velikosti z proměnných, přepíšeme je na 260 */
+.wtUpcoming .wtLabelScope .coreSquare{
+  width: var(--card-size) !important;
+  height: var(--card-size) !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+
+  background: linear-gradient(#ffffff, #f2f2f2) !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -6px 14px rgba(0,0,0,0.08),
+    0 10px 24px rgba(0,0,0,0.18) !important;
+}
+
+/* 2) “dateSquare” = .date (uvnitř coreSquare) */
+.wtUpcoming .wtLabelScope .date{
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+
+  width: var(--date-size) !important;
+  height: var(--date-size) !important;
+  overflow: hidden !important;
+
+  display: block !important;   /* vypnout grid/centrování */
+  text-align: left !important;
+  text-shadow: none !important;
+
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  color: #000 !important;
+}
+
+/* 3) day/month absolutně, podle tvé komponenty */
+.wtUpcoming .wtLabelScope .day,
+.wtUpcoming .wtLabelScope .mon{
+  position: absolute !important;
+  left: 50% !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+  transform-origin: 50% 50% !important;
+}
+
+/* DEN */
+.wtUpcoming .wtLabelScope .day{
+  top: calc(100% * -0.1056) !important;
+  font-size: calc(100% * 0.8515) !important;
+  font-weight: 800 !important;
+
+  transform: translateX(-50%) scaleX(1.07) !important;
+
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0 !important;
+  color: #000 !important;
+}
+
+/* MĚSÍC */
+.wtUpcoming .wtLabelScope .mon{
+  bottom: calc(100% * -0.0594) !important;
+  font-size: calc(100% * 0.4092) !important;
+  font-weight: 700 !important;
+
+  transform: translateX(-50%) scaleX(1.21) !important;
+  transform-origin: 50% 100% !important;
+
+  letter-spacing: 0 !important;
+  color: #000 !important;
+}
+
+/* 4) volitelné: pokud ti “glass” vrstvy kreslí vlastní ringy/halo, vypni je,
+      ať zůstane čistá plastová kartička */
+.wtUpcoming .wtLabelScope .glassSquare,
+.wtUpcoming .wtLabelScope .pressGlow{
+  display: none !important;
+}
+
+/* 5) klikací logika nech – coreSquare dál může být klikací (ty to tak máš) */
