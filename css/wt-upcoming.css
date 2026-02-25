@@ -277,3 +277,102 @@
     inset: calc(var(--sqOuter) * -0.0027777778);
   }
 }
+
+/* =====================================================
+   WHITE DATE CARD — VLOŽENÍ DO GLASS (STEJNÁ LOGIKA ŠKÁLOVÁNÍ)
+   - Nešahá na glass vzhled
+   - Vše se odvozuje z --sqOuter (tedy z --wtGlassSize)
+   HTML uvnitř .glassSquare:
+     <div class="wtCardSlot">
+       <div class="dateCard">
+         <div class="dateSquare">
+           <div class="day">25</div>
+           <div class="month">FEB</div>
+         </div>
+       </div>
+     </div>
+===================================================== */
+
+/* slot uvnitř skla – vždy nad pseudo-elementy (které mají pointer-events:none) */
+.wtLabelScope .glassSquare .wtCardSlot{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  display:grid;
+  place-items:center;
+  pointer-events:none; /* ať klik/tap pořád chytá wrapper, ne karta */
+}
+
+/* velikost bílé kartičky: poměr vůči sklu (default 0.76) */
+.wtLabelScope{
+  --cardRatio: 0.76;
+}
+
+/* samotná bílá kartička */
+.wtLabelScope .dateCard{
+  position:relative;
+  width: calc(var(--sqOuter) * var(--cardRatio));
+  aspect-ratio: 1 / 1;
+
+  background: linear-gradient(#ffffff, #f2f2f2);
+  border-radius: calc(var(--sqOuter) * 0.0611111111); /* 22/360 */
+
+  box-shadow:
+    inset 0 calc(var(--sqOuter) * 0.0027777778) 0 rgba(255,255,255,0.9), /* 1/360 */
+    inset 0 calc(var(--sqOuter) * -0.0166666667) calc(var(--sqOuter) * 0.0388888889) rgba(0,0,0,0.08), /* -6/360 , 14/360 */
+    0 calc(var(--sqOuter) * 0.0277777778) calc(var(--sqOuter) * 0.0666666667) rgba(0,0,0,0.18); /* 10/360 , 24/360 */
+
+  overflow:hidden;
+
+  /* velikost datumového bloku (≈ 36 % plochy kartičky) */
+  --date-size: 36%;
+}
+
+/* datumový čtverec (uvnitř bílé karty) */
+.wtLabelScope .dateCard .dateSquare{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform: translate(-50%, -50%);
+
+  width: var(--date-size);
+  aspect-ratio: 1 / 1;
+  overflow:hidden;
+
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color:#000;
+}
+
+/* společné */
+.wtLabelScope .dateSquare .day,
+.wtLabelScope .dateSquare .month{
+  position:absolute;
+  left:50%;
+  line-height:1;
+  white-space:nowrap;
+  transform-origin:50% 50%;
+}
+
+/* DEN */
+.wtLabelScope .dateSquare .day{
+  top: calc(100% * -0.1056);
+  font-size: calc(100% * 0.8515);
+  font-weight:800;
+
+  transform: translateX(-50%) scaleX(1.07);
+
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* MĚSÍC */
+.wtLabelScope .dateSquare .month{
+  bottom: calc(100% * -0.0594);
+  font-size: calc(100% * 0.4092);
+  font-weight:700;
+
+  transform: translateX(-50%) scaleX(1.21);
+  transform-origin:50% 100%;
+
+  letter-spacing:0;
+}
