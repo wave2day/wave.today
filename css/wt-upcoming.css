@@ -558,3 +558,83 @@
   transform-origin:50% 100%;
   letter-spacing:0;
 }
+
+/* =====================================================
+   FIX v3 (1:1 GLYPH podle tvého originálu):
+   Uděláme z existujícího .wtLabelDate skutečný "dateSquare" box (36%),
+   takže můžeš použít původní top/bottom výpočty s 100%.
+   Tím zmizí drift měsíce (posun doprava/dolů).
+===================================================== */
+
+/* dateSquare box */
+.wtUpcomingItem .wtLabelWrap .wtLabelDate{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width: var(--date-size);
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  display:block;
+  z-index:70;
+  pointer-events:none;
+  isolation:isolate;
+}
+
+/* bílá kartička pod dateSquare, ale větší (card-size) */
+.wtUpcomingItem .wtLabelWrap .wtLabelDate::before{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  z-index:0;
+
+  width: var(--card-size);
+  aspect-ratio: 1 / 1;
+
+  background: linear-gradient(#ffffff, #f2f2f2);
+  border-radius: var(--card-r);
+
+  box-shadow:
+    inset 0 calc(var(--sqOuterLocal) * 0.0027777778) 0 rgba(255,255,255,0.9),
+    inset 0 calc(var(--sqOuterLocal) * -0.0166666667) calc(var(--sqOuterLocal) * 0.0388888889) rgba(0,0,0,0.08),
+    0 calc(var(--sqOuterLocal) * 0.0277777778) calc(var(--sqOuterLocal) * 0.0666666667) rgba(0,0,0,0.18);
+}
+
+/* společné */
+.wtUpcomingItem .wtLabelWrap .wtLabelDate .day,
+.wtUpcomingItem .wtLabelWrap .wtLabelDate .mon,
+.wtUpcomingItem .wtLabelWrap .wtLabelDate .month{
+  position:absolute;
+  left:50%;
+  line-height:1;
+  white-space:nowrap;
+  transform-origin:50% 50%;
+  z-index:1;
+
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color:#000;
+}
+
+/* DEN — přesně jako v tvém dateSquare */
+.wtUpcomingItem .wtLabelWrap .wtLabelDate .day{
+  top: calc(100% * -0.1056);
+  font-size: calc(100% * 0.8515);
+  font-weight:800;
+  transform: translateX(-50%) scaleX(1.07);
+
+  font-variant-numeric: tabular-nums;
+  font-feature-settings:"tnum" 1;
+}
+
+/* MĚSÍC — přesně jako v tvém dateSquare */
+.wtUpcomingItem .wtLabelWrap .wtLabelDate .mon,
+.wtUpcomingItem .wtLabelWrap .wtLabelDate .month{
+  bottom: calc(100% * -0.0594);
+  font-size: calc(100% * 0.4092);
+  font-weight:700;
+  transform: translateX(-50%) scaleX(1.21);
+  transform-origin: 50% 100%;
+  letter-spacing:0;
+}
