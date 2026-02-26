@@ -381,7 +381,7 @@
   font-size: calc(var(--date-size) * 0.4092);
   font-weight:800; /* aby černá působila stejně jako den */
 
-  transform: translateX(-50%) scaleX(1.21) translateY(-6%) !important; /* zvednutí */
+  transform: translateX(-50%) scaleX(1.21) translateY(-12%) !important; /* zvednutí */
   transform-origin:50% 100%;
   letter-spacing:0;
 }
