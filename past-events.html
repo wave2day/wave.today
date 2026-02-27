@@ -458,7 +458,7 @@ html,body{
     #eventsGrid.randomMode{
       display:grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
+  gap: 8px;
 max-width: 1180px;
       margin: 0 auto;
       padding: 0 18px;
@@ -492,7 +492,7 @@ border-radius: 0 !important;
     @media (max-width: 560px){
       #eventsGrid.randomMode{
         grid-template-columns: repeat(auto-fit, minmax(clamp(190px, 48vw, 320px), 1fr));
-        gap: 16px 14px;
+        gap: 8px 6px;
         padding: 0 12px;
       }
       #eventsGrid.randomMode .poster{
@@ -502,7 +502,7 @@ border-radius: 0 !important;
     @media (max-width: 420px){
       #eventsGrid.randomMode{
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px 10px;
+        gap: 4px 4px;
         padding: 0 8px;
       }
     }
@@ -994,7 +994,108 @@ will-change: transform, filter;
 
 </style>
 
+<style id="masonryPatch">
+/* ===== Masonry (CSS columns) – desktop ok, mobil vrátíme na GRID =====
+   Cíl:
+   - desktop: columns + „random“ kouzlo bez ořezu
+   - mobil: stabilní 2-sloupcový GRID (žádné díry / miznutí při scrollu)
+   - FLIP (--flipX/--flipY) musí být na .poster, random (tx/ty/rot/scale) na IMG
+*/
 
+#eventsGrid.randomMode{
+  display: block !important;
+  column-width: 280px;
+  column-gap: 14px;
+  column-fill: auto; /* balance na mobilu/Androidu skáče – auto je stabilnější */
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 18px;
+  overflow: visible !important;
+}
+
+#eventsGrid.randomMode .poster{
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 14px !important;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  overflow: visible !important;
+
+  /* buffer proti „useknutí“ při rotaci/posunu */
+  padding: 12px;
+  box-sizing: border-box;
+  position: relative;
+
+  /* FLIP posun patří sem (neovlivňuje layout) */
+  transform: translate(var(--flipX,0px), var(--flipY,0px));
+  transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+}
+
+/* random transformy patří na IMG */
+#eventsGrid.randomMode .poster img{
+  display: block;
+  width: 100%;
+  height: auto;
+
+  transform:
+    translate(var(--tx,0px), var(--ty,0px))
+    rotate(var(--rot,0deg))
+    scale(var(--scl, 1));
+  transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* ===== MOBIL: columns vypnout, vrátit GRID (tvůj původní layout) ===== */
+@media (max-width: 560px){
+  #eventsGrid.randomMode{
+    display: grid !important;
+    /* zruš columns */
+    column-width: auto !important;
+    column-count: unset !important;
+    column-gap: unset !important;
+    column-fill: unset !important;
+
+    /* grid nastavení držíme jako v hlavním CSS */
+    grid-template-columns: repeat(auto-fit, minmax(clamp(190px, 48vw, 320px), 1fr)) !important;
+    gap: 16px 14px !important;
+    padding: 0 12px !important;
+    align-items: start !important;
+    justify-items: center !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    margin: 0 !important;
+    padding: 0 !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+
+    /* v grid režimu se random+flip dělá na .poster (stejně jako nahoře v hlavním CSS) */
+    transform:
+      translate(var(--flipX,0px), var(--flipY,0px))
+      translate(var(--tx,0px), var(--ty,0px))
+      rotate(var(--rot,0deg))
+      scale(var(--scl, 1)) !important;
+    transition: transform 520ms cubic-bezier(.2,.8,.2,1) !important;
+    will-change: transform !important;
+  }
+
+  /* ať IMG už nic nepřepisuje */
+  #eventsGrid.randomMode .poster img{
+    transform: none !important;
+  }
+}
+
+@media (max-width: 420px){
+  #eventsGrid.randomMode{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 10px !important;
+    padding: 0 8px !important;
+  }
+}
+</style>
 
 </head>
 <body>
@@ -1186,12 +1287,12 @@ will-change: transform, filter;
     const posters = Array.from(grid.querySelectorAll('.poster'));
     // stronger "plutí" + overlap
     posters.forEach((el, i) => {
-      const tx  = (Math.random()*2 - 1) * 14;     // -27..27 (mírnější rozkývání)
-      const ty  = (Math.random()*2 - 1) * 22;     // -43..43 (mírnější rozkývání)
-      const rot = (Math.random()*2 - 1) * 1.6;    // -3.1..3.1 deg
-      const scl = 0.99 + Math.random()*0.05;      // 0.98..1.06 (méně rozdílů)
+      const tx  = (Math.random()*2 - 1) * 34;     // -34..34 (víc překryvů)     // -27..27 (mírnější rozkývání)
+      const ty  = (Math.random()*2 - 1) * 46;     // -46..46 (víc překryvů)     // -43..43 (mírnější rozkývání)
+      const rot = (Math.random()*2 - 1) * 2.4;    // -2.4..2.4 deg    // -3.1..3.1 deg
+      const scl = 0.985 + Math.random()*0.07;      // 0.985..1.055      // 0.98..1.06 (méně rozdílů)
       const lift= 0;                              // (nepoužíváme layout lift – jen transform)
-      const z   = 1 + Math.round(Math.random()*3);  // 1..7 (méně překryvů)
+      const z   = 1 + Math.round(Math.random()*8);  // 1..9 (víc překryvů)
 
       el.style.setProperty('--tx', tx.toFixed(1)+'px');
       el.style.setProperty('--ty', ty.toFixed(1)+'px');
