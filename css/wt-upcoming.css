@@ -83,7 +83,7 @@
 ===================================================== */
 .wtLabelWrap{
   position:absolute;
-  z-index:50;
+  z-index:80;
   pointer-events:auto;
   cursor:pointer;
 
@@ -306,6 +306,8 @@
   pointer-events:none;
   display:block;
   isolation:isolate;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 /* 2) bílá kartička pod textem */
