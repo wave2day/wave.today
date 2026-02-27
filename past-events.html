@@ -1053,11 +1053,20 @@ will-change: transform, filter;
 
 /* mobil: menší buffer */
 @media (max-width: 560px){
-  #eventsGrid.randomMode{ padding: 0 12px; }
+  #eventsGrid.randomMode{
+    padding: 0 12px;
+    column-count: 2;
+    column-width: auto;
+  }
   #eventsGrid.randomMode .poster{ padding: 10px; }
 }
-@media (max-width: 420px){
-  #eventsGrid.randomMode{ padding: 0 8px; }
+
+@@media (max-width: 420px){
+  #eventsGrid.randomMode{
+    padding: 0 8px;
+    column-count: 2;
+    column-width: auto;
+  }
   #eventsGrid.randomMode .poster{ padding: 8px; }
 }
 </style>
