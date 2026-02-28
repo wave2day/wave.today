@@ -1005,7 +1005,7 @@ will-change: transform, filter;
   display: block !important;
   column-width: 280px;
   column-gap: 14px;
-  column-fill: auto;
+  column-fill: balance;
   max-width: 1180px;
   margin: 0 auto;
   padding: 0 18px;
@@ -1060,67 +1060,6 @@ will-change: transform, filter;
   #eventsGrid.randomMode{ padding: 0 8px; }
   #eventsGrid.randomMode .poster{ padding: 8px; }
 }
-
-
-/* ===== MOBILE: stabilní 2-sloupcový grid (bez columns + bez random transformů) ===== */
-@media (max-width: 560px){
-  #eventsGrid.randomMode{
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    column-count: unset !important;
-    column-width: auto !important;
-    column-gap: unset !important;
-    column-fill: auto !important;
-    gap: 12px 10px !important;
-    padding: 0 10px !important;
-    align-items: start;
-    justify-items: center;
-  }
-  #eventsGrid.randomMode .poster{
-    padding: 0 !important;
-    margin: 0 !important;
-    transform: none !important;
-  }
-  #eventsGrid.randomMode .poster img{
-    transform: none !important;
-  }
-}
-@media (max-width: 420px){
-  #eventsGrid.randomMode{
-    gap: 10px 8px !important;
-    padding: 0 8px !important;
-  }
-}
-
-
-
-/* ===== MOBILE GPU/scroll stabilizace (Android) ===== */
-@media (max-width: 560px){
-  /* odlehčit blend/blur animace, které na mobilu shazují vrstvy (mizící plakáty) */
-  #ambientPoster{ opacity:.28 !important; mix-blend-mode: normal !important; filter: blur(60px) saturate(1.05) !important; animation: none !important; }
-  #ambientGlow{ opacity:.80 !important; animation: none !important; }
-  /* grid: žádné centrování, ať se nepočítají divné mezery */
-  #eventsGrid.randomMode{ justify-items: stretch !important; }
-  /* izolovat každou položku – méně repaint glitchů */
-  #eventsGrid.randomMode .poster{ contain: layout paint !important; }
-}
-
-
-/* ===== MOBILE HARD FIX: vypnout těžké fixed/blur vrstvy (Android repaint bug) ===== */
-@media (max-width: 560px){
-  /* tyhle vrstvy jsou nejčastější příčina „neviditelné, ale klikatelné“ dlaždice při scrollu */
-  #ambientBg, #ambientPoster, #ambientGlow{ display:none !important; }
-  #pageBase{ background:#0b0b10 !important; }
-
-  /* zamezit divným kompozicím */
-  #eventsGrid, #eventsGrid.randomMode{ transform: translateZ(0); }
-  #eventsGrid.randomMode .poster,
-  #eventsGrid.randomMode .poster img{
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-}
-
 </style>
 
 </head>
@@ -1311,7 +1250,6 @@ will-change: transform, filter;
 
   function randomizeVars(){
     const posters = Array.from(grid.querySelectorAll('.poster'));
-    const isMobile = window.matchMedia('(max-width: 560px)').matches;
     // stronger "plutí" + overlap
     posters.forEach((el, i) => {
       const tx  = (Math.random()*2 - 1) * 14;     // -27..27 (mírnější rozkývání)
@@ -1706,36 +1644,6 @@ void wrap.offsetHeight;
   init().catch(err => {
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
-
-  // ===== MOBILE repaint hack: některé Android prohlížeče při scrollu „zapomenou“ překreslit grid
-  (function(){
-    const mq = window.matchMedia('(max-width: 560px)');
-    if(!mq.matches) return;
-
-    let raf = 0;
-    let t = 0;
-
-    function nudge(){
-      const el = document.getElementById('eventsGrid');
-      if(!el) return;
-      // krátký „nudge“ kompozice – donutí repaint bez viditelného posunu
-      el.style.transform = 'translateZ(0)';
-      clearTimeout(t);
-      t = setTimeout(() => { el.style.transform = ''; }, 80);
-    }
-
-    window.addEventListener('scroll', () => {
-      if(raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        nudge();
-      });
-    }, {passive:true});
-
-    // i po načtení obrázků
-    window.addEventListener('load', nudge, {once:true});
-  })();
-
 </script>
 </body>
 </html>
