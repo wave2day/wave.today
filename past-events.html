@@ -1063,35 +1063,55 @@ will-change: transform, filter;
 </style>
 
 
-<style id="mobileMasonryJS">
+<style id="mobileGridTiltPatch">
 
-/* ===== MOBILE ONLY (rndm): JS masonry (2 cols) + stable repaint ===== */
+/* ===== MOBILE ONLY (rndm): 2-col GRID + "masonry feel" without holes ===== */
 @media (max-width: 560px){
-  /* Container becomes positioning context in rndm */
+  /* Keep your desktop masonry intact; on mobile force stable grid */
   #eventsGrid.randomMode{
-    display: block !important;        /* JS controls placement */
-    position: relative !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+    gap: 14px 12px !important;
     padding: 0 10px !important;
-    /* ensure any CSS-columns are off on mobile */
+    align-items: start !important;
+    justify-items: stretch !important;
+
+    /* hard-disable columns if any rule leaks in */
     column-count: unset !important;
     column-width: unset !important;
     column-gap: unset !important;
     column-fill: unset !important;
   }
-  /* Posters are absolutely positioned by JS in rndm */
+
+  /* Ensure cards don't collapse / repaint weirdly */
   #eventsGrid.randomMode .poster{
-    position: absolute !important;
     margin: 0 !important;
     padding: 0 !important;
     contain: layout paint !important;
-  }
-  /* Keep the “random” look on mobile but safely: transforms on IMG only (vars already used) */
-  #eventsGrid.randomMode .poster img{
-    backface-visibility: hidden;
-    transform: translateZ(0); /* stable compositing */
+    overflow: visible !important;
+    transform: none !important;          /* no layout-breaking transforms on box */
+    transition: none !important;
+    will-change: auto !important;
   }
 
-  /* During scroll pause ambient animation (prevents Android “invisible but clickable”) */
+  /* "Masonry look": small tilt only (no translate/scale), alternating pattern */
+  #eventsGrid.randomMode .poster img{
+    display:block;
+    width:100%;
+    height:auto;
+    backface-visibility: hidden;
+    transform: translateZ(0) rotate(var(--mrot, 0deg));
+    transition: transform 260ms ease;
+    transform-origin: 50% 50%;
+  }
+  #eventsGrid.randomMode .poster:nth-child(6n+1){ --mrot: -1.2deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+2){ --mrot:  0.9deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+3){ --mrot: -0.6deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+4){ --mrot:  1.1deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot: -0.8deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot:  0.5deg; }
+
+  /* Background: keep the original look, but avoid the Android "invisible but clickable" glitch */
   body.isScrolling #ambientPoster,
   body.isScrolling #ambientGlow{
     animation-play-state: paused !important;
@@ -1684,122 +1704,34 @@ void wrap.offsetHeight;
 </script>
 
 <script>
-/* ===== MOBILE ONLY (rndm): JS masonry layout (2 cols) + repaint nudge ===== */
+/* ===== MOBILE ONLY: pause ambient while scrolling + force repaint (Android) ===== */
 (function(){
-  const mq = window.matchMedia("(max-width: 560px)");
+  const mq = matchMedia("(max-width: 560px)");
+  if(!mq.matches) return;
+
   const grid = document.getElementById("eventsGrid");
   if(!grid) return;
 
-  const PAD_X = 10;   // must match CSS padding
-  const GAP_X = 10;
-  const GAP_Y = 12;
+  let t=null, raf=0;
 
-  let raf = 0;
-  let scrollTimer = null;
-
-  function isMobile(){ return mq.matches; }
-  function isRandom(){ return grid.classList.contains("randomMode"); }
-
-  function cleanup(){
-    grid.style.height = "";
-    grid.style.transform = "";
-    const posters = grid.querySelectorAll(".poster");
-    posters.forEach(el=>{
-      el.style.position = "";
-      el.style.left = "";
-      el.style.top = "";
-      el.style.width = "";
-    });
-  }
-
-  async function waitImages(){
-    const imgs = Array.from(grid.querySelectorAll(".poster img"));
-    const decodes = imgs.map(img => {
-      if(img.complete && img.naturalWidth) return Promise.resolve();
-      // decode() is best-effort; fall back to load event
-      if(img.decode) return img.decode().catch(()=>{});
-      return new Promise(res=> img.addEventListener("load", ()=>res(), {once:true}));
-    });
-    await Promise.all(decodes);
-  }
-
-  function layout(){
-    if(!isMobile() || !isRandom()) { cleanup(); return; }
-
-    const w = grid.clientWidth;
-    const colW = Math.max(120, (w - PAD_X*2 - GAP_X) / 2);
-
-    const posters = Array.from(grid.querySelectorAll(".poster"));
-    let h = [0,0];
-
-    posters.forEach(el=>{
-      el.style.position = "absolute";
-      el.style.width = colW + "px";
-
-      // choose shorter column
-      const col = h[0] <= h[1] ? 0 : 1;
-      const x = PAD_X + col * (colW + GAP_X);
-      const y = h[col];
-
-      el.style.left = x + "px";
-      el.style.top  = y + "px";
-
-      // measure after width is set
-      const rectH = el.getBoundingClientRect().height;
-      h[col] = y + rectH + GAP_Y;
-    });
-
-    grid.style.height = Math.max(h[0], h[1]) + "px";
-  }
-
-  async function relayoutSoon(){
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(async ()=>{
-      await waitImages();
-      // two frames helps with Android paint ordering
-      requestAnimationFrame(()=>{
-        layout();
-        requestAnimationFrame(()=> nudgeRepaint());
-      });
-    });
-  }
-
-  function nudgeRepaint(){
-    if(!isMobile() || !isRandom()) return;
+  function nudge(){
+    // tiny transform toggled on the grid to force paint without visible movement
     grid.style.transform = "translate3d(0,0.01px,0)";
-    requestAnimationFrame(()=>{ grid.style.transform = "translate3d(0,0,0)"; });
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(()=>{ grid.style.transform = "translate3d(0,0,0)"; });
   }
 
-  // Observe mode changes (date <-> rndm)
-  const obs = new MutationObserver(()=>{
-    if(isMobile() && isRandom()) relayoutSoon();
-    else cleanup();
-  });
-  obs.observe(grid, {attributes:true, attributeFilter:["class"]});
-
-  // Relayout on resize/orientation
-  mq.addEventListener?.("change", ()=>{ if(isMobile() && isRandom()) relayoutSoon(); else cleanup(); });
-  window.addEventListener("resize", ()=>{ if(isMobile() && isRandom()) relayoutSoon(); }, {passive:true});
-  window.addEventListener("orientationchange", ()=>{ if(isMobile() && isRandom()) relayoutSoon(); }, {passive:true});
-
-  // If posters/images load later, relayout
-  grid.addEventListener("load", (e)=>{
-    if(e && e.target && e.target.tagName === "IMG" && isMobile() && isRandom()){
-      relayoutSoon();
-    }
-  }, true);
-
-  // Scroll: pause ambient + nudge repaint
   window.addEventListener("scroll", ()=>{
-    if(!isMobile()) return;
     document.body.classList.add("isScrolling");
-    nudgeRepaint();
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(()=>{ document.body.classList.remove("isScrolling"); }, 220);
+    nudge();
+    clearTimeout(t);
+    t = setTimeout(()=>{ document.body.classList.remove("isScrolling"); }, 220);
   }, {passive:true});
 
-  // Initial
-  if(isMobile() && isRandom()) relayoutSoon();
+  // also nudge after each image load (late decode can cause missing paint on return scroll)
+  grid.addEventListener("load", (e)=>{
+    if(e && e.target && e.target.tagName === "IMG") nudge();
+  }, true);
 })();
 </script>
 
