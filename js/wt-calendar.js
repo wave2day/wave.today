@@ -1,31 +1,23 @@
-/* wt-calendar.js
-   Purpose: Click on the date label (.wtLabelWrap) opens an "Add to calendar" screen with the ticket link prefilled.
-   - No CSS changes required.
-   - No event time/location required: creates an ALL‑DAY event for the label's date.
-   - Pulls:
-       date  -> from label (.day + .mon) or label text (e.g., "25 FEB")
-       title -> from poster <img alt="..."> or from image filename
-       ticket/event url -> from nearest <a href> (prefers .wtUpcomingLink if present)
-       poster url -> from nearest <img src> (added into details as "Poster: ...")
-   Works best with Google Calendar (opens a prefilled event form).
+/* wt-calendar.js (ICS version)
+   Click on the date label (.wtLabelWrap) -> downloads an .ics file.
+   On mobile, opening the .ics usually prompts "Add to calendar" in the phone's calendar app.
 
-   If nothing happens:
-   - confirm this script is loaded (Network tab, no 404)
-   - confirm .wtLabelWrap exists in DOM (console: document.querySelectorAll('.wtLabelWrap').length)
+   No CSS changes required. No event times required: creates an ALL‑DAY event for the label's date.
+
+   Pulls:
+     date  -> from label (.day + .mon) or label text (e.g., "25 FEB")
+     title -> from poster <img alt="..."> or image filename
+     ticket/event url -> from nearest <a href> (prefers .wtUpcomingLink if present)
+     poster url -> from nearest <img src> (added to DESCRIPTION and as ATTACH;VALUE=URI=...)
 */
 
 (() => {
-  // ===== Config =====
   const LABEL_SELECTOR = ".wtLabelWrap";
   const ITEM_SELECTOR = ".wtUpcomingItem";
   const LINK_SELECTOR_PREFERRED = "a.wtUpcomingLink[href]";
   const LINK_SELECTOR_FALLBACK = "a[href]";
   const POSTER_SELECTOR = "img";
 
-  // Set true for quick debugging in console
-  const DEBUG = false;
-
-  // ===== Month map (EN 3–9 letters). Add more if your labels use other languages. =====
   const MONTHS = {
     jan: 1, january: 1,
     feb: 2, february: 2,
@@ -43,27 +35,13 @@
 
   const pad = (n) => String(n).padStart(2, "0");
 
-  function log(...args) {
-    if (DEBUG) console.log("[wt-calendar]", ...args);
-  }
-
-  // --- Date helpers for Google Calendar ALL-DAY events ---
-  // Google all-day uses YYYYMMDD/YYYYMMDD with end exclusive (+1 day)
-  function ymdToCompact(ymd) {
-    // "YYYY-MM-DD" -> "YYYYMMDD"
-    return ymd.replaceAll("-", "");
-  }
-
-  function addDaysYMD(ymd, days) {
-    const [y, m, d] = ymd.split("-").map(Number);
-    const dt = new Date(y, m - 1, d);
-    dt.setDate(dt.getDate() + days);
-    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+  function absolutizeUrl(url) {
+    if (!url) return "";
+    try { return new URL(url, window.location.href).toString(); }
+    catch { return url; }
   }
 
   function extractDayMonth(labelEl) {
-    // Preferred structure:
-    // <span class="day">25</span><span class="mon">FEB</span>
     const dayEl = labelEl.querySelector(".day");
     const monEl = labelEl.querySelector(".mon");
 
@@ -71,31 +49,22 @@
     let mon = monEl ? monEl.textContent.trim() : "";
 
     if (!day || !mon) {
-      // Fallback: parse any "25 FEB" in label text
       const t = labelEl.textContent.replace(/\s+/g, " ").trim();
       const m = t.match(/(\d{1,2})\s*([A-Za-z]{3,9})/);
-      if (m) {
-        day = m[1];
-        mon = m[2];
-      }
+      if (m) { day = m[1]; mon = m[2]; }
     }
 
     const dayNum = parseInt(day, 10);
     const monNum = MONTHS[(mon || "").toLowerCase()];
     if (!dayNum || !monNum) return null;
-
     return { day: dayNum, month: monNum };
   }
 
   function decideYear(month, day) {
-    // Use current year; if the date is already clearly "past", roll to next year.
-    // This avoids Jan edge cases and keeps behavior stable for short lists.
     const now = new Date();
     const y = now.getFullYear();
     const candidate = new Date(y, month - 1, day);
-
     const diffDays = (candidate - now) / (1000 * 60 * 60 * 24);
-    // if more than 7 days in the past, treat as next year
     return (diffDays < -7) ? (y + 1) : y;
   }
 
@@ -113,15 +82,6 @@
     return "Event";
   }
 
-  function absolutizeUrl(url) {
-    if (!url) return "";
-    try {
-      return new URL(url, window.location.href).toString();
-    } catch {
-      return url;
-    }
-  }
-
   function getTicketUrl(itemEl) {
     const a = itemEl.querySelector(LINK_SELECTOR_PREFERRED) || itemEl.querySelector(LINK_SELECTOR_FALLBACK);
     const href = a ? a.getAttribute("href") : "";
@@ -134,36 +94,105 @@
     return absolutizeUrl(src);
   }
 
-  function openGoogleCalendarAllDay({ title, ymd, ticketUrl, posterUrl }) {
-    const start = ymdToCompact(ymd);
-    const end = ymdToCompact(addDaysYMD(ymd, 1));
-
-    const detailsLines = [];
-    if (ticketUrl) detailsLines.push(`Tickets: ${ticketUrl}`);
-    if (posterUrl) detailsLines.push(`Poster: ${posterUrl}`);
-
-    const gcal = new URL("https://calendar.google.com/calendar/render");
-    gcal.searchParams.set("action", "TEMPLATE");
-    gcal.searchParams.set("text", title || "Event");
-    gcal.searchParams.set("dates", `${start}/${end}`);
-    if (detailsLines.length) gcal.searchParams.set("details", detailsLines.join("\n"));
-
-    log("Open:", gcal.toString());
-    window.open(gcal.toString(), "_blank", "noopener,noreferrer");
+  function addDaysYMD(ymd, days) {
+    const [y, m, d] = ymd.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + days);
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
   }
 
-  // ===== Main handler =====
+  function ymdToCompact(ymd) {
+    return ymd.replaceAll("-", ""); // YYYYMMDD
+  }
+
+  function icsEscape(text) {
+    return String(text || "")
+      .replace(/\\/g, "\\\\")
+      .replace(/\r?\n/g, "\\n")
+      .replace(/,/g, "\\,")
+      .replace(/;/g, "\\;");
+  }
+
+  function foldLine(line) {
+    const limit = 72;
+    if (line.length <= limit) return line;
+    let out = "";
+    let i = 0;
+    while (i < line.length) {
+      const chunk = line.slice(i, i + limit);
+      out += (i === 0) ? chunk : ("\r\n " + chunk);
+      i += limit;
+    }
+    return out;
+  }
+
+  function buildICS({ title, ymd, ticketUrl, posterUrl }) {
+    const dtStart = ymdToCompact(ymd);
+    const dtEnd = ymdToCompact(addDaysYMD(ymd, 1));
+
+    const uid = (crypto.randomUUID?.() || ("wt-" + Date.now() + "-" + Math.random().toString(16).slice(2))) + "@wave.today";
+
+    const now = new Date();
+    const dtStamp =
+      now.getUTCFullYear() + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate()) + "T" +
+      pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + "Z";
+
+    const descParts = [];
+    if (ticketUrl) descParts.push("Tickets: " + ticketUrl);
+    if (posterUrl) descParts.push("Poster: " + posterUrl);
+    const description = descParts.join("\\n");
+
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//wave.today//WT//CZ",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      "UID:" + icsEscape(uid),
+      "DTSTAMP:" + dtStamp,
+      "DTSTART;VALUE=DATE:" + dtStart,
+      "DTEND;VALUE=DATE:" + dtEnd,
+      "SUMMARY:" + icsEscape(title || "Event"),
+      description ? ("DESCRIPTION:" + icsEscape(description)) : null,
+      ticketUrl ? ("URL:" + icsEscape(ticketUrl)) : null,
+      posterUrl ? ("ATTACH;VALUE=URI:" + icsEscape(posterUrl)) : null,
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ].filter(Boolean);
+
+    return lines.map(foldLine).join("\r\n") + "\r\n";
+  }
+
+  function downloadICS(filenameBase, icsText) {
+    const blob = new Blob([icsText], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = (filenameBase || "event") + ".ics";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function safeFilename(name) {
+    return (name || "event")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "event";
+  }
+
   document.addEventListener("click", (e) => {
     const label = e.target.closest(LABEL_SELECTOR);
     if (!label) return;
 
-    // Block click from reaching the poster link beneath
     e.preventDefault();
     e.stopPropagation();
 
     const item = label.closest(ITEM_SELECTOR) || document;
 
-    // Date: from label if possible, else fallback to today (still opens calendar)
     let ymd;
     const dm = extractDayMonth(label);
     if (dm) {
@@ -178,8 +207,7 @@
     const ticketUrl = getTicketUrl(item);
     const posterUrl = getPosterUrl(item);
 
-    log({ title, ymd, ticketUrl, posterUrl });
-
-    openGoogleCalendarAllDay({ title, ymd, ticketUrl, posterUrl });
-  }, true); // capture=true helps override other click handlers
+    const ics = buildICS({ title, ymd, ticketUrl, posterUrl });
+    downloadICS(safeFilename(title) + "-" + ymd, ics);
+  }, true);
 })();
