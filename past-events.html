@@ -1105,6 +1105,22 @@ will-change: transform, filter;
   #eventsGrid.randomMode .poster{ contain: layout paint !important; }
 }
 
+
+/* ===== MOBILE HARD FIX: vypnout těžké fixed/blur vrstvy (Android repaint bug) ===== */
+@media (max-width: 560px){
+  /* tyhle vrstvy jsou nejčastější příčina „neviditelné, ale klikatelné“ dlaždice při scrollu */
+  #ambientBg, #ambientPoster, #ambientGlow{ display:none !important; }
+  #pageBase{ background:#0b0b10 !important; }
+
+  /* zamezit divným kompozicím */
+  #eventsGrid, #eventsGrid.randomMode{ transform: translateZ(0); }
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster img{
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+
 </style>
 
 </head>
@@ -1690,6 +1706,36 @@ void wrap.offsetHeight;
   init().catch(err => {
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
+
+  // ===== MOBILE repaint hack: některé Android prohlížeče při scrollu „zapomenou“ překreslit grid
+  (function(){
+    const mq = window.matchMedia('(max-width: 560px)');
+    if(!mq.matches) return;
+
+    let raf = 0;
+    let t = 0;
+
+    function nudge(){
+      const el = document.getElementById('eventsGrid');
+      if(!el) return;
+      // krátký „nudge“ kompozice – donutí repaint bez viditelného posunu
+      el.style.transform = 'translateZ(0)';
+      clearTimeout(t);
+      t = setTimeout(() => { el.style.transform = ''; }, 80);
+    }
+
+    window.addEventListener('scroll', () => {
+      if(raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        nudge();
+      });
+    }, {passive:true});
+
+    // i po načtení obrázků
+    window.addEventListener('load', nudge, {once:true});
+  })();
+
 </script>
 </body>
 </html>
