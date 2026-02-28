@@ -1062,61 +1062,6 @@ will-change: transform, filter;
 }
 </style>
 
-
-<style id="touchRndmFix_v11">
-
-/* ===== TOUCH DEVICES (rndm): FORCE 2 columns + stop vanish (v11) ===== */
-@media (pointer: coarse) and (max-width: 900px){
-  /* ALWAYS 2 columns for rndm on touch devices (phones/foldables) */
-  #eventsGrid.randomMode{
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 12px 10px !important;
-    padding: 0 8px !important;
-    justify-items: stretch !important;
-    align-items: start !important;
-    max-width: none !important;
-    margin: 0 auto !important;
-  }
-
-  /* kill layout-breaking transforms on the card box */
-  #eventsGrid.randomMode .poster{
-    width: 100% !important;
-    max-width: none !important;
-    transform: none !important;
-    transition: none !important;
-    will-change: auto !important;
-    contain: none !important;
-    overflow: visible !important;
-  }
-
-  /* mild tilt only on image (optional) */
-  #eventsGrid.randomMode .poster img{
-    backface-visibility: hidden !important;
-    transform-origin: 50% 50% !important;
-    transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
-  }
-  #eventsGrid.randomMode .poster:nth-child(6n+1){ --mrot: -0.9deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+2){ --mrot:  0.7deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+3){ --mrot: -0.5deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+4){ --mrot:  0.8deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot: -0.6deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot:  0.4deg; }
-
-  /* avoid partial-draw: keep posters fully opaque layers */
-  #eventsGrid.randomMode .poster, #eventsGrid.randomMode .poster img{
-    -webkit-transform-style: preserve-3d;
-    transform-style: preserve-3d;
-  }
-
-  /* pause ambient only while scrolling */
-  body.isScrolling #ambientPoster,
-  body.isScrolling #ambientGlow{
-    animation-play-state: paused !important;
-  }
-}
-
-</style>
 </head>
 <body>
   <div id="pageBase" aria-hidden="true"></div>
@@ -1700,37 +1645,5 @@ void wrap.offsetHeight;
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
 </script>
-
-<script>
-/* ===== TOUCH DEVICES (rndm): repaint nudge using opacity (v11) ===== */
-(function(){
-  const mq = matchMedia("(pointer: coarse) and (max-width: 900px)");
-  const grid = document.getElementById("eventsGrid");
-  if(!grid) return;
-
-  let t=null, raf=0;
-
-  function repaintNudge(){
-    // opacity toggle is safer than transform toggle (prevents half-drawn tiles)
-    grid.style.opacity = "0.999";
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(()=>{ grid.style.opacity = "1"; });
-  }
-
-  window.addEventListener("scroll", ()=>{
-    if(!mq.matches) return;
-    document.body.classList.add("isScrolling");
-    if(grid.classList.contains("randomMode")) repaintNudge();
-    clearTimeout(t);
-    t = setTimeout(()=>{ document.body.classList.remove("isScrolling"); }, 220);
-  }, {passive:true});
-
-  grid.addEventListener("load", (e)=>{
-    if(!mq.matches) return;
-    if(e && e.target && e.target.tagName === "IMG" && grid.classList.contains("randomMode")) repaintNudge();
-  }, true);
-})();
-</script>
-
 </body>
 </html>
