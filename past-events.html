@@ -490,52 +490,20 @@ border-radius: 0 !important;
 
     /* Mobile: 2–3 vedle sebe (menší základ), pořád bez fragmentace */
     @media (max-width: 560px){
-      /* rndm: MOBILE masonry (CSS columns) — desktop nedotčeno */
       #eventsGrid.randomMode{
-        display: block !important;
-        -webkit-column-count: 2;
-        column-count: 2;
-        -webkit-column-gap: 12px;
-        column-gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(clamp(190px, 48vw, 320px), 1fr));
+        gap: 16px 14px;
         padding: 0 12px;
-
-        /* stabilita scrollu na Androidu */
-        transform: none !important;
-        will-change: auto !important;
-        filter: none !important;
       }
-
       #eventsGrid.randomMode .poster{
-        break-inside: avoid;
-        -webkit-column-break-inside: avoid;
-        display: inline-block;
-        vertical-align: top;
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 0 12px !important;
-        padding: 0 !important;
-      }
-
-      /* ikony na mobilu jsou moc malé */
-      #eventsGrid.randomMode .wtIcon{
-        width: 44px;
-        height: 44px;
+        max-width: none;
       }
     }
     @media (max-width: 420px){
       #eventsGrid.randomMode{
-        -webkit-column-gap: 10px;
-        column-gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 10px;
         padding: 0 8px;
-      }
-
-      #eventsGrid.randomMode .poster{
-        margin: 0 0 10px !important;
-      }
-
-      #eventsGrid.randomMode .wtIcon{
-        width: 40px;
-        height: 40px;
       }
     }
     @media (min-width: 720px){
@@ -1085,72 +1053,51 @@ will-change: transform, filter;
 
 /* mobil: menší buffer */
 @media (max-width: 560px){
-      /* rndm: MOBILE masonry (CSS columns) — desktop nedotčeno */
-      #eventsGrid.randomMode{
-        display: block !important;
-        -webkit-column-count: 2;
-        column-count: 2;
-        -webkit-column-gap: 12px;
-        column-gap: 12px;
-        padding: 0 12px;
-
-        /* stabilita scrollu na Androidu */
-        transform: none !important;
-        will-change: auto !important;
-        filter: none !important;
-      }
-
-      #eventsGrid.randomMode .poster{
-        break-inside: avoid;
-        -webkit-column-break-inside: avoid;
-        display: inline-block;
-        vertical-align: top;
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 0 12px !important;
-        padding: 0 !important;
-      }
-
-      /* ikony na mobilu jsou moc malé */
-      #eventsGrid.randomMode .wtIcon{
-        width: 44px;
-        height: 44px;
-      }
-    }
+  #eventsGrid.randomMode{ padding: 0 12px; }
+  #eventsGrid.randomMode .poster{ padding: 10px; }
+}
 @media (max-width: 420px){
-      #eventsGrid.randomMode{
-        -webkit-column-gap: 10px;
-        column-gap: 10px;
-        padding: 0 8px;
-      }
-
-      #eventsGrid.randomMode .poster{
-        margin: 0 0 10px !important;
-      }
-
-      #eventsGrid.randomMode .wtIcon{
-        width: 40px;
-        height: 40px;
-      }
-    }
+  #eventsGrid.randomMode{ padding: 0 8px; }
+  #eventsGrid.randomMode .poster{ padding: 8px; }
+}
 </style>
 
 
 <style id="force2colTouch">
 
-/* ===== TOUCH rndm ONLY: force 2 columns (no overlay) ===== */
-html.isTouch #eventsGrid.randomMode.force2col {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 12px 10px !important;
-  padding: 0 8px !important;
-  align-items: start !important;
-  justify-items: stretch !important;
-}
-html.isTouch #eventsGrid.randomMode.force2col > * { min-width: 0 !important; }
+/* ===== TOUCH rndm ONLY v13: REAL masonry via CSS columns + bigger posters + anti-vanish ===== */
+html.isTouch #eventsGrid.randomMode.touchMasonry{
+  /* switch to columns (masonry-like), fill full viewport */
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 6px !important;
 
-/* Stop Android compositor glitch: no transforms on card boxes */
-html.isTouch #eventsGrid.randomMode.force2col .poster{
+  -webkit-column-count: 2 !important;
+  column-count: 2 !important;
+
+  -webkit-column-gap: 10px !important;
+  column-gap: 10px !important;
+
+  -webkit-column-fill: auto !important;
+  column-fill: auto !important;
+
+  /* kill any grid/flex spacing that leaks */
+  gap: unset !important;
+}
+
+/* each card must stay intact within a column */
+html.isTouch #eventsGrid.randomMode.touchMasonry .poster{
+  display: inline-block !important;
+  width: 100% !important;
+  margin: 0 0 10px !important;
+
+  break-inside: avoid !important;
+  -webkit-column-break-inside: avoid !important;
+  page-break-inside: avoid !important;
+
+  /* Android paint stability */
   transform: none !important;
   transition: none !important;
   will-change: auto !important;
@@ -1158,21 +1105,36 @@ html.isTouch #eventsGrid.randomMode.force2col .poster{
   overflow: visible !important;
 }
 
-/* Keep slight "random" feel safely */
-html.isTouch #eventsGrid.randomMode.force2col .poster img{
+/* Bigger + glow + collage: apply only to IMG (safe) */
+html.isTouch #eventsGrid.randomMode.touchMasonry .poster img{
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+
   backface-visibility: hidden !important;
   transform-origin: 50% 50% !important;
-  transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
-}
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+1){ --mrot: -0.9deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+2){ --mrot:  0.7deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+3){ --mrot: -0.5deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+4){ --mrot:  0.8deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+5){ --mrot: -0.6deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  0.4deg; }
 
-/* repaint nudge helper (no visible label) */
-html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
+  /* glow ("vyzař") - use box-shadow (lighter than filter) */
+  box-shadow:
+    0 0 16px rgba(255,255,255,.16),
+    0 0 34px rgba(255,255,255,.08);
+
+  transform: translate3d(var(--mtx,0px), var(--mty,0px), 0) rotate(var(--mrot,0deg)) !important;
+}
+
+/* subtle randomized pattern */
+html.isTouch #eventsGrid.randomMode.touchMasonry .poster:nth-child(6n+1){ --mrot:-1.2deg; --mtx:-4px; --mty: 2px; }
+html.isTouch #eventsGrid.randomMode.touchMasonry .poster:nth-child(6n+2){ --mrot: 1.0deg; --mtx: 3px; --mty:-2px; }
+html.isTouch #eventsGrid.randomMode.touchMasonry .poster:nth-child(6n+3){ --mrot:-0.8deg; --mtx:-2px; --mty:-1px; }
+html.isTouch #eventsGrid.randomMode.touchMasonry .poster:nth-child(6n+4){ --mrot: 1.1deg; --mtx: 2px; --mty: 3px; }
+html.isTouch #eventsGrid.randomMode.touchMasonry .poster:nth-child(6n+5){ --mrot:-0.9deg; --mtx:-3px; --mty: 1px; }
+html.isTouch #eventsGrid.randomMode.touchMasonry .poster:nth-child(6n+6){ --mrot: 0.7deg; --mtx: 1px; --mty:-3px; }
+
+/* pause ambient only while scrolling */
+html.isTouch body.isScrolling #ambientPoster,
+html.isTouch body.isScrolling #ambientGlow{
+  animation-play-state: paused !important;
+}
 
 </style>
 </head>
@@ -1760,7 +1722,7 @@ void wrap.offsetHeight;
 </script>
 
 <script>
-/* ===== FORCE-2COL controller (no overlay) ===== */
+/* ===== TOUCH masonry controller v13 (no overlay) ===== */
 (function(){
   const html = document.documentElement;
   const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
@@ -1771,26 +1733,31 @@ void wrap.offsetHeight;
 
   function apply(){
     const on = grid.classList.contains('randomMode');
-    grid.classList.toggle('force2col', on && isTouch);
+    grid.classList.toggle('touchMasonry', on && isTouch);
   }
 
-  // Repaint nudge on scroll (helps "half poster disappears")
-  let raf=0;
+  // Repaint nudge + pause background while scrolling
+  let raf=0, t=null;
   function nudge(){
     if(!(isTouch && grid.classList.contains('randomMode'))) return;
-    grid.classList.add('paintNudge');
+    grid.style.opacity = "0.999";
     cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(()=> grid.classList.remove('paintNudge'));
+    raf = requestAnimationFrame(()=>{ grid.style.opacity = "1"; });
   }
 
-  window.addEventListener('scroll', ()=>{ if(isTouch) nudge(); }, {passive:true});
+  window.addEventListener('scroll', ()=>{
+    if(!isTouch) return;
+    document.body.classList.add('isScrolling');
+    nudge();
+    clearTimeout(t);
+    t = setTimeout(()=>{ document.body.classList.remove('isScrolling'); }, 220);
+  }, {passive:true});
 
-  // Observe mode changes (date <-> rndm)
+  // observe mode changes
   new MutationObserver(apply).observe(grid, {attributes:true, attributeFilter:['class']});
   window.addEventListener('resize', apply, {passive:true});
   window.addEventListener('orientationchange', apply, {passive:true});
 
-  // Initial
   apply();
 })();
 </script>
