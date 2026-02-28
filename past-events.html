@@ -1724,18 +1724,14 @@ void wrap.offsetHeight;
 
 
 
-<style id="rndm-mobile-js-masonry-v2">
-/* MOBILE rndm — JS masonry (2 cols) ONLY for #eventsGrid.randomMode
-   - Edge-to-edge big posters
-   - Avoid "holes" and Android disappearing by using absolute layout
-*/
+<style id="rndm-mobile-js-masonry-v3">
 @media (max-width: 768px){
   #eventsGrid.randomMode,
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
     position: relative !important;
-    display: block !important; /* override grid/force2col */
+    display: block !important;
     padding: 0 !important;
     margin: 0 !important;
     transform: none !important;
@@ -1745,10 +1741,11 @@ void wrap.offsetHeight;
 
   #eventsGrid.randomMode .poster{
     position: absolute !important;
-    margin: 0 !important;
     left: 0;
     top: 0;
+    margin: 0 !important;
 
+    /* critical */
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
@@ -1765,11 +1762,12 @@ void wrap.offsetHeight;
     height: auto !important;
     object-fit: contain !important;
 
-    /* collage feel without layout holes */
+    /* no translate = no holes; keep slight rotation */
     transform: rotate(var(--rot, 0deg)) !important;
     will-change: auto !important;
   }
 
+  /* bigger icons */
   #eventsGrid.randomMode .wtIcon{
     width: 64px !important;
     height: 64px !important;
@@ -1777,43 +1775,62 @@ void wrap.offsetHeight;
 }
 </style>
 
-<script id="rndm-mobile-js-masonry-v2-script">
+<script id="rndm-mobile-js-masonry-v3-script">
 (() => {
   const mq = window.matchMedia("(max-width: 768px)");
-  const GAP = 2;         // between columns
-  const V_GAP = 2;       // between items
+  const GAP = 1;   // almost edge-to-edge
+  const V_GAP = 1;
 
-  function grid(){
-    // works for randomMode with/without additional classes
-    return document.getElementById("eventsGrid");
-  }
-
-  function isRndm(){
-    const g = grid();
+  const gridEl = () => document.getElementById("eventsGrid");
+  const rndmOn = () => {
+    const g = gridEl();
     return !!(g && g.classList.contains("randomMode"));
-  }
+  };
 
   let raf = 0;
-  function schedule(){
+  const schedule = () => {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(() => {
       layout();
-      // second pass (fonts/images settle)
+      // second/third pass for stability
       requestAnimationFrame(layout);
+      setTimeout(layout, 120);
     });
+  };
+
+  function forceEagerMobileRndm(g){
+    // Speed up image height stabilization on mobile rndm
+    const imgs = Array.from(g.querySelectorAll(".poster img"));
+    for (const img of imgs){
+      img.loading = "eager";
+      img.decoding = "async";
+      // Hint for Chrome
+      try { img.fetchPriority = "high"; } catch(e){}
+    }
+  }
+
+  function measureHeight(p){
+    // Prefer layout height; fallback to image natural ratio if available
+    let h = p.offsetHeight || p.getBoundingClientRect().height || 0;
+    if (h > 1) return h;
+
+    const img = p.querySelector("img");
+    if (img && img.naturalWidth && img.naturalHeight){
+      const w = p.getBoundingClientRect().width || p.offsetWidth || 0;
+      if (w) return (img.naturalHeight / img.naturalWidth) * w;
+    }
+    // Reserve a sane placeholder to avoid stacking while lazy content loads
+    return 220;
   }
 
   function layout(){
     if (!mq.matches) return;
-    const g = grid();
-    if (!g || !isRndm()) return;
+    const g = gridEl();
+    if (!g || !rndmOn()) return;
 
     const posters = Array.from(g.querySelectorAll(".poster"));
     if (!posters.length) return;
 
-    // Force the class-based selector to apply even if force2col remains
-    // (CSS already targets #eventsGrid.randomMode...)
-    // Compute width from grid box
     const w = g.clientWidth || g.getBoundingClientRect().width;
     if (!w) return;
 
@@ -1831,45 +1848,56 @@ void wrap.offsetHeight;
       p.style.left = x + "px";
       p.style.top = y + "px";
 
-      const h = p.getBoundingClientRect().height || p.offsetHeight || 0;
+      const h = measureHeight(p);
       colH[col] = y + h + V_GAP;
     }
 
     g.style.height = Math.max(colH[0], colH[1]) + "px";
   }
 
-  function hookImages(){
-    const g = grid();
-    if (!g) return;
+  function hook(g){
+    // Re-layout when images load (including lazy)
     const imgs = Array.from(g.querySelectorAll(".poster img"));
     for (const img of imgs){
-      // layout immediately, and on each image load/error (don't wait for all)
-      if (!img.__masonryHooked){
-        img.__masonryHooked = true;
-        img.addEventListener("load", schedule, { passive: true });
-        img.addEventListener("error", schedule, { passive: true });
-      }
+      if (img.__m3) continue;
+      img.__m3 = true;
+      img.addEventListener("load", schedule, { passive: true });
+      img.addEventListener("error", schedule, { passive: true });
+    }
+
+    // Re-layout when poster sizes change (covers font/render/late decode)
+    const posters = Array.from(g.querySelectorAll(".poster"));
+    if ("ResizeObserver" in window){
+      const ro = new ResizeObserver(() => schedule());
+      posters.forEach(p => { if (!p.__ro){ p.__ro = true; ro.observe(p); }});
+      g.__ro = ro;
     }
   }
 
   function init(){
-    const g = grid();
+    const g = gridEl();
     if (!g) return;
 
-    // observe class changes & child changes (events get rendered later)
     const mo = new MutationObserver(() => {
-      hookImages();
+      if (!mq.matches) return;
+      if (!rndmOn()) return;
+      forceEagerMobileRndm(g);
+      hook(g);
       schedule();
     });
     mo.observe(g, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true });
 
     window.addEventListener("resize", schedule, { passive: true });
-    window.addEventListener("orientationchange", () => setTimeout(schedule, 120), { passive: true });
+    window.addEventListener("orientationchange", () => setTimeout(schedule, 160), { passive: true });
 
-    hookImages();
-    schedule();
-    setTimeout(schedule, 120);
-    setTimeout(schedule, 320);
+    // First pass
+    if (mq.matches && rndmOn()){
+      forceEagerMobileRndm(g);
+      hook(g);
+      schedule();
+      setTimeout(schedule, 200);
+      setTimeout(schedule, 450);
+    }
   }
 
   if (document.readyState === "loading") {
