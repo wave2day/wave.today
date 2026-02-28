@@ -1063,55 +1063,51 @@ will-change: transform, filter;
 </style>
 
 
-<style id="mobileGridTiltPatch">
+<style id="mobileGridTiltPatch2">
 
-/* ===== MOBILE ONLY (rndm): 2-col GRID + "masonry feel" without holes ===== */
+/* ===== MOBILE ONLY (rndm): 2-col GRID + mild tilt, NO clipping ===== */
 @media (max-width: 560px){
-  /* Keep your desktop masonry intact; on mobile force stable grid */
   #eventsGrid.randomMode{
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0,1fr)) !important;
-    gap: 14px 12px !important;
+    gap: 16px 12px !important;
     padding: 0 10px !important;
     align-items: start !important;
     justify-items: stretch !important;
 
-    /* hard-disable columns if any rule leaks in */
     column-count: unset !important;
     column-width: unset !important;
     column-gap: unset !important;
     column-fill: unset !important;
   }
 
-  /* Ensure cards don't collapse / repaint weirdly */
+  /* Do NOT use contain:paint (clips rotated images) */
   #eventsGrid.randomMode .poster{
     margin: 0 !important;
     padding: 0 !important;
-    contain: layout paint !important;
     overflow: visible !important;
-    transform: none !important;          /* no layout-breaking transforms on box */
+    transform: none !important;     /* prevent holes */
     transition: none !important;
     will-change: auto !important;
   }
 
-  /* "Masonry look": small tilt only (no translate/scale), alternating pattern */
+  /* Mild "random" feel without moving boxes: rotate only the image */
   #eventsGrid.randomMode .poster img{
     display:block;
     width:100%;
     height:auto;
     backface-visibility: hidden;
     transform: translateZ(0) rotate(var(--mrot, 0deg));
-    transition: transform 260ms ease;
     transform-origin: 50% 50%;
   }
-  #eventsGrid.randomMode .poster:nth-child(6n+1){ --mrot: -1.2deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+2){ --mrot:  0.9deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+1){ --mrot: -1.0deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+2){ --mrot:  0.8deg; }
   #eventsGrid.randomMode .poster:nth-child(6n+3){ --mrot: -0.6deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+4){ --mrot:  1.1deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot: -0.8deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+4){ --mrot:  0.9deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot: -0.7deg; }
   #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot:  0.5deg; }
 
-  /* Background: keep the original look, but avoid the Android "invisible but clickable" glitch */
+  /* Pause ambient ONLY while scrolling (helps Android paint) */
   body.isScrolling #ambientPoster,
   body.isScrolling #ambientGlow{
     animation-play-state: paused !important;
@@ -1704,7 +1700,7 @@ void wrap.offsetHeight;
 </script>
 
 <script>
-/* ===== MOBILE ONLY: pause ambient while scrolling + force repaint (Android) ===== */
+/* ===== MOBILE ONLY: pause ambient while scrolling + repaint nudge (Android) ===== */
 (function(){
   const mq = matchMedia("(max-width: 560px)");
   if(!mq.matches) return;
@@ -1715,7 +1711,7 @@ void wrap.offsetHeight;
   let t=null, raf=0;
 
   function nudge(){
-    // tiny transform toggled on the grid to force paint without visible movement
+    // tiny transform on grid to force repaint; doesn't clip because posters are overflow:visible
     grid.style.transform = "translate3d(0,0.01px,0)";
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(()=>{ grid.style.transform = "translate3d(0,0,0)"; });
@@ -1728,7 +1724,6 @@ void wrap.offsetHeight;
     t = setTimeout(()=>{ document.body.classList.remove("isScrolling"); }, 220);
   }, {passive:true});
 
-  // also nudge after each image load (late decode can cause missing paint on return scroll)
   grid.addEventListener("load", (e)=>{
     if(e && e.target && e.target.tagName === "IMG") nudge();
   }, true);
