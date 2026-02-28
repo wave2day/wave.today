@@ -1065,37 +1065,19 @@ will-change: transform, filter;
 
 <style id="force2colTouch">
 
-/* ===== TOUCH rndm ONLY v15: JS masonry (2 real columns, no empty column) ===== */
-html.isTouch #eventsGrid.randomMode.touchMasonryJS{
-  /* turn the grid into two physical columns */
-  display:flex !important;
-  flex-direction: row !important;
-  align-items:flex-start !important;
-  justify-content:center !important;
-  gap: 8px !important;
-  padding: 0 6px !important;
-  max-width: none !important;
-  margin: 0 auto !important;
-
-  /* neutralize original grid props */
-  grid-template-columns: none !important;
+/* ===== TOUCH rndm ONLY: force 2 columns (no overlay) ===== */
+html.isTouch #eventsGrid.randomMode.force2col {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px 10px !important;
+  padding: 0 8px !important;
+  align-items: start !important;
+  justify-items: stretch !important;
 }
+html.isTouch #eventsGrid.randomMode.force2col > * { min-width: 0 !important; }
 
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .touchCol{
-  flex: 1 1 0 !important;
-  display:flex !important;
-  flex-direction: column !important;
-  gap: 8px !important;
-  min-width: 0 !important;
-}
-
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster{
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-
-  /* stability on Android */
+/* Stop Android compositor glitch: no transforms on card boxes */
+html.isTouch #eventsGrid.randomMode.force2col .poster{
   transform: none !important;
   transition: none !important;
   will-change: auto !important;
@@ -1103,35 +1085,21 @@ html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster{
   overflow: visible !important;
 }
 
-/* Bigger glow ("vyzař") and collage feel safely only on IMG */
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster img{
-  display:block !important;
-  width:100% !important;
-  height:auto !important;
-
-  box-shadow:
-    0 0 18px rgba(255,255,255,.18),
-    0 0 40px rgba(255,255,255,.10);
-
+/* Keep slight "random" feel safely */
+html.isTouch #eventsGrid.randomMode.force2col .poster img{
   backface-visibility: hidden !important;
   transform-origin: 50% 50% !important;
-  transform: translate3d(var(--mtx,0px), var(--mty,0px), 0) rotate(var(--mrot,0deg)) !important;
+  transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
 }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+1){ --mrot: -0.9deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+2){ --mrot:  0.7deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+3){ --mrot: -0.5deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+4){ --mrot:  0.8deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+5){ --mrot: -0.6deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  0.4deg; }
 
-/* deterministic subtle pattern */
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster[data-idx] { --mrot: 0deg; --mtx: 0px; --mty: 0px; }
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster[data-idx="0"]{ --mrot:-1.0deg; --mtx:-3px; --mty: 2px; }
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster[data-idx="1"]{ --mrot: 0.9deg; --mtx: 2px; --mty:-2px; }
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster[data-idx="2"]{ --mrot:-0.7deg; --mtx:-2px; --mty:-1px; }
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster[data-idx="3"]{ --mrot: 1.0deg; --mtx: 2px; --mty: 2px; }
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster[data-idx="4"]{ --mrot:-0.8deg; --mtx:-2px; --mty: 1px; }
-html.isTouch #eventsGrid.randomMode.touchMasonryJS .poster[data-idx="5"]{ --mrot: 0.6deg; --mtx: 1px; --mty:-2px; }
-
-/* Pause ambient only while scrolling */
-html.isTouch body.isScrolling #ambientPoster,
-html.isTouch body.isScrolling #ambientGlow{
-  animation-play-state: paused !important;
-}
+/* repaint nudge helper (no visible label) */
+html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
 
 </style>
 </head>
@@ -1719,7 +1687,7 @@ void wrap.offsetHeight;
 </script>
 
 <script>
-/* ===== TOUCH rndm ONLY v15: build 2-column masonry by JS (no overlay) ===== */
+/* ===== FORCE-2COL controller (no overlay) ===== */
 (function(){
   const html = document.documentElement;
   const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
@@ -1728,131 +1696,126 @@ void wrap.offsetHeight;
   const grid = document.getElementById('eventsGrid');
   if(!grid) return;
 
-  const PLACEHOLDER_ID = "touchMasonryPlaceholder";
-  const COL_CLASS = "touchCol";
-
-  function ensurePlaceholder(){
-    let ph = document.getElementById(PLACEHOLDER_ID);
-    if(!ph){
-      ph = document.createElement('div');
-      ph.id = PLACEHOLDER_ID;
-      ph.style.display = 'none';
-      grid.appendChild(ph);
-    }
-    return ph;
-  }
-
-  function postersInCurrentContainer(){
-    // posters might be direct children or inside columns
-    return Array.from(grid.querySelectorAll('.poster'));
-  }
-
-  function unwrapIfNeeded(){
-    const cols = Array.from(grid.querySelectorAll('.' + COL_CLASS));
-    if(!cols.length) return;
-
-    // collect posters in original order
-    const posters = postersInCurrentContainer()
-      .filter(el => el.classList.contains('poster'))
-      .sort((a,b)=> (parseInt(a.dataset.idx||"0",10) - parseInt(b.dataset.idx||"0",10)));
-
-    cols.forEach(c=>c.remove());
-    const ph = ensurePlaceholder();
-    // put posters back before placeholder
-    posters.forEach(p=> grid.insertBefore(p, ph));
-  }
-
-  function buildColumns(){
-    // remove previous cols, then create two cols at top
-    unwrapIfNeeded();
-
-    const ph = ensurePlaceholder();
-    const colA = document.createElement('div');
-    const colB = document.createElement('div');
-    colA.className = COL_CLASS;
-    colB.className = COL_CLASS;
-
-    grid.insertBefore(colB, ph); // insert B then A so A stays first
-    grid.insertBefore(colA, colB);
-    return [colA, colB];
-  }
-
-  function waitImagesLoaded(posters){
-    const imgs = posters.map(p=>p.querySelector('img')).filter(Boolean);
-    const pending = imgs.filter(img=>!img.complete);
-    if(!pending.length) return Promise.resolve();
-    return new Promise(res=>{
-      let left = pending.length;
-      pending.forEach(img=>{
-        const done = ()=>{ left--; if(left<=0) res(); };
-        img.addEventListener('load', done, {once:true});
-        img.addEventListener('error', done, {once:true});
-      });
-    });
-  }
-
-  function distribute(){
-    if(!(isTouch && grid.classList.contains('randomMode'))) return;
-
-    grid.classList.add('touchMasonryJS');
-
-    const posters = Array.from(grid.querySelectorAll('.poster')).filter(p=>!p.closest('.'+COL_CLASS));
-    // assign stable indices if missing
-    posters.forEach((p,i)=>{ if(p.dataset.idx==null) p.dataset.idx = String(i); });
-
-    const [colA, colB] = buildColumns();
-
-    // distribute by current column height
-    const all = Array.from(grid.querySelectorAll('.poster')).sort((a,b)=>parseInt(a.dataset.idx,10)-parseInt(b.dataset.idx,10));
-    all.forEach(p=>{
-      const hA = colA.offsetHeight;
-      const hB = colB.offsetHeight;
-      (hA<=hB ? colA : colB).appendChild(p);
-    });
-  }
-
-  function teardown(){
-    grid.classList.remove('touchMasonryJS');
-    unwrapIfNeeded();
-  }
-
   function apply(){
-    const on = grid.classList.contains('randomMode') && isTouch;
-    if(on){
-      // build after images settle
-      const posters = Array.from(grid.querySelectorAll('.poster'));
-      waitImagesLoaded(posters).then(()=>{
-        distribute();
-      });
-    }else{
-      teardown();
-    }
+    const on = grid.classList.contains('randomMode');
+    grid.classList.toggle('force2col', on && isTouch);
   }
 
-  // repaint nudge + pause ambient while scrolling (reduces vanish)
-  let raf=0, t=null;
+  // Repaint nudge on scroll (helps "half poster disappears")
+  let raf=0;
   function nudge(){
     if(!(isTouch && grid.classList.contains('randomMode'))) return;
-    grid.style.opacity = "0.999";
+    grid.classList.add('paintNudge');
     cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(()=>{ grid.style.opacity = "1"; });
+    raf = requestAnimationFrame(()=> grid.classList.remove('paintNudge'));
   }
-  window.addEventListener('scroll', ()=>{
-    if(!isTouch) return;
-    document.body.classList.add('isScrolling');
-    nudge();
-    clearTimeout(t);
-    t = setTimeout(()=>{ document.body.classList.remove('isScrolling'); }, 220);
-  }, {passive:true});
 
-  // observe mode changes (date <-> rndm)
+  window.addEventListener('scroll', ()=>{ if(isTouch) nudge(); }, {passive:true});
+
+  // Observe mode changes (date <-> rndm)
   new MutationObserver(apply).observe(grid, {attributes:true, attributeFilter:['class']});
-  window.addEventListener('resize', ()=>{ if(isTouch && grid.classList.contains('randomMode')) apply(); }, {passive:true});
-  window.addEventListener('orientationchange', ()=>{ if(isTouch && grid.classList.contains('randomMode')) apply(); }, {passive:true});
+  window.addEventListener('resize', apply, {passive:true});
+  window.addEventListener('orientationchange', apply, {passive:true});
 
+  // Initial
   apply();
 })();
 </script>
+
+
+
+<style id="mobile-rndm-masonry-fix">
+/* ======================================================
+   MOBILE FIX — rndm ONLY
+   Scope: ONLY @media + selectors targeting #eventsGrid.randomMode
+   ====================================================== */
+@media (max-width: 768px){
+
+  /* FORCE: always 2 columns masonry on mobile rndm (override any grid/force2col/touch rules) */
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    display: block !important;
+    -webkit-column-count: 2 !important;
+    column-count: 2 !important;
+    -webkit-column-gap: 10px !important;
+    column-gap: 10px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+
+    /* prevent Android layer glitches on container */
+    transform: none !important;
+    will-change: auto !important;
+    filter: none !important;
+  }
+
+  /* Masonry item behavior (no breaks, no clipping) */
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode.force2col .poster,
+  html.isTouch #eventsGrid.randomMode .poster,
+  html.isTouch #eventsGrid.randomMode.force2col .poster{
+    display: inline-block !important;
+    width: 100% !important;
+    margin: 0 0 10px !important;
+
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+
+    /* CRITICAL: fix "invisible but clickable" on Android — no transforms on layout box */
+    transform: none !important;
+    will-change: auto !important;
+    contain: none !important;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    overflow: visible !important;
+  }
+
+  /* Posters should not be cropped; any tilt/variation must be on IMG */
+  #eventsGrid.randomMode .poster img,
+  #eventsGrid.randomMode.force2col .poster img,
+  html.isTouch #eventsGrid.randomMode .poster img,
+  html.isTouch #eventsGrid.randomMode.force2col .poster img{
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+
+    /* small stability hint, allowed on img */
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Slightly larger touch icons within rndm posters (if present) */
+  #eventsGrid.randomMode .wtIcon,
+  #eventsGrid.randomMode.force2col .wtIcon,
+  html.isTouch #eventsGrid.randomMode .wtIcon,
+  html.isTouch #eventsGrid.randomMode.force2col .wtIcon{
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+@media (max-width: 420px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    -webkit-column-gap: 8px !important;
+    column-gap: 8px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode.force2col .poster,
+  html.isTouch #eventsGrid.randomMode .poster,
+  html.isTouch #eventsGrid.randomMode.force2col .poster{
+    margin-bottom: 8px !important;
+  }
+}
+</style>
 
 </body>
 </html>
