@@ -98,6 +98,14 @@ html,body{
 
 
 
+
+/* Mobil: pauzni ambient animaci během scrollu (stabilita renderu na Androidu), ale jinak ji nech běžet */
+@media (max-width: 560px){
+  body.isScrolling #ambientPoster,
+  body.isScrolling #ambientGlow{
+    animation-play-state: paused !important;
+  }
+}
 /* ===== Page glass ===== */
     .glassPage{
   min-height: 100vh;
@@ -530,6 +538,40 @@ border-radius: 0 !important;
       }
     }
 
+
+/* Mobil: zachovat 2-sloupcový GRID (žádné díry z layoutu), ale udělat „masonry feeling“ přes transformy na IMG (ne na boxu) */
+@media (max-width: 560px){
+  #eventsGrid.randomMode{ justify-items: stretch; }
+  #eventsGrid.randomMode .poster{
+    /* nech layout stabilní – transform jen FLIP */
+    transform: translate(var(--flipX,0px), var(--flipY,0px)) !important;
+    transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+    will-change: transform;
+    overflow: visible;
+  }
+  #eventsGrid.randomMode .poster img{
+    transform:
+      translate3d(var(--tx,0px), var(--ty,0px), 0)
+      rotate(var(--rot,0deg))
+      scale(var(--scl, 1));
+    transform-origin: 50% 50%;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+@media (max-width: 420px){
+  #eventsGrid.randomMode{ justify-items: stretch; }
+  #eventsGrid.randomMode .poster{
+    transform: translate(var(--flipX,0px), var(--flipY,0px)) !important;
+  }
+  #eventsGrid.randomMode .poster img{
+    transform:
+      translate3d(var(--tx,0px), var(--ty,0px), 0)
+      rotate(var(--rot,0deg))
+      scale(var(--scl, 1));
+  }
+}
 .posterCard{
   /* neutralize legacy card styling */
   border-radius: 0 !important;
@@ -1280,12 +1322,16 @@ will-change: transform, filter;
     const posters = Array.from(grid.querySelectorAll('.poster'));
     // stronger "plutí" + overlap
     posters.forEach((el, i) => {
-      const tx  = (Math.random()*2 - 1) * 14;     // -27..27 (mírnější rozkývání)
-      const ty  = (Math.random()*2 - 1) * 22;     // -43..43 (mírnější rozkývání)
-      const rot = (Math.random()*2 - 1) * 1.6;    // -3.1..3.1 deg
-      const scl = 0.99 + Math.random()*0.05;      // 0.98..1.06 (méně rozdílů)
-      const lift= 0;                              // (nepoužíváme layout lift – jen transform)
-      const z   = 1 + Math.round(Math.random()*3);  // 1..7 (méně překryvů)
+      const isMobile = window.matchMedia('(max-width: 560px)').matches;
+
+/* Mobil: menší chaos (žádné díry), ale pořád živý „masonry feel“ */
+const tx  = (Math.random()*2 - 1) * (isMobile ? 9  : 14);   // px
+const ty  = (Math.random()*2 - 1) * (isMobile ? 12 : 22);   // px
+const rot = (Math.random()*2 - 1) * (isMobile ? 0.9: 1.6);  // deg
+const scl = (isMobile ? (0.995 + Math.random()*0.03) : (0.99 + Math.random()*0.05));
+const lift= 0;                                              // layout lift nepoužíváme
+const z   = 1 + Math.round(Math.random() * (isMobile ? 2 : 3));
+
 
       el.style.setProperty('--tx', tx.toFixed(1)+'px');
       el.style.setProperty('--ty', ty.toFixed(1)+'px');
@@ -1694,7 +1740,13 @@ void wrap.offsetHeight;
   }
 
   window.addEventListener('scroll', () => {
-    if(rafId) return;
+    // Mobil: během scrollu pauzni ambient animaci (zabrání „neviditelné, ale klikatelné“)
+    if (window.matchMedia('(max-width: 560px)').matches){
+      document.body.classList.add('isScrolling');
+      clearTimeout(window.__wtScrollT);
+      window.__wtScrollT = setTimeout(() => document.body.classList.remove('isScrolling'), 180);
+    }
+if(rafId) return;
     rafId = requestAnimationFrame(() => {
       rafId = 0;
       nudge();
