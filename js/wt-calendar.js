@@ -1,14 +1,17 @@
-/* wt-calendar.js (ICS version)
-   Click on the date label (.wtLabelWrap) -> downloads an .ics file.
-   On mobile, opening the .ics usually prompts "Add to calendar" in the phone's calendar app.
-
-   No CSS changes required. No event times required: creates an ALL‑DAY event for the label's date.
+/* wt-calendar.js (Google Calendar TEMPLATE)
+   Tap/click on the date label (.wtLabelWrap) opens Google Calendar "Add event" (prefilled).
+   - No CSS changes required.
+   - No times required: creates an ALL‑DAY event for the label's date.
+   - Adds ticket URL + poster URL into Details.
 
    Pulls:
      date  -> from label (.day + .mon) or label text (e.g., "25 FEB")
      title -> from poster <img alt="..."> or image filename
      ticket/event url -> from nearest <a href> (prefers .wtUpcomingLink if present)
-     poster url -> from nearest <img src> (added to DESCRIPTION and as ATTACH;VALUE=URI=...)
+     poster url -> from nearest <img src>
+
+   If nothing happens, check that this file is actually served:
+     https://wave.today/js/wt-calendar.js
 */
 
 (() => {
@@ -68,6 +71,17 @@
     return (diffDays < -7) ? (y + 1) : y;
   }
 
+  function addDaysYMD(ymd, days) {
+    const [y, m, d] = ymd.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + days);
+    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+  }
+
+  function ymdToCompact(ymd) {
+    return ymd.replaceAll("-", "");
+  }
+
   function getTitle(itemEl) {
     const img = itemEl.querySelector(POSTER_SELECTOR);
     const alt = img && img.getAttribute("alt");
@@ -94,94 +108,21 @@
     return absolutizeUrl(src);
   }
 
-  function addDaysYMD(ymd, days) {
-    const [y, m, d] = ymd.split("-").map(Number);
-    const dt = new Date(y, m - 1, d);
-    dt.setDate(dt.getDate() + days);
-    return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
-  }
+  function openGoogleCalendarAllDay({ title, ymd, ticketUrl, posterUrl }) {
+    const start = ymdToCompact(ymd);
+    const end = ymdToCompact(addDaysYMD(ymd, 1));
 
-  function ymdToCompact(ymd) {
-    return ymd.replaceAll("-", ""); // YYYYMMDD
-  }
+    const detailsLines = [];
+    if (ticketUrl) detailsLines.push(`Tickets: ${ticketUrl}`);
+    if (posterUrl) detailsLines.push(`Poster: ${posterUrl}`);
 
-  function icsEscape(text) {
-    return String(text || "")
-      .replace(/\\/g, "\\\\")
-      .replace(/\r?\n/g, "\\n")
-      .replace(/,/g, "\\,")
-      .replace(/;/g, "\\;");
-  }
+    const gcal = new URL("https://calendar.google.com/calendar/render");
+    gcal.searchParams.set("action", "TEMPLATE");
+    gcal.searchParams.set("text", title || "Event");
+    gcal.searchParams.set("dates", `${start}/${end}`);
+    if (detailsLines.length) gcal.searchParams.set("details", detailsLines.join("\n"));
 
-  function foldLine(line) {
-    const limit = 72;
-    if (line.length <= limit) return line;
-    let out = "";
-    let i = 0;
-    while (i < line.length) {
-      const chunk = line.slice(i, i + limit);
-      out += (i === 0) ? chunk : ("\r\n " + chunk);
-      i += limit;
-    }
-    return out;
-  }
-
-  function buildICS({ title, ymd, ticketUrl, posterUrl }) {
-    const dtStart = ymdToCompact(ymd);
-    const dtEnd = ymdToCompact(addDaysYMD(ymd, 1));
-
-    const uid = (crypto.randomUUID?.() || ("wt-" + Date.now() + "-" + Math.random().toString(16).slice(2))) + "@wave.today";
-
-    const now = new Date();
-    const dtStamp =
-      now.getUTCFullYear() + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate()) + "T" +
-      pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + pad(now.getUTCSeconds()) + "Z";
-
-    const descParts = [];
-    if (ticketUrl) descParts.push("Tickets: " + ticketUrl);
-    if (posterUrl) descParts.push("Poster: " + posterUrl);
-    const description = descParts.join("\\n");
-
-    const lines = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//wave.today//WT//CZ",
-      "CALSCALE:GREGORIAN",
-      "METHOD:PUBLISH",
-      "BEGIN:VEVENT",
-      "UID:" + icsEscape(uid),
-      "DTSTAMP:" + dtStamp,
-      "DTSTART;VALUE=DATE:" + dtStart,
-      "DTEND;VALUE=DATE:" + dtEnd,
-      "SUMMARY:" + icsEscape(title || "Event"),
-      description ? ("DESCRIPTION:" + icsEscape(description)) : null,
-      ticketUrl ? ("URL:" + icsEscape(ticketUrl)) : null,
-      posterUrl ? ("ATTACH;VALUE=URI:" + icsEscape(posterUrl)) : null,
-      "END:VEVENT",
-      "END:VCALENDAR"
-    ].filter(Boolean);
-
-    return lines.map(foldLine).join("\r\n") + "\r\n";
-  }
-
-  function downloadICS(filenameBase, icsText) {
-    const blob = new Blob([icsText], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (filenameBase || "event") + ".ics";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function safeFilename(name) {
-    return (name || "event")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "event";
+    window.open(gcal.toString(), "_blank", "noopener,noreferrer");
   }
 
   document.addEventListener("click", (e) => {
@@ -207,7 +148,6 @@
     const ticketUrl = getTicketUrl(item);
     const posterUrl = getPosterUrl(item);
 
-    const ics = buildICS({ title, ymd, ticketUrl, posterUrl });
-    downloadICS(safeFilename(title) + "-" + ymd, ics);
+    openGoogleCalendarAllDay({ title, ymd, ticketUrl, posterUrl });
   }, true);
 })();
