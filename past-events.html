@@ -1724,10 +1724,15 @@ void wrap.offsetHeight;
 
 
 
-<style id="rndm-mobile-only-fix">
+<style id="rndm-mobile-only-fix-v6">
 /* ======================================================
    MOBILE FIX — ONLY for #eventsGrid.randomMode
-   Desktop/date are untouched (all rules are inside media queries)
+   Goals:
+   - real 2-column masonry (CSS columns)
+   - NO big visual holes (disable random translate offsets on mobile)
+   - NO Android "invisible but clickable" (no transforms on .poster)
+   - bigger posters + bigger icons on mobile rndm
+   Scope: ONLY @media + selectors targeting #eventsGrid.randomMode
    ====================================================== */
 @media (max-width: 768px){
 
@@ -1738,66 +1743,68 @@ void wrap.offsetHeight;
   html.isTouch #eventsGrid.randomMode.force2col{
     display: block !important;
 
-    /* Force EXACT 2 columns (and neutralize column-width that can collapse to 1) */
+    /* Force EXACT 2 columns and neutralize column-width heuristics */
     -webkit-column-count: 2 !important;
     column-count: 2 !important;
     -webkit-column-width: auto !important;
     column-width: auto !important;
 
-    -webkit-column-gap: 12px !important;
-    column-gap: 12px !important;
+    -webkit-column-gap: 10px !important;
+    column-gap: 10px !important;
 
-    /* Bigger posters: reduce side padding on mobile rndm */
-    padding-left: 8px !important;
-    padding-right: 8px !important;
+    /* Bigger posters: tighter side padding */
+    padding-left: 6px !important;
+    padding-right: 6px !important;
 
-    /* Avoid Android layer glitches on the container */
+    /* Container stability (avoid compositor issues) */
     transform: none !important;
     will-change: auto !important;
     filter: none !important;
   }
 
-  /* Masonry items (no breaks; no clipping; no transforms on layout box) */
+  /* Masonry items: pack, don't clip, and NEVER transform the layout box */
   #eventsGrid.randomMode .poster{
     break-inside: avoid !important;
     -webkit-column-break-inside: avoid !important;
 
     display: inline-block !important;
     width: 100% !important;
-    margin: 0 0 12px !important;
+    max-width: none !important;
+    margin: 0 0 10px !important;
 
     /* CRITICAL: Android "invisible but clickable" fix */
     transform: none !important;
+    transition: none !important;
     will-change: auto !important;
 
-    /* Don't clip posters */
     contain: none !important;
     overflow: visible !important;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
 
-  /* Never crop posters; allow tilt only on IMG (not .poster) */
+  /* KEY FIX FOR "HOLES":
+     On mobile masonry, random translate offsets create visual gaps
+     because transforms don't affect layout. So we disable translation
+     and keep only rotation + scale for collage vibe. */
   #eventsGrid.randomMode .poster img{
     display: block !important;
     width: 100% !important;
     height: auto !important;
     object-fit: contain !important;
 
-    /* Keep any existing per-poster variables, just make it a bit bigger on mobile */
     transform:
-      translate(var(--tx, 0px), var(--ty, 0px))
       rotate(var(--rot, 0deg))
-      scale(calc(var(--scl, 1) * 1.14))
+      scale(calc(var(--scl, 1) * 1.22))
       translateZ(0);
 
     will-change: transform;
   }
 
-  /* Bigger icons on mobile rndm (if present) */
+  /* Bigger icons on mobile rndm */
   #eventsGrid.randomMode .wtIcon{
-    width: 30px !important;
-    height: 30px !important;
+    width: 38px !important;
+    height: 38px !important;
   }
 }
 
@@ -1806,22 +1813,26 @@ void wrap.offsetHeight;
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
-    -webkit-column-gap: 10px !important;
-    column-gap: 10px !important;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
+    -webkit-column-gap: 8px !important;
+    column-gap: 8px !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
   }
 
   #eventsGrid.randomMode .poster{
-    margin-bottom: 10px !important;
+    margin-bottom: 8px !important;
   }
 
   #eventsGrid.randomMode .poster img{
     transform:
-      translate(var(--tx, 0px), var(--ty, 0px))
       rotate(var(--rot, 0deg))
-      scale(calc(var(--scl, 1) * 1.18))
+      scale(calc(var(--scl, 1) * 1.28))
       translateZ(0);
+  }
+
+  #eventsGrid.randomMode .wtIcon{
+    width: 40px !important;
+    height: 40px !important;
   }
 }
 </style>
