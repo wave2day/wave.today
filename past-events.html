@@ -1724,86 +1724,104 @@ void wrap.offsetHeight;
 
 
 
-<style id="rndm-mobile-js-masonry">
+<style id="rndm-mobile-js-masonry-v2">
+/* MOBILE rndm — JS masonry (2 cols) ONLY for #eventsGrid.randomMode
+   - Edge-to-edge big posters
+   - Avoid "holes" and Android disappearing by using absolute layout
+*/
 @media (max-width: 768px){
-  #eventsGrid.randomMode{
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
     position: relative !important;
-    display: block !important;
+    display: block !important; /* override grid/force2col */
     padding: 0 !important;
     margin: 0 !important;
     transform: none !important;
     will-change: auto !important;
     filter: none !important;
   }
+
   #eventsGrid.randomMode .poster{
     position: absolute !important;
+    margin: 0 !important;
     left: 0;
     top: 0;
-    margin: 0 !important;
+
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
     contain: none !important;
     overflow: visible !important;
+
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
+
   #eventsGrid.randomMode .poster img{
     display: block !important;
     width: 100% !important;
     height: auto !important;
     object-fit: contain !important;
+
+    /* collage feel without layout holes */
     transform: rotate(var(--rot, 0deg)) !important;
     will-change: auto !important;
   }
+
   #eventsGrid.randomMode .wtIcon{
-    width: 60px !important;
-    height: 60px !important;
+    width: 64px !important;
+    height: 64px !important;
   }
 }
 </style>
 
-<script id="rndm-mobile-js-masonry-script">
+<script id="rndm-mobile-js-masonry-v2-script">
 (() => {
   const mq = window.matchMedia("(max-width: 768px)");
-  const GAP = 2;
-  const BOTTOM_GAP = 2;
+  const GAP = 2;         // between columns
+  const V_GAP = 2;       // between items
 
-  function isRndmActive(grid){
-    return grid && grid.classList && grid.classList.contains("randomMode");
+  function grid(){
+    // works for randomMode with/without additional classes
+    return document.getElementById("eventsGrid");
   }
 
-  function getGrid(){
-    return document.querySelector("#eventsGrid.randomMode");
+  function isRndm(){
+    const g = grid();
+    return !!(g && g.classList.contains("randomMode"));
   }
 
-  function waitForImages(posters){
-    const imgs = posters.map(p => p.querySelector("img")).filter(Boolean);
-    const waits = imgs.map(img => {
-      if (img.complete && img.naturalWidth) return Promise.resolve();
-      return new Promise(res => {
-        img.addEventListener("load", res, { once: true });
-        img.addEventListener("error", res, { once: true });
-      });
+  let raf = 0;
+  function schedule(){
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      layout();
+      // second pass (fonts/images settle)
+      requestAnimationFrame(layout);
     });
-    return Promise.all(waits);
   }
 
   function layout(){
     if (!mq.matches) return;
-    const grid = getGrid();
-    if (!grid || !isRndmActive(grid)) return;
+    const g = grid();
+    if (!g || !isRndm()) return;
 
-    const posters = Array.from(grid.querySelectorAll(".poster"));
+    const posters = Array.from(g.querySelectorAll(".poster"));
     if (!posters.length) return;
 
-    const w = grid.clientWidth || grid.getBoundingClientRect().width;
+    // Force the class-based selector to apply even if force2col remains
+    // (CSS already targets #eventsGrid.randomMode...)
+    // Compute width from grid box
+    const w = g.clientWidth || g.getBoundingClientRect().width;
     if (!w) return;
 
-    const colW = Math.floor((w - GAP) / 2);
+    const colW = Math.max(1, Math.floor((w - GAP) / 2));
+
     let colH = [0, 0];
 
-    posters.forEach(p => {
+    for (const p of posters){
       p.style.width = colW + "px";
 
       const col = (colH[0] <= colH[1]) ? 0 : 1;
@@ -1813,44 +1831,45 @@ void wrap.offsetHeight;
       p.style.left = x + "px";
       p.style.top = y + "px";
 
-      const h = p.offsetHeight || p.getBoundingClientRect().height || 0;
-      colH[col] = y + h + BOTTOM_GAP;
-    });
+      const h = p.getBoundingClientRect().height || p.offsetHeight || 0;
+      colH[col] = y + h + V_GAP;
+    }
 
-    grid.style.height = Math.max(colH[0], colH[1]) + "px";
+    g.style.height = Math.max(colH[0], colH[1]) + "px";
+  }
+
+  function hookImages(){
+    const g = grid();
+    if (!g) return;
+    const imgs = Array.from(g.querySelectorAll(".poster img"));
+    for (const img of imgs){
+      // layout immediately, and on each image load/error (don't wait for all)
+      if (!img.__masonryHooked){
+        img.__masonryHooked = true;
+        img.addEventListener("load", schedule, { passive: true });
+        img.addEventListener("error", schedule, { passive: true });
+      }
+    }
   }
 
   function init(){
-    const grid = getGrid();
-    if (!grid) return;
+    const g = grid();
+    if (!g) return;
 
-    const posters = Array.from(grid.querySelectorAll(".poster"));
-    waitForImages(posters).then(() => {
-      layout();
-      setTimeout(layout, 80);
-      setTimeout(layout, 220);
-    });
-
-    window.addEventListener("resize", () => {
-      clearTimeout(init._t);
-      init._t = setTimeout(layout, 120);
-    }, { passive: true });
-
-    window.addEventListener("orientationchange", () => setTimeout(layout, 200), { passive: true });
-
+    // observe class changes & child changes (events get rendered later)
     const mo = new MutationObserver(() => {
-      if (!mq.matches) return;
-      layout();
-      setTimeout(layout, 120);
+      hookImages();
+      schedule();
     });
-    mo.observe(grid, { attributes: true, attributeFilter: ["class"], childList: true, subtree: false });
+    mo.observe(g, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true });
 
-    const mo2 = new MutationObserver(() => {
-      if (!mq.matches) return;
-      layout();
-      setTimeout(layout, 120);
-    });
-    mo2.observe(grid, { childList: true });
+    window.addEventListener("resize", schedule, { passive: true });
+    window.addEventListener("orientationchange", () => setTimeout(schedule, 120), { passive: true });
+
+    hookImages();
+    schedule();
+    setTimeout(schedule, 120);
+    setTimeout(schedule, 320);
   }
 
   if (document.readyState === "loading") {
