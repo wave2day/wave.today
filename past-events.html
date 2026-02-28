@@ -1092,6 +1092,19 @@ will-change: transform, filter;
   }
 }
 
+
+
+/* ===== MOBILE GPU/scroll stabilizace (Android) ===== */
+@media (max-width: 560px){
+  /* odlehčit blend/blur animace, které na mobilu shazují vrstvy (mizící plakáty) */
+  #ambientPoster{ opacity:.28 !important; mix-blend-mode: normal !important; filter: blur(60px) saturate(1.05) !important; animation: none !important; }
+  #ambientGlow{ opacity:.80 !important; animation: none !important; }
+  /* grid: žádné centrování, ať se nepočítají divné mezery */
+  #eventsGrid.randomMode{ justify-items: stretch !important; }
+  /* izolovat každou položku – méně repaint glitchů */
+  #eventsGrid.randomMode .poster{ contain: layout paint !important; }
+}
+
 </style>
 
 </head>
