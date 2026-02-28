@@ -80,6 +80,24 @@ html,body{
 #ambientPoster{ animation: wtAmbientDrift 8.5s ease-in-out infinite; }
 #ambientGlow{ animation: wtAmbientDrift 7.2s ease-in-out infinite reverse; }
 
+@keyframes wtAmbientDriftMobile{
+  0%{ transform: translate3d(0,0,0) scale(1.02); }
+  50%{ transform: translate3d(1.5vw,-1.2vh,0) scale(1.04); }
+  100%{ transform: translate3d(0,0,0) scale(1.02); }
+}
+@media (max-width: 560px){
+  #ambientPoster{ animation-name: wtAmbientDriftMobile; }
+  #ambientGlow{ animation-name: wtAmbientDriftMobile; }
+
+  /* Android repaint nudge (řeší „klikatelné, ale neviditelné“) */
+  #eventsGrid.randomMode{
+    transform: translateY(var(--repaintNudge, 0px));
+    will-change: transform;
+  }
+}
+
+
+
 /* ===== Page glass ===== */
     .glassPage{
   min-height: 100vh;
@@ -995,70 +1013,80 @@ will-change: transform, filter;
 </style>
 
 <style id="masonryPatch">
-/* ===== Masonry (CSS columns) + zachování „random“ kouzla bez ořezu =====
-   Princip:
-   - samotný .poster je jen „nosná“ krabička pro columns (bez transformu)
-   - transform (rotace/posun/scale) se aplikuje na IMG uvnitř
-   - .poster dostane padding jako bezpečný „buffer“, aby se nic neřízlo
+/* ===== Masonry (CSS columns) – jen desktop/landscape =====
+   Mobil: nepoužívat columns (dělá díry/mizení při scrollu na Androidu).
 */
-#eventsGrid.randomMode{
-  display: block !important;
-  column-width: 280px;
-  column-gap: 14px;
-  column-fill: balance;
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 0 18px;
-  overflow: visible !important;
+@media (min-width: 561px){
+  #eventsGrid.randomMode{
+    display: block !important;
+    column-width: 280px;
+    column-gap: 14px;
+    column-fill: auto;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 18px;
+    overflow: visible !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+
+    padding: 12px;
+    margin: 0 0 14px !important;
+
+    position: relative;
+    overflow: visible !important;
+
+    /* v columns nechceme transform na .poster */
+    transform: none !important;
+    transition: none !important;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    display:block;
+    width:100%;
+    height:auto;
+
+    /* random křivost na IMG */
+    transform:
+      translate(var(--flipX,0px), var(--flipY,0px))
+      translate(var(--tx,0px), var(--ty,0px))
+      rotate(var(--rot,0deg))
+      scale(var(--scl, 1));
+    transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+    will-change: transform;
+  }
 }
 
-#eventsGrid.randomMode .poster{
-  display: block !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 0 14px !important;
-  break-inside: avoid;
-  page-break-inside: avoid;
-  overflow: visible !important;
-
-  /* buffer proti „useknutí“ při rotaci/posunu */
-  padding: 12px;
-  box-sizing: border-box;
-
-  /* z-index proměnná zůstane, ale v columns je omezený – necháme jen kvůli konzistenci */
-  position: relative;
-}
-
-/* zachovat transformy, ale přesunout je z .poster na img */
-#eventsGrid.randomMode .poster{
-  transform: none !important;
-  transition: none !important;
-}
-
-#eventsGrid.randomMode .poster img{
-  display: block;
-  width: 100%;
-  height: auto;
-
-  /* původní random transformy (vars jsou na .poster a dědí se) */
-  transform:
-    translate(var(--flipX,0px), var(--flipY,0px))
-    translate(var(--tx,0px), var(--ty,0px))
-    rotate(var(--rot,0deg))
-    scale(var(--scl, 1));
-  transition: transform 520ms cubic-bezier(.2,.8,.2,1);
-  transform-origin: 50% 50%;
-  will-change: transform;
-}
-
-/* mobil: menší buffer */
+/* ===== Mobil: stabilní 2 sloupce (GRID), bez random transformů ===== */
 @media (max-width: 560px){
-  #eventsGrid.randomMode{ padding: 0 12px; }
-  #eventsGrid.randomMode .poster{ padding: 10px; }
-}
-@media (max-width: 420px){
-  #eventsGrid.randomMode{ padding: 0 8px; }
-  #eventsGrid.randomMode .poster{ padding: 8px; }
+  #eventsGrid.randomMode{
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 10px !important;
+    padding: 0 10px !important;
+
+    /* vypnout columns vlastnosti */
+    column-width: unset !important;
+    column-gap: unset !important;
+    column-count: unset !important;
+    column-fill: unset !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    transform: none !important;
+    transition: none !important;
+    will-change: auto;
+  }
 }
 </style>
 
@@ -1644,6 +1672,38 @@ void wrap.offsetHeight;
   init().catch(err => {
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
+
+
+// ===== Mobile repaint fix (Android): při scrollu v rndm lehce „šťouchne“ do kompozice =====
+(() => {
+  const mmMobile = window.matchMedia('(max-width: 560px)');
+  let rafId = 0;
+  let flip = 0;
+  let t = 0;
+
+  function nudge(){
+    if(!mmMobile.matches) return;
+    if(!grid || !grid.classList.contains('randomMode')) return;
+
+    flip ^= 1;
+    document.documentElement.style.setProperty('--repaintNudge', flip ? '0.01px' : '0px');
+    clearTimeout(t);
+    t = setTimeout(() => {
+      document.documentElement.style.setProperty('--repaintNudge', '0px');
+    }, 140);
+  }
+
+  window.addEventListener('scroll', () => {
+    if(rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      nudge();
+    });
+  }, { passive: true });
+
+  window.addEventListener('resize', nudge, { passive: true });
+})();
+
 </script>
 </body>
 </html>
