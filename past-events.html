@@ -1724,46 +1724,87 @@ void wrap.offsetHeight;
 
 
 
-<style id="rndm-mobile-two-columns-simple">
+<style id="rndm-mobile-columns-v8">
+/* ======================================================
+   MOBILE rndm — TRUE masonry via CSS columns (2 cols)
+   - packed/edge-to-edge (bigger posters without fake scale)
+   - NO grid holes
+   - reduce Android "invisible but clickable" by:
+     - no transforms on .poster
+     - simplify img transform during scroll
+   Scope: ONLY @media + selectors targeting #eventsGrid.randomMode
+   ====================================================== */
 @media (max-width: 768px){
+
+  /* FORCE columns masonry and override any grid/force2col rules */
   #eventsGrid.randomMode,
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 2px !important;
+    display: block !important;
+
+    -webkit-column-count: 2 !important;
+    column-count: 2 !important;
+    -webkit-column-width: auto !important;
+    column-width: auto !important;
+
+    /* almost edge-to-edge */
+    -webkit-column-gap: 2px !important;
+    column-gap: 2px !important;
     padding: 0 !important;
     margin: 0 !important;
+
+    /* stability */
     transform: none !important;
     will-change: auto !important;
     filter: none !important;
   }
 
+  /* column items */
   #eventsGrid.randomMode .poster{
+    display: inline-block !important;
     width: 100% !important;
-    margin: 0 !important;
+
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+
+    margin: 0 0 2px !important;
+
+    /* CRITICAL: no transform on layout box */
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
+
     contain: none !important;
     overflow: visible !important;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
 
+  /* posters: NO translate offsets on mobile (they create "holes") */
   #eventsGrid.randomMode .poster img{
     display: block !important;
     width: 100% !important;
     height: auto !important;
-    object-fit: cover !important;
-    transform: rotate(var(--rot, 0deg)) !important;
+    object-fit: contain !important;
+
+    /* collage feel: rotation only (no translate) */
+    transform: rotate(var(--rot, 0deg));
     will-change: auto !important;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
+  /* bigger icons */
   #eventsGrid.randomMode .wtIcon{
-    width: 56px !important;
-    height: 56px !important;
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  /* during scroll: simplify transforms to prevent disappearing on Android */
+  #eventsGrid.randomMode.isScrolling .poster img{
+    transform: none !important;
   }
 }
 
@@ -1772,15 +1813,39 @@ void wrap.offsetHeight;
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
-    gap: 1px !important;
+    -webkit-column-gap: 1px !important;
+    column-gap: 1px !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    margin-bottom: 1px !important;
   }
 
   #eventsGrid.randomMode .wtIcon{
-    width: 60px !important;
-    height: 60px !important;
+    width: 64px !important;
+    height: 64px !important;
   }
 }
 </style>
+
+<script id="rndm-mobile-columns-v8-script">
+/* Mobile rndm: mark scroll state to temporarily simplify transforms (Android stability) */
+(() => {
+  const mq = window.matchMedia("(max-width: 768px)");
+  let t = null;
+
+  function onScroll(){
+    if (!mq.matches) return;
+    const grid = document.querySelector("#eventsGrid.randomMode");
+    if (!grid) return;
+    grid.classList.add("isScrolling");
+    clearTimeout(t);
+    t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+})();
+</script>
 
 </body>
 </html>
