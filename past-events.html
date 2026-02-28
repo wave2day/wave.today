@@ -1063,11 +1063,11 @@ will-change: transform, filter;
 </style>
 
 
-<style id="mobileColumnsMasonryPatch">
+<style id="mobileRndmColumnsOnly">
 
-/* ===== MOBILE ONLY (rndm): FORCE 2 columns (webkit-safe) + stability ===== */
+/* ===== MOBILE rndm ONLY: 2-column "masonry" via CSS columns + anti-vanish ===== */
 @media (max-width: 560px){
-  /* IMPORTANT: Samsung Internet / some Android WebKit need -webkit-column-* explicitly */
+  /* Force rndm to columns (not grid) */
   #eventsGrid.randomMode{
     display: block !important;
     padding: 0 10px !important;
@@ -1081,14 +1081,12 @@ will-change: transform, filter;
     -webkit-column-fill: auto !important;
     column-fill: auto !important;
 
-    /* hard-disable any grid layout from base CSS */
+    /* kill any grid settings that might leak */
     grid-template-columns: unset !important;
     gap: unset !important;
-    max-width: none !important;
-    margin: 0 auto !important;
   }
 
-  /* keep each item intact */
+  /* Keep each card intact in a column */
   #eventsGrid.randomMode .poster{
     break-inside: avoid !important;
     -webkit-column-break-inside: avoid !important;
@@ -1099,18 +1097,18 @@ will-change: transform, filter;
     margin: 0 0 12px !important;
     padding: 0 !important;
 
-    /* key for “invisible but clickable” bug */
+    /* critical for Android "invisible but clickable" */
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
     overflow: visible !important;
   }
 
-  /* subtle tilt for “random feeling” (only on the image) */
+  /* Optional mild tilt: only the image (doesn't affect layout) */
   #eventsGrid.randomMode .poster img{
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
+    display:block !important;
+    width:100% !important;
+    height:auto !important;
     backface-visibility: hidden !important;
     transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
     transform-origin: 50% 50% !important;
@@ -1122,7 +1120,7 @@ will-change: transform, filter;
   #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot: -0.6deg; }
   #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot:  0.4deg; }
 
-  /* Pause ambient only while scrolling */
+  /* Pause ambient only while scrolling (keeps look, improves paint stability) */
   body.isScrolling #ambientPoster,
   body.isScrolling #ambientGlow{
     animation-play-state: paused !important;
@@ -1715,7 +1713,7 @@ void wrap.offsetHeight;
 </script>
 
 <script>
-/* ===== MOBILE ONLY (rndm): Android repaint nudge + pause ambient while scroll ===== */
+/* ===== MOBILE rndm ONLY: Android repaint nudge + pause ambient while scrolling ===== */
 (function(){
   const mq = matchMedia("(max-width: 560px)");
   if(!mq.matches) return;
