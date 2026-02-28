@@ -1724,85 +1724,89 @@ void wrap.offsetHeight;
 
 
 
-<style id="rndm-mobile-columns-v8">
-/* ======================================================
-   MOBILE rndm — TRUE masonry via CSS columns (2 cols)
-   - packed/edge-to-edge (bigger posters without fake scale)
-   - NO grid holes
-   - reduce Android "invisible but clickable" by:
-     - no transforms on .poster
-     - simplify img transform during scroll
-   Scope: ONLY @media + selectors targeting #eventsGrid.randomMode
-   ====================================================== */
+<style id="rndm-mobile-columns-v9-edge-tilt">
 @media (max-width: 768px){
-
-  /* FORCE columns masonry and override any grid/force2col rules */
   #eventsGrid.randomMode,
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
     display: block !important;
-
     -webkit-column-count: 2 !important;
     column-count: 2 !important;
     -webkit-column-width: auto !important;
     column-width: auto !important;
-
-    /* almost edge-to-edge */
-    -webkit-column-gap: 2px !important;
-    column-gap: 2px !important;
+    -webkit-column-gap: 1px !important;
+    column-gap: 1px !important;
     padding: 0 !important;
     margin: 0 !important;
 
-    /* stability */
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+
     transform: none !important;
     will-change: auto !important;
     filter: none !important;
+    isolation: isolate;
   }
 
-  /* column items */
   #eventsGrid.randomMode .poster{
     display: inline-block !important;
     width: 100% !important;
-
     break-inside: avoid !important;
     -webkit-column-break-inside: avoid !important;
+    margin: 0 0 1px !important;
 
-    margin: 0 0 2px !important;
-
-    /* CRITICAL: no transform on layout box */
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
 
     contain: none !important;
     overflow: visible !important;
+
+    mix-blend-mode: normal !important;
+    filter: none !important;
+
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
 
-  /* posters: NO translate offsets on mobile (they create "holes") */
   #eventsGrid.randomMode .poster img{
     display: block !important;
     width: 100% !important;
     height: auto !important;
     object-fit: contain !important;
 
-    /* collage feel: rotation only (no translate) */
-    transform: rotate(var(--rot, 0deg));
+    transform: rotate(0deg);
     will-change: auto !important;
+
+    mix-blend-mode: normal !important;
+    filter: none !important;
 
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
 
-  /* bigger icons */
+  /* non-symmetric rotation pattern */
+  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-6.5deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 4.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-2.8deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 6.9deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-5.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 5.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-1.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 3.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-7.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 2.4deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-3.7deg); }
+
   #eventsGrid.randomMode .wtIcon{
-    width: 60px !important;
-    height: 60px !important;
+    width: 64px !important;
+    height: 64px !important;
   }
 
-  /* during scroll: simplify transforms to prevent disappearing on Android */
   #eventsGrid.randomMode.isScrolling .poster img{
     transform: none !important;
   }
@@ -1813,27 +1817,25 @@ void wrap.offsetHeight;
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
-    -webkit-column-gap: 1px !important;
-    column-gap: 1px !important;
+    -webkit-column-gap: 0px !important;
+    column-gap: 0px !important;
   }
 
   #eventsGrid.randomMode .poster{
-    margin-bottom: 1px !important;
+    margin-bottom: 0px !important;
   }
 
   #eventsGrid.randomMode .wtIcon{
-    width: 64px !important;
-    height: 64px !important;
+    width: 68px !important;
+    height: 68px !important;
   }
 }
 </style>
 
-<script id="rndm-mobile-columns-v8-script">
-/* Mobile rndm: mark scroll state to temporarily simplify transforms (Android stability) */
+<script id="rndm-mobile-columns-v9-script">
 (() => {
   const mq = window.matchMedia("(max-width: 768px)");
   let t = null;
-
   function onScroll(){
     if (!mq.matches) return;
     const grid = document.querySelector("#eventsGrid.randomMode");
@@ -1842,7 +1844,6 @@ void wrap.offsetHeight;
     clearTimeout(t);
     t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
   }
-
   window.addEventListener("scroll", onScroll, { passive: true });
 })();
 </script>
