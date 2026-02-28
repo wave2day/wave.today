@@ -1724,55 +1724,49 @@ void wrap.offsetHeight;
 
 
 
-<style id="rndm-mobile-only-fix-v6">
+<style id="rndm-mobile-only-fix-final-big">
 /* ======================================================
    MOBILE FIX — ONLY for #eventsGrid.randomMode
-   Goals:
-   - real 2-column masonry (CSS columns)
-   - NO big visual holes (disable random translate offsets on mobile)
-   - NO Android "invisible but clickable" (no transforms on .poster)
-   - bigger posters + bigger icons on mobile rndm
-   Scope: ONLY @media + selectors targeting #eventsGrid.randomMode
+   Variant: BIG posters (mobile rndm)
    ====================================================== */
 @media (max-width: 768px){
 
-  /* Force masonry via CSS columns (override any grid/force2col/touch rules) */
   #eventsGrid.randomMode,
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
     display: block !important;
 
-    /* Force EXACT 2 columns and neutralize column-width heuristics */
     -webkit-column-count: 2 !important;
     column-count: 2 !important;
     -webkit-column-width: auto !important;
     column-width: auto !important;
 
-    -webkit-column-gap: 10px !important;
-    column-gap: 10px !important;
+    /* smaller gaps = larger posters */
+    -webkit-column-gap: 6px !important;
+    column-gap: 6px !important;
 
-    /* Bigger posters: tighter side padding */
-    padding-left: 6px !important;
-    padding-right: 6px !important;
+    /* minimal side padding = larger posters */
+    padding-left: 2px !important;
+    padding-right: 2px !important;
 
-    /* Container stability (avoid compositor issues) */
     transform: none !important;
     will-change: auto !important;
     filter: none !important;
   }
 
-  /* Masonry items: pack, don't clip, and NEVER transform the layout box */
   #eventsGrid.randomMode .poster{
-    break-inside: avoid !important;
-    -webkit-column-break-inside: avoid !important;
-
     display: inline-block !important;
     width: 100% !important;
     max-width: none !important;
-    margin: 0 0 10px !important;
 
-    /* CRITICAL: Android "invisible but clickable" fix */
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+
+    /* tighter vertical spacing */
+    margin: 0 0 6px !important;
+
+    /* Android stability */
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
@@ -1783,28 +1777,29 @@ void wrap.offsetHeight;
     -webkit-backface-visibility: hidden;
   }
 
-  /* KEY FIX FOR "HOLES":
-     On mobile masonry, random translate offsets create visual gaps
-     because transforms don't affect layout. So we disable translation
-     and keep only rotation + scale for collage vibe. */
   #eventsGrid.randomMode .poster img{
     display: block !important;
     width: 100% !important;
     height: auto !important;
     object-fit: contain !important;
 
+    /* BIGGER posters: stronger scale */
     transform:
       rotate(var(--rot, 0deg))
-      scale(calc(var(--scl, 1) * 1.22))
+      scale(calc(var(--scl, 1) * 1.45))
       translateZ(0);
 
     will-change: transform;
   }
 
-  /* Bigger icons on mobile rndm */
   #eventsGrid.randomMode .wtIcon{
-    width: 38px !important;
-    height: 38px !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  #eventsGrid.randomMode.isScrolling,
+  #eventsGrid.randomMode.isScrolling *{
+    animation-play-state: paused !important;
   }
 }
 
@@ -1813,29 +1808,45 @@ void wrap.offsetHeight;
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
-    -webkit-column-gap: 8px !important;
-    column-gap: 8px !important;
-    padding-left: 4px !important;
-    padding-right: 4px !important;
+    -webkit-column-gap: 5px !important;
+    column-gap: 5px !important;
+    padding-left: 1px !important;
+    padding-right: 1px !important;
   }
 
   #eventsGrid.randomMode .poster{
-    margin-bottom: 8px !important;
+    margin-bottom: 5px !important;
   }
 
   #eventsGrid.randomMode .poster img{
     transform:
       rotate(var(--rot, 0deg))
-      scale(calc(var(--scl, 1) * 1.28))
+      scale(calc(var(--scl, 1) * 1.55))
       translateZ(0);
   }
 
   #eventsGrid.randomMode .wtIcon{
-    width: 40px !important;
-    height: 40px !important;
+    width: 46px !important;
+    height: 46px !important;
   }
 }
 </style>
+
+<script id="rndm-mobile-only-fix-final-big-js">
+(() => {
+  const mq = window.matchMedia("(max-width: 768px)");
+  let t = null;
+  function onScroll(){
+    if (!mq.matches) return;
+    const grid = document.querySelector("#eventsGrid.randomMode");
+    if (!grid) return;
+    grid.classList.add("isScrolling");
+    clearTimeout(t);
+    t = setTimeout(() => grid.classList.remove("isScrolling"), 160);
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+})();
+</script>
 
 </body>
 </html>
