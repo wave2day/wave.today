@@ -403,8 +403,8 @@ html,body{
         0  3px    8px    var(--depth2);
     }
 
-    #wtModes .wtModeBtn.isActive .glassBase{ filter: saturate(1.05) brightness(1.03); }
-    #wtModes .wtModeBtn.isActive .glassBase::after{ opacity: 1; }
+    /* removed visual difference for isActive */
+    /* removed visual difference for isActive */
     
     .titleMini{
       font-weight: 900;
@@ -984,54 +984,84 @@ will-change: transform, filter;
 }
 
 
-
-/* ===== MOBILE STABILITA (rndm): 2 sloupce bez děr + bez miznutí při scrollu ===== */
-@media (max-width: 560px){
-
-  /* ponecháme původní ambient look, ale na mobilu neanimujeme filter (jen transform) */
-  @keyframes wtAmbientDriftMobile{
-    0%{ transform: translate3d(0,0,0) scale(1.02); }
-    50%{ transform: translate3d(1.5vw,-1.2vh,0) scale(1.04); }
-    100%{ transform: translate3d(0,0,0) scale(1.02); }
-  }
-  #ambientPoster{ animation: wtAmbientDriftMobile 8.5s ease-in-out infinite; }
-  #ambientGlow{ animation: wtAmbientDriftMobile 7.2s ease-in-out infinite reverse; }
-
-  /* stabilní 2-sloupcový grid, navazující pod sebou */
-  #eventsGrid.randomMode{
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px 10px !important;
-    padding: 0 10px !important;
-    justify-items: stretch !important;
-  }
-  #eventsGrid.randomMode .poster{
-    max-width: none !important;
-    /* vypnout random posuny/rotace/scale => žádné „díry“ */
-    --tx: 0px;
-    --ty: 0px;
-    --rot: 0deg;
-    --scl: 1;
-    transform: translate(var(--flipX,0px), var(--flipY,0px)) !important;
-    will-change: transform;
-    contain: layout paint;
-    backface-visibility: hidden;
-    transform-style: preserve-3d;
-  }
-  #eventsGrid.randomMode .poster img{
-    backface-visibility: hidden;
-    transform-style: preserve-3d;
-  }
-
-  /* malý prostor pro úplně úzké displeje */
+/* ===== FIX: make glass under date/random identical (no active-state glass diff) ===== */
+#wtModes .glassBase{
+  filter: saturate(1.05) brightness(1.03);
 }
-@media (max-width: 420px){
-  #eventsGrid.randomMode{
-    gap: 10px 8px !important;
-    padding: 0 8px !important;
-  }
+#wtModes .glassBase::after{
+  opacity: 1;
 }
 
 </style>
+
+<style id="masonryPatch">
+/* ===== Masonry (CSS columns) + zachování „random“ kouzla bez ořezu =====
+   Princip:
+   - samotný .poster je jen „nosná“ krabička pro columns (bez transformu)
+   - transform (rotace/posun/scale) se aplikuje na IMG uvnitř
+   - .poster dostane padding jako bezpečný „buffer“, aby se nic neřízlo
+*/
+#eventsGrid.randomMode{
+  display: block !important;
+  column-width: 280px;
+  column-gap: 14px;
+  column-fill: balance;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 18px;
+  overflow: visible !important;
+}
+
+#eventsGrid.randomMode .poster{
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 14px !important;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  overflow: visible !important;
+
+  /* buffer proti „useknutí“ při rotaci/posunu */
+  padding: 12px;
+  box-sizing: border-box;
+
+  /* z-index proměnná zůstane, ale v columns je omezený – necháme jen kvůli konzistenci */
+  position: relative;
+}
+
+/* zachovat transformy, ale přesunout je z .poster na img */
+#eventsGrid.randomMode .poster{
+  transform: none !important;
+  transition: none !important;
+}
+
+#eventsGrid.randomMode .poster img{
+  display: block;
+  width: 100%;
+  height: auto;
+
+  /* původní random transformy (vars jsou na .poster a dědí se) */
+  transform:
+    translate(var(--flipX,0px), var(--flipY,0px))
+    translate(var(--tx,0px), var(--ty,0px))
+    rotate(var(--rot,0deg))
+    scale(var(--scl, 1));
+  transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* mobil: menší buffer */
+@media (max-width: 560px){
+  #eventsGrid.randomMode{ padding: 0 12px; }
+  #eventsGrid.randomMode .poster{ padding: 10px; }
+}
+@media (max-width: 420px){
+  #eventsGrid.randomMode{ padding: 0 8px; }
+  #eventsGrid.randomMode .poster{ padding: 8px; }
+}
+</style>
+
 </head>
 <body>
   <div id="pageBase" aria-hidden="true"></div>
@@ -1614,41 +1644,6 @@ void wrap.offsetHeight;
   init().catch(err => {
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
-
-
-/* ===== MOBILE repaint fix (Android): když se při scrollu „ztratí“ vykreslení ===== */
-(function(){
-  const mq = window.matchMedia('(max-width: 560px)');
-  const gridEl = document.getElementById('eventsGrid');
-  if(!gridEl) return;
-
-  let ticking = false;
-
-  function nudgeRepaint(){
-    if(!mq.matches) return;
-    if(!gridEl.classList.contains('randomMode')) return;
-
-    // drobný transform nudge – vynutí překreslení bez vizuální změny
-    gridEl.style.transform = 'translateZ(0) translateY(0.02px)';
-    requestAnimationFrame(() => {
-      gridEl.style.transform = 'translateZ(0)';
-    });
-  }
-
-  function onScroll(){
-    if(ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      nudgeRepaint();
-      ticking = false;
-    });
-  }
-
-  window.addEventListener('scroll', onScroll, { passive: true });
-
-  // i po návratu z hero overlay / přepnutí režimu
-  window.addEventListener('resize', nudgeRepaint, { passive: true });
-})();
 </script>
 </body>
 </html>
