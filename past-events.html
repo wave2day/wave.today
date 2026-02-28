@@ -1063,13 +1063,14 @@ will-change: transform, filter;
 </style>
 
 
-<style id="mobileRndmFix_v10">
+<style id="touchRndmFix_v11">
 
-/* ===== MOBILE FIX v10 (ONLY rndm): FORCE 2 columns + stop vanish ===== */
-@media (max-width: 560px){
-  /* You said: ALWAYS 2 columns on phone */
+/* ===== TOUCH DEVICES (rndm): FORCE 2 columns + stop vanish (v11) ===== */
+@media (pointer: coarse) and (max-width: 900px){
+  /* ALWAYS 2 columns for rndm on touch devices (phones/foldables) */
   #eventsGrid.randomMode{
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 12px 10px !important;
     padding: 0 8px !important;
     justify-items: stretch !important;
@@ -1078,10 +1079,10 @@ will-change: transform, filter;
     margin: 0 auto !important;
   }
 
-  /* Kill the heavy random transforms on the card box (Android paint bug) */
+  /* kill layout-breaking transforms on the card box */
   #eventsGrid.randomMode .poster{
-    max-width: none !important;
     width: 100% !important;
+    max-width: none !important;
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
@@ -1089,7 +1090,7 @@ will-change: transform, filter;
     overflow: visible !important;
   }
 
-  /* Keep a bit of "random" feel safely: tiny tilt only on the image */
+  /* mild tilt only on image (optional) */
   #eventsGrid.randomMode .poster img{
     backface-visibility: hidden !important;
     transform-origin: 50% 50% !important;
@@ -1102,7 +1103,13 @@ will-change: transform, filter;
   #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot: -0.6deg; }
   #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot:  0.4deg; }
 
-  /* Pause ambient only while scrolling (keeps look, avoids compositor stalls) */
+  /* avoid partial-draw: keep posters fully opaque layers */
+  #eventsGrid.randomMode .poster, #eventsGrid.randomMode .poster img{
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+  }
+
+  /* pause ambient only while scrolling */
   body.isScrolling #ambientPoster,
   body.isScrolling #ambientGlow{
     animation-play-state: paused !important;
@@ -1695,16 +1702,16 @@ void wrap.offsetHeight;
 </script>
 
 <script>
-/* ===== MOBILE FIX v10 (ONLY rndm): stop "half poster disappears" on scroll ===== */
+/* ===== TOUCH DEVICES (rndm): repaint nudge using opacity (v11) ===== */
 (function(){
-  const mq = matchMedia("(max-width: 560px)");
+  const mq = matchMedia("(pointer: coarse) and (max-width: 900px)");
   const grid = document.getElementById("eventsGrid");
   if(!grid) return;
 
   let t=null, raf=0;
 
   function repaintNudge(){
-    // opacity toggle is safer than transform toggle (avoids clipping/half-drawn tiles)
+    // opacity toggle is safer than transform toggle (prevents half-drawn tiles)
     grid.style.opacity = "0.999";
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(()=>{ grid.style.opacity = "1"; });
