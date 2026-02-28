@@ -490,52 +490,20 @@ border-radius: 0 !important;
 
     /* Mobile: 2–3 vedle sebe (menší základ), pořád bez fragmentace */
     @media (max-width: 560px){
-      /* rndm: MOBILE masonry (CSS columns) — desktop nedotčeno */
       #eventsGrid.randomMode{
-        display: block !important;
-        -webkit-column-count: 2;
-        column-count: 2;
-        -webkit-column-gap: 12px;
-        column-gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(clamp(190px, 48vw, 320px), 1fr));
+        gap: 16px 14px;
         padding: 0 12px;
-
-        /* stabilita scrollu na Androidu */
-        transform: none !important;
-        will-change: auto !important;
-        filter: none !important;
       }
-
       #eventsGrid.randomMode .poster{
-        break-inside: avoid;
-        -webkit-column-break-inside: avoid;
-        display: inline-block;
-        vertical-align: top;
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 0 12px !important;
-        padding: 0 !important;
-      }
-
-      /* ikony na mobilu jsou moc malé */
-      #eventsGrid.randomMode .wtIcon{
-        width: 44px;
-        height: 44px;
+        max-width: none;
       }
     }
     @media (max-width: 420px){
       #eventsGrid.randomMode{
-        -webkit-column-gap: 10px;
-        column-gap: 10px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 10px;
         padding: 0 8px;
-      }
-
-      #eventsGrid.randomMode .poster{
-        margin: 0 0 10px !important;
-      }
-
-      #eventsGrid.randomMode .wtIcon{
-        width: 40px;
-        height: 40px;
       }
     }
     @media (min-width: 720px){
@@ -1085,54 +1053,13 @@ will-change: transform, filter;
 
 /* mobil: menší buffer */
 @media (max-width: 560px){
-      /* rndm: MOBILE masonry (CSS columns) — desktop nedotčeno */
-      #eventsGrid.randomMode{
-        display: block !important;
-        -webkit-column-count: 2;
-        column-count: 2;
-        -webkit-column-gap: 12px;
-        column-gap: 12px;
-        padding: 0 12px;
-
-        /* stabilita scrollu na Androidu */
-        transform: none !important;
-        will-change: auto !important;
-        filter: none !important;
-      }
-
-      #eventsGrid.randomMode .poster{
-        break-inside: avoid;
-        -webkit-column-break-inside: avoid;
-        display: inline-block;
-        vertical-align: top;
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 0 12px !important;
-        padding: 0 !important;
-      }
-
-      /* ikony na mobilu jsou moc malé */
-      #eventsGrid.randomMode .wtIcon{
-        width: 44px;
-        height: 44px;
-      }
-    }
+  #eventsGrid.randomMode{ padding: 0 12px; }
+  #eventsGrid.randomMode .poster{ padding: 10px; }
+}
 @media (max-width: 420px){
-      #eventsGrid.randomMode{
-        -webkit-column-gap: 10px;
-        column-gap: 10px;
-        padding: 0 8px;
-      }
-
-      #eventsGrid.randomMode .poster{
-        margin: 0 0 10px !important;
-      }
-
-      #eventsGrid.randomMode .wtIcon{
-        width: 40px;
-        height: 40px;
-      }
-    }
+  #eventsGrid.randomMode{ padding: 0 8px; }
+  #eventsGrid.randomMode .poster{ padding: 8px; }
+}
 </style>
 
 
@@ -1174,102 +1101,94 @@ html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  
 /* repaint nudge helper (no visible label) */
 html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
 
-</style>
 
-<style id="touchMasonryOverride">
-/* ===== MOBILE rndm override (TOUCH/force2col) — keep desktop/date intact =====
-   - only affects #eventsGrid.randomMode on small screens
-   - replaces touch grid (force2col) with CSS columns masonry
-*/
+
+
+/* ======================================================
+   MOBILE FIX – rndm ONLY (masonry + stabilita + větší)
+   Scope: ONLY inside @media + ONLY #eventsGrid.randomMode…
+   ====================================================== */
 @media (max-width: 768px){
-  /* kill the touch grid engine when it appears */
-  #eventsGrid.randomMode.force2col{
+
+  /* skutečné masonry – vypnout grid/force2col na mobilu */
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
     display: block !important;
-    -webkit-column-count: 2 !important;
-    column-count: 2 !important;
-    -webkit-column-gap: 10px !important;
-    column-gap: 10px !important;
-    padding: 0 8px !important;
-    align-items: initial !important;
-    justify-items: initial !important;
-  }
+    -webkit-column-count: 2;
+    column-count: 2;
+    -webkit-column-gap: 8px;
+    column-gap: 8px;
 
-  #eventsGrid.randomMode.force2col > *{
-    min-width: 0 !important;
-  }
+    padding: 0 6px; /* menší okraje = větší plakáty */
 
-  #eventsGrid.randomMode.force2col .poster{
-    break-inside: avoid !important;
-    -webkit-column-break-inside: avoid !important;
-    display: inline-block !important;
-    vertical-align: top !important;
-    width: 100% !important;
-    margin: 0 0 10px !important;
-
-    /* buffer proti ořezu při naklonění/scale */
-    padding: 10px !important;
-    box-sizing: border-box !important;
-
+    /* stabilita scrollu (Android “invisible but clickable”) */
     transform: none !important;
-    transition: none !important;
     will-change: auto !important;
+    filter: none !important;
+  }
+
+  /* položky */
+  html.isTouch #eventsGrid.randomMode .poster{
+    display: inline-block;
+    width: 100% !important;
+    margin: 0 0 8px !important;
+
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+
+    /* KRITICKÉ: žádný transform na layout boxu */
+    transform: none !important;
+    will-change: auto !important;
+    transition: none !important;
+
     contain: none !important;
     overflow: visible !important;
+    backface-visibility: hidden;
   }
 
-  /* bigger icons on mobile rndm */
-  #eventsGrid.randomMode.force2col .wtIcon{
-    width: 54px !important;
-    height: 54px !important;
-  }
-
-  /* more "random" feel: add extra mobile tilt/scale ON IMG ONLY */
-  #eventsGrid.randomMode.force2col .poster img{
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    object-fit: contain !important;
-
-    backface-visibility: hidden !important;
-    transform-origin: 50% 50% !important;
+  /* transformace jen na obrázku (variabilita + větší) */
+  html.isTouch #eventsGrid.randomMode .poster img{
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
 
     transform:
-      translate(var(--flipX,0px), var(--flipY,0px))
       translate(var(--tx,0px), var(--ty,0px))
-      rotate(calc(var(--rot,0deg) + var(--mrot, 0deg)))
-      scale(calc(var(--scl, 1) * var(--mscl, 1)))
-      translateZ(0) !important;
-    will-change: transform !important;
+      rotate(var(--rot,0deg))
+      scale(calc(var(--scl,1) * 1.14))
+      translateZ(0);
+
+    will-change: transform;
   }
 
-  /* variability (mobile-only) */
-  #eventsGrid.randomMode.force2col .poster:nth-child(8n+1){ --mrot: -2.4deg; --mscl: 1.05; }
-  #eventsGrid.randomMode.force2col .poster:nth-child(8n+2){ --mrot:  1.8deg; --mscl: 1.02; }
-  #eventsGrid.randomMode.force2col .poster:nth-child(8n+3){ --mrot: -1.6deg; --mscl: 1.04; }
-  #eventsGrid.randomMode.force2col .poster:nth-child(8n+4){ --mrot:  2.2deg; --mscl: 1.03; }
-  #eventsGrid.randomMode.force2col .poster:nth-child(8n+5){ --mrot: -1.9deg; --mscl: 1.02; }
-  #eventsGrid.randomMode.force2col .poster:nth-child(8n+6){ --mrot:  1.4deg; --mscl: 1.06; }
-  #eventsGrid.randomMode.force2col .poster:nth-child(8n+7){ --mrot: -2.1deg; --mscl: 1.03; }
-  #eventsGrid.randomMode.force2col .poster:nth-child(8n+8){ --mrot:  1.1deg; --mscl: 1.04; }
+  /* větší ikonky na mobilu v rndm */
+  html.isTouch #eventsGrid.randomMode .wtIcon{
+    width: 28px !important;
+    height: 28px !important;
+  }
 }
 
 @media (max-width: 420px){
-  #eventsGrid.randomMode.force2col{
-    -webkit-column-gap: 8px !important;
-    column-gap: 8px !important;
-    padding: 0 6px !important;
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    -webkit-column-gap: 6px;
+    column-gap: 6px;
+    padding: 0 4px;
   }
-  #eventsGrid.randomMode.force2col .poster{
-    margin: 0 0 8px !important;
-    padding: 8px !important;
+
+  html.isTouch #eventsGrid.randomMode .poster{
+    margin: 0 0 6px !important;
   }
-  #eventsGrid.randomMode.force2col .wtIcon{
-    width: 50px !important;
-    height: 50px !important;
+
+  html.isTouch #eventsGrid.randomMode .wtIcon{
+    width: 30px !important;
+    height: 30px !important;
   }
 }
-</style>
 
+
+</style>
 </head>
 <body>
   <div id="pageBase" aria-hidden="true"></div>
