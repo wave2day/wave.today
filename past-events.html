@@ -866,6 +866,31 @@ border-radius: 0 !important;
 #ambientGlow{ opacity: 1; }
 .glassPage{ background: rgba(255,255,255,.026); }
 
+/* ===== MOBILE: odlehčit kompozici (Android má bug: obrázky jsou klikatelné, ale neviditelné) ===== */
+@media (max-width: 560px){
+  /* fixed + blur + blend + animace => nejčastější spouštěč toho mizení */
+  #ambientPoster{
+    opacity: .16 !important;
+    mix-blend-mode: normal !important;
+    filter: blur(42px) saturate(1.05) !important;
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+  #ambientGlow{
+    opacity: .55 !important;
+    mix-blend-mode: normal !important;
+    filter: blur(14px) saturate(1.05) !important;
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+  #ambientBg{
+    will-change: auto !important;
+  }
+  .glassPage{ background: rgba(255,255,255,.018) !important; }
+}
+
   
 /* ===== HERO (odloupnutí plakátu) ===== */
 body.heroOpen #eventsGrid{ filter:none; opacity:1; transform:none; transition: none; }
@@ -929,7 +954,7 @@ will-change: transform, filter;
   animation: rollUpPoster 260ms cubic-bezier(.2,.8,.2,1) both;
 }
 /* ===== Stabilizace kompozice (zoom / mobile blikání) ===== */
-#ambientBg, #ambientPoster, #ambientGlow{ will-change: transform, opacity, filter; }
+#ambientBg, #ambientPoster, #ambientGlow{ will-change: auto; }
 .glassPage{ isolation:isolate; }
 
 
@@ -995,100 +1020,98 @@ will-change: transform, filter;
 </style>
 
 <style id="masonryPatch">
-/* ===== Masonry patch =====
-   Desktop (>=561px): CSS columns + „random“ transformy (koláž).
-   Mobile (<=560px): stabilní 2-column GRID bez random transformů (žádné miznutí při scrollu).
+/* ===== Masonry (CSS columns) + zachování „random“ kouzla bez ořezu =====
+   Princip:
+   - samotný .poster je jen „nosná“ krabička pro columns (bez transformu)
+   - transform (rotace/posun/scale) se aplikuje na IMG uvnitř
+   - .poster dostane padding jako bezpečný „buffer“, aby se nic neřízlo
 */
-
-@media (min-width: 561px){
-  #eventsGrid.randomMode{
-    display: block !important;
-    column-width: 280px;
-    column-gap: 14px;
-    column-fill: auto;
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 0 18px;
-    overflow: visible !important;
-  }
-
-  #eventsGrid.randomMode .poster{
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 0 14px !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
-    overflow: visible !important;
-
-    /* malý buffer proti „useknutí“ */
-    padding: 10px;
-    box-sizing: border-box;
-
-    position: relative;
-  }
-
-  /* poster nenese transform, aby columns zůstaly čitelné */
-  #eventsGrid.randomMode .poster{
-    transform: none !important;
-    transition: none !important;
-  }
-
-  /* transformy na img */
-  #eventsGrid.randomMode .poster img{
-    display:block;
-    width:100%;
-    height:auto;
-
-    transform:
-      translate(var(--tx,0px), var(--ty,0px))
-      rotate(var(--rot,0deg))
-      scale(var(--scl, 1));
-    transition: transform 520ms cubic-bezier(.2,.8,.2,1);
-    transform-origin: 50% 50%;
-    will-change: transform;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
+#eventsGrid.randomMode{
+  display: block !important;
+  column-width: 280px;
+  column-gap: 14px;
+  column-fill: balance;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 18px;
+  overflow: visible !important;
 }
 
-/* ===== MOBILE: JS masonry (2 sloupce bez CSS columns), stabilní scroll ===== */
+#eventsGrid.randomMode .poster{
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 14px !important;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  overflow: visible !important;
+
+  /* buffer proti „useknutí“ při rotaci/posunu */
+  padding: 12px;
+  box-sizing: border-box;
+
+  /* z-index proměnná zůstane, ale v columns je omezený – necháme jen kvůli konzistenci */
+  position: relative;
+}
+
+/* zachovat transformy, ale přesunout je z .poster na img */
+#eventsGrid.randomMode .poster{
+  transform: none !important;
+  transition: none !important;
+}
+
+#eventsGrid.randomMode .poster img{
+  display: block;
+  width: 100%;
+  height: auto;
+
+  /* původní random transformy (vars jsou na .poster a dědí se) */
+  transform:
+    translate(var(--flipX,0px), var(--flipY,0px))
+    translate(var(--tx,0px), var(--ty,0px))
+    rotate(var(--rot,0deg))
+    scale(var(--scl, 1));
+  transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* mobil: menší buffer */
 @media (max-width: 560px){
-  /* fallback: obyč 2-col GRID (kdyby JS selhal) */
+  /* MOBILE: vypnout CSS columns (to dělá Android render bug) a jet stabilní 2-sloupcový grid */
   #eventsGrid.randomMode{
     display: grid !important;
-    column-count: unset !important;
-    column-width: unset !important;
-    column-gap: unset !important;
-    column-fill: unset !important;
-    overflow: visible !important;
+    column-width: auto !important;
+    column-count: auto !important;
+    column-gap: 0 !important;
+    column-fill: auto !important;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 10px;
+    max-width: none;
+    margin: 0;
+    padding: 0 12px;
+    align-items: start;
     justify-items: stretch;
   }
-
-  /* když JS zapne .jsMasonry, přepneme na absolutní layout */
-  #eventsGrid.randomMode.jsMasonry{
-    display: block !important;
-    position: relative;
-    width: 100%;
-  }
-
-  #eventsGrid.randomMode.jsMasonry .poster{
-    position: absolute;
+  #eventsGrid.randomMode .poster{
     margin: 0 !important;
-    padding: 0 !important;
-    width: var(--mColW, calc(50% - 6px));
-    will-change: transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
+    padding: 8px;           /* buffer proti ořezu při rotaci */
+    break-inside: auto;
   }
-
-  /* na mobilu bez random rotací/posunů (stabilita); JS masonry dělá nepravidelnost výškami */
-  #eventsGrid.randomMode.jsMasonry .poster img{
-    transform: none !important;
+  #eventsGrid.randomMode .poster img{
+    will-change: auto;
+    backface-visibility: hidden;
   }
 }
 
+@media (max-width: 420px){
+  #eventsGrid.randomMode{
+    padding: 0 8px;
+    gap: 10px 8px;
+  }
+  #eventsGrid.randomMode .poster{ padding: 6px; }
+}
 </style>
 
 </head>
@@ -1279,15 +1302,14 @@ will-change: transform, filter;
 
   function randomizeVars(){
     const posters = Array.from(grid.querySelectorAll('.poster'));
-    const isMobile = window.matchMedia('(max-width: 560px)').matches;
     // stronger "plutí" + overlap
     posters.forEach((el, i) => {
-      const tx  = isMobile ? 0 : (Math.random()*2 - 1) * 14;
-      const ty  = isMobile ? 0 : (Math.random()*2 - 1) * 22;
-      const rot = isMobile ? 0 : (Math.random()*2 - 1) * 1.1;  // desktop méně nakloněné
-      const scl = isMobile ? 1 : (0.99 + Math.random()*0.04);
-      const lift= 0;
-      const z   = isMobile ? 1 : (1 + Math.round(Math.random()*3));  // 1..7 (méně překryvů)
+      const tx  = (Math.random()*2 - 1) * 14;     // -27..27 (mírnější rozkývání)
+      const ty  = (Math.random()*2 - 1) * 22;     // -43..43 (mírnější rozkývání)
+      const rot = (Math.random()*2 - 1) * 1.6;    // -3.1..3.1 deg
+      const scl = 0.99 + Math.random()*0.05;      // 0.98..1.06 (méně rozdílů)
+      const lift= 0;                              // (nepoužíváme layout lift – jen transform)
+      const z   = 1 + Math.round(Math.random()*3);  // 1..7 (méně překryvů)
 
       el.style.setProperty('--tx', tx.toFixed(1)+'px');
       el.style.setProperty('--ty', ty.toFixed(1)+'px');
@@ -1299,86 +1321,7 @@ will-change: transform, filter;
   }
 
   function clearRandomVars(){
-    const posters = Array.from(grid.querySelectorAll('.poster'
-
-  // ===== Mobile JS masonry (2 columns, no CSS columns) =====
-  function enableMobileMasonry(enable){
-    const isMobile = window.matchMedia('(max-width: 560px)').matches;
-    if(!isMobile){ enable = false; }
-    grid.classList.toggle('jsMasonry', !!enable);
-    if(!enable){
-      // reset inline positions
-      Array.from(grid.querySelectorAll('.poster')).forEach(el => {
-        el.style.left = '';
-        el.style.top = '';
-      });
-      grid.style.height = '';
-      grid.style.setProperty('--mColW','');
-      return;
-    }
-    layoutMobileMasonry();
-  }
-
-  function layoutMobileMasonry(){
-    const isMobile = window.matchMedia('(max-width: 560px)').matches;
-    if(!isMobile || currentMode !== 'random'){ enableMobileMasonry(false); return; }
-
-    // ensure class on
-    grid.classList.add('jsMasonry');
-
     const posters = Array.from(grid.querySelectorAll('.poster'));
-    if(!posters.length) return;
-
-    // measure container inner width
-    const cs = getComputedStyle(grid);
-    const padL = parseFloat(cs.paddingLeft) || 0;
-    const padR = parseFloat(cs.paddingRight) || 0;
-    const gapX = 10; // align with CSS gap on mobile
-    const w = grid.clientWidth - padL - padR;
-    const colW = Math.floor((w - gapX) / 2);
-
-    grid.style.setProperty('--mColW', colW + 'px');
-
-    const colH = [0,0];
-    posters.forEach((el) => {
-      // set width first so height measures correctly
-      el.style.width = colW + 'px';
-      el.style.left = '';
-      el.style.top = '';
-
-      // prefer right column if it's shorter
-      const col = colH[0] <= colH[1] ? 0 : 1;
-      const left = padL + (col === 0 ? 0 : (colW + gapX));
-
-      el.style.left = left + 'px';
-      el.style.top  = colH[col] + 'px';
-
-      const h = el.getBoundingClientRect().height;
-      colH[col] += h + 12; // vertical gap
-    });
-
-    const height = Math.max(colH[0], colH[1]);
-    grid.style.height = height + 'px';
-  }
-
-  function whenImagesReady(cb){
-    const imgs = Array.from(grid.querySelectorAll('.poster img'));
-    let pending = 0;
-    imgs.forEach(img => {
-      if(img.complete) return;
-      pending++;
-      img.addEventListener('load', () => {
-        pending--;
-        if(pending<=0) cb();
-      }, { once:true });
-      img.addEventListener('error', () => {
-        pending--;
-        if(pending<=0) cb();
-      }, { once:true });
-    });
-    if(pending===0) cb();
-  }
-));
     posters.forEach(el => {
       el.style.removeProperty('--tx');
       el.style.removeProperty('--ty');
@@ -1426,8 +1369,6 @@ will-change: transform, filter;
     if(mode === 'random'){
       shufflePosters();
       randomizeVars();
-      whenImagesReady(() => requestAnimationFrame(layoutMobileMasonry));
-      enableMobileMasonry(true);
       requestAnimationFrame(() => flipAnimate(before));
     } else {
       // DATE MODE (re-apply)
@@ -1456,12 +1397,8 @@ currentMode = mode;
   if(mode === 'random'){
     shufflePosters();
     randomizeVars();
-    // mobile masonry layout (stabilní)
-    whenImagesReady(() => requestAnimationFrame(layoutMobileMasonry));
-    enableMobileMasonry(true);
   }else{
     // DATE MODE – vrátit skutečné pořadí podle data
-    enableMobileMasonry(false);
     clearRandomVars();
 
     // znovu připojit postery podle pořadí v items
@@ -1759,41 +1696,24 @@ void wrap.offsetHeight;
   init().catch(err => {
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
-</script>
 
-<script>
-/* Android repaint bug workaround: při návratu scrollu někdy „zmizí“ obsah (je klikací, ale neviditelný).
-   Krátký kompoziční nudge donutí prohlížeč překreslit grid. */
-(function(){
-  const mq = window.matchMedia('(max-width: 560px)');
-  if(!mq.matches) return;
+  // MOBILE repaint fix (Android): občas nere-renderuje obrázky při scrollu nahoru (jsou klikatelné, ale neviditelné)
+  (function mobileRepaintFix(){
+    const mq = window.matchMedia('(max-width: 560px)');
+    if(!mq.matches) return;
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        // drobný no-op stylový zásah -> vynutí překreslení bez viditelného efektu
+        grid.style.filter = 'opacity(0.999)';
+        // další frame vrátit
+        requestAnimationFrame(() => { grid.style.filter = ''; ticking = false; });
+      });
+    }, { passive:true });
+  })();
 
-  let raf = 0;
-  let t = 0;
-
-  function nudge(){
-    const el = document.getElementById('eventsGrid');
-    if(!el) return;
-    el.style.transform = 'translate3d(0,0,0)';
-    clearTimeout(t);
-    t = setTimeout(() => { el.style.transform = ''; }, 80);
-  }
-
-  window.addEventListener('scroll', () => {
-    if(raf) return;
-    raf = requestAnimationFrame(() => { raf = 0; nudge(); });
-  }, {passive:true});
-
-  window.addEventListener('load', nudge, {once:true});
-})();
-
-window.addEventListener('resize', () => {
-  if(currentMode === 'random'){
-    // debounce a bit
-    clearTimeout(window.__wtMz);
-    window.__wtMz = setTimeout(() => layoutMobileMasonry(), 120);
-  }
-});
 </script>
 </body>
 </html>
