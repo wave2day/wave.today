@@ -1052,37 +1052,41 @@ will-change: transform, filter;
   }
 }
 
-/* ===== MOBILE: vrať GRID a vypni random transformy (stabilita) ===== */
+/* ===== MOBILE: JS masonry (2 sloupce bez CSS columns), stabilní scroll ===== */
 @media (max-width: 560px){
+  /* fallback: obyč 2-col GRID (kdyby JS selhal) */
   #eventsGrid.randomMode{
     display: grid !important;
-    /* grid-template-columns necháváme z hlavního CSS */
     column-count: unset !important;
     column-width: unset !important;
     column-gap: unset !important;
     column-fill: unset !important;
     overflow: visible !important;
+    justify-items: stretch;
   }
 
-  #eventsGrid.randomMode .poster{
+  /* když JS zapne .jsMasonry, přepneme na absolutní layout */
+  #eventsGrid.randomMode.jsMasonry{
+    display: block !important;
+    position: relative;
+    width: 100%;
+  }
+
+  #eventsGrid.randomMode.jsMasonry .poster{
+    position: absolute;
     margin: 0 !important;
     padding: 0 !important;
-    break-inside: auto;
-    page-break-inside: auto;
-    contain: layout paint;
-  }
-
-  #eventsGrid.randomMode .poster,
-  #eventsGrid.randomMode .poster img{
-    transform: none !important;
-    transition: none !important;
+    width: var(--mColW, calc(50% - 6px));
+    will-change: transform;
+    transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
 
-  /* odlehčit pozadí, ale NE vypnout */
-  #ambientPoster{ opacity:.24 !important; filter: blur(52px) saturate(1.05) !important; animation:none !important; mix-blend-mode: normal !important; }
-  #ambientGlow{ opacity:.70 !important; filter: blur(16px) saturate(1.1) !important; animation:none !important; mix-blend-mode: normal !important; }
+  /* na mobilu bez random rotací/posunů (stabilita); JS masonry dělá nepravidelnost výškami */
+  #eventsGrid.randomMode.jsMasonry .poster img{
+    transform: none !important;
+  }
 }
 
 </style>
@@ -1278,12 +1282,12 @@ will-change: transform, filter;
     const isMobile = window.matchMedia('(max-width: 560px)').matches;
     // stronger "plutí" + overlap
     posters.forEach((el, i) => {
-      const tx  = (Math.random()*2 - 1) * 14;     // -27..27 (mírnější rozkývání)
-      const ty  = (Math.random()*2 - 1) * 22;     // -43..43 (mírnější rozkývání)
-      const rot = (Math.random()*2 - 1) * 1.6;    // -3.1..3.1 deg
-      const scl = 0.99 + Math.random()*0.05;      // 0.98..1.06 (méně rozdílů)
-      const lift= 0;                              // (nepoužíváme layout lift – jen transform)
-      const z   = 1 + Math.round(Math.random()*3);  // 1..7 (méně překryvů)
+      const tx  = isMobile ? 0 : (Math.random()*2 - 1) * 14;
+      const ty  = isMobile ? 0 : (Math.random()*2 - 1) * 22;
+      const rot = isMobile ? 0 : (Math.random()*2 - 1) * 1.1;  // desktop méně nakloněné
+      const scl = isMobile ? 1 : (0.99 + Math.random()*0.04);
+      const lift= 0;
+      const z   = isMobile ? 1 : (1 + Math.round(Math.random()*3));  // 1..7 (méně překryvů)
 
       el.style.setProperty('--tx', tx.toFixed(1)+'px');
       el.style.setProperty('--ty', ty.toFixed(1)+'px');
@@ -1295,7 +1299,86 @@ will-change: transform, filter;
   }
 
   function clearRandomVars(){
+    const posters = Array.from(grid.querySelectorAll('.poster'
+
+  // ===== Mobile JS masonry (2 columns, no CSS columns) =====
+  function enableMobileMasonry(enable){
+    const isMobile = window.matchMedia('(max-width: 560px)').matches;
+    if(!isMobile){ enable = false; }
+    grid.classList.toggle('jsMasonry', !!enable);
+    if(!enable){
+      // reset inline positions
+      Array.from(grid.querySelectorAll('.poster')).forEach(el => {
+        el.style.left = '';
+        el.style.top = '';
+      });
+      grid.style.height = '';
+      grid.style.setProperty('--mColW','');
+      return;
+    }
+    layoutMobileMasonry();
+  }
+
+  function layoutMobileMasonry(){
+    const isMobile = window.matchMedia('(max-width: 560px)').matches;
+    if(!isMobile || currentMode !== 'random'){ enableMobileMasonry(false); return; }
+
+    // ensure class on
+    grid.classList.add('jsMasonry');
+
     const posters = Array.from(grid.querySelectorAll('.poster'));
+    if(!posters.length) return;
+
+    // measure container inner width
+    const cs = getComputedStyle(grid);
+    const padL = parseFloat(cs.paddingLeft) || 0;
+    const padR = parseFloat(cs.paddingRight) || 0;
+    const gapX = 10; // align with CSS gap on mobile
+    const w = grid.clientWidth - padL - padR;
+    const colW = Math.floor((w - gapX) / 2);
+
+    grid.style.setProperty('--mColW', colW + 'px');
+
+    const colH = [0,0];
+    posters.forEach((el) => {
+      // set width first so height measures correctly
+      el.style.width = colW + 'px';
+      el.style.left = '';
+      el.style.top = '';
+
+      // prefer right column if it's shorter
+      const col = colH[0] <= colH[1] ? 0 : 1;
+      const left = padL + (col === 0 ? 0 : (colW + gapX));
+
+      el.style.left = left + 'px';
+      el.style.top  = colH[col] + 'px';
+
+      const h = el.getBoundingClientRect().height;
+      colH[col] += h + 12; // vertical gap
+    });
+
+    const height = Math.max(colH[0], colH[1]);
+    grid.style.height = height + 'px';
+  }
+
+  function whenImagesReady(cb){
+    const imgs = Array.from(grid.querySelectorAll('.poster img'));
+    let pending = 0;
+    imgs.forEach(img => {
+      if(img.complete) return;
+      pending++;
+      img.addEventListener('load', () => {
+        pending--;
+        if(pending<=0) cb();
+      }, { once:true });
+      img.addEventListener('error', () => {
+        pending--;
+        if(pending<=0) cb();
+      }, { once:true });
+    });
+    if(pending===0) cb();
+  }
+));
     posters.forEach(el => {
       el.style.removeProperty('--tx');
       el.style.removeProperty('--ty');
@@ -1343,6 +1426,8 @@ will-change: transform, filter;
     if(mode === 'random'){
       shufflePosters();
       randomizeVars();
+      whenImagesReady(() => requestAnimationFrame(layoutMobileMasonry));
+      enableMobileMasonry(true);
       requestAnimationFrame(() => flipAnimate(before));
     } else {
       // DATE MODE (re-apply)
@@ -1371,8 +1456,12 @@ currentMode = mode;
   if(mode === 'random'){
     shufflePosters();
     randomizeVars();
+    // mobile masonry layout (stabilní)
+    whenImagesReady(() => requestAnimationFrame(layoutMobileMasonry));
+    enableMobileMasonry(true);
   }else{
     // DATE MODE – vrátit skutečné pořadí podle data
+    enableMobileMasonry(false);
     clearRandomVars();
 
     // znovu připojit postery podle pořadí v items
@@ -1697,6 +1786,14 @@ void wrap.offsetHeight;
 
   window.addEventListener('load', nudge, {once:true});
 })();
+
+window.addEventListener('resize', () => {
+  if(currentMode === 'random'){
+    // debounce a bit
+    clearTimeout(window.__wtMz);
+    window.__wtMz = setTimeout(() => layoutMobileMasonry(), 120);
+  }
+});
 </script>
 </body>
 </html>
