@@ -1063,63 +1063,55 @@ will-change: transform, filter;
 </style>
 
 
-<style id="mobileMasonryJS_v8">
+<style id="mobileColumnsMasonryPatch">
 
-/* ===== MOBILE PATCH v8 (ONLY rndm): grid fallback + JS masonry class ===== */
+/* ===== MOBILE ONLY (rndm): CSS COLUMNS masonry (2 cols) + stability ===== */
 @media (max-width: 560px){
 
-  /* 0) Default mobile rndm = stable 2-col GRID (fallback if JS doesn't run) */
+  /* Keep your desktop intact; only affect rndm on mobile */
   #eventsGrid.randomMode{
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 14px 12px !important;
+    display: block !important;
     padding: 0 10px !important;
-    align-items: start !important;
-    justify-items: stretch !important;
 
-    /* kill columns if any rule leaks in */
-    column-count: unset !important;
-    column-width: unset !important;
-    column-gap: unset !important;
-    column-fill: unset !important;
+    /* real “masonry look” via columns */
+    column-count: 2 !important;
+    column-gap: 12px !important;
+    column-fill: auto !important;
+
+    /* ensure no grid rules leak in */
+    grid-template-columns: unset !important;
+    gap: unset !important;
   }
 
-  /* prevent the “invisible but clickable” glitch: NO transforms on the box */
+  /* each card stays whole in a column */
   #eventsGrid.randomMode .poster{
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+    page-break-inside: avoid !important;
+
+    display: inline-block !important;
+    width: 100% !important;
+    margin: 0 0 12px !important;
+    padding: 0 !important;
+
+    /* critical: remove transforms that trigger Android “invisible but clickable” */
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
     overflow: visible !important;
   }
 
-  /* mild "random" feel safely (rotate only the image) */
   #eventsGrid.randomMode .poster img{
-    transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
-    backface-visibility: hidden;
-    transform-origin: 50% 50%;
-  }
-  #eventsGrid.randomMode .poster:nth-child(6n+1){ --mrot: -0.9deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+2){ --mrot:  0.7deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+3){ --mrot: -0.5deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+4){ --mrot:  0.8deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot: -0.6deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot:  0.4deg; }
-
-  /* 1) When JS masonry is active, switch container to positioned block and posters to absolute */
-  #eventsGrid.randomMode.masonryJS{
     display: block !important;
-    position: relative !important;
-  }
-  #eventsGrid.randomMode.masonryJS .poster{
-    position: absolute !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    left: 0;
-    top: 0;
-    width: auto;
+    width: 100% !important;
+    height: auto !important;
+
+    /* keep it on its own layer (more stable on Android) */
+    transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
   }
 
-  /* 2) Pause ambient only while scrolling (keeps the look, avoids Android paint bugs) */
+  /* Pause ambient ONLY while scrolling (helps paint stability without killing the look) */
   body.isScrolling #ambientPoster,
   body.isScrolling #ambientGlow{
     animation-play-state: paused !important;
@@ -1712,123 +1704,31 @@ void wrap.offsetHeight;
 </script>
 
 <script>
-/* ===== MOBILE PATCH v8 (ONLY rndm): JS masonry layout without holes ===== */
+/* ===== MOBILE ONLY: stabilize Android paint on scroll (rndm) ===== */
 (function(){
   const mq = matchMedia("(max-width: 560px)");
+  if(!mq.matches) return;
+
   const grid = document.getElementById("eventsGrid");
   if(!grid) return;
 
-  const PAD_X = 10;   // must match CSS padding
-  const GAP_X = 12;
-  const GAP_Y = 14;
-
-  let raf = 0;
-  let scrollTimer = null;
-
-  function isMobile(){ return mq.matches; }
-  function isRandom(){ return grid.classList.contains("randomMode"); }
-
+  let t=null, raf=0;
   function nudge(){
-    if(!isMobile() || !isRandom()) return;
     grid.style.transform = "translate3d(0,0.01px,0)";
-    requestAnimationFrame(()=>{ grid.style.transform = "translate3d(0,0,0)"; });
-  }
-
-  async function waitDecode(){
-    const imgs = Array.from(grid.querySelectorAll(".poster img"));
-    await Promise.all(imgs.map(img=>{
-      if(img.complete && img.naturalWidth) return Promise.resolve();
-      if(img.decode) return img.decode().catch(()=>{});
-      return new Promise(res=>img.addEventListener("load", ()=>res(), {once:true}));
-    }));
-  }
-
-  function disableMasonry(){
-    grid.classList.remove("masonryJS");
-    grid.style.height = "";
-    const posters = grid.querySelectorAll(".poster");
-    posters.forEach(el=>{
-      el.style.left = "";
-      el.style.top = "";
-      el.style.width = "";
-    });
-  }
-
-  function layoutMasonry(){
-    if(!isMobile() || !isRandom()) { disableMasonry(); return; }
-
-    const w = grid.clientWidth;
-    const colW = Math.max(140, (w - PAD_X*2 - GAP_X) / 2);
-
-    const posters = Array.from(grid.querySelectorAll(".poster"));
-
-    // turn on masonry mode
-    grid.classList.add("masonryJS");
-
-    // widths first
-    posters.forEach(el=>{
-      el.style.width = colW + "px";
-    });
-
-    const colH = [0,0];
-
-    posters.forEach(el=>{
-      const col = (colH[0] <= colH[1]) ? 0 : 1;
-      const x = PAD_X + col*(colW + GAP_X);
-      const y = colH[col];
-
-      el.style.left = x + "px";
-      el.style.top  = y + "px";
-
-      // offsetHeight ignores image rotation (good)
-      const h = el.offsetHeight;
-      colH[col] = y + h + GAP_Y;
-    });
-
-    grid.style.height = Math.max(colH[0], colH[1]) + "px";
-  }
-
-  async function relayout(){
     cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(async ()=>{
-      if(!isMobile() || !isRandom()) { disableMasonry(); return; }
-      await waitDecode();
-      requestAnimationFrame(()=>{
-        layoutMasonry();
-        requestAnimationFrame(nudge);
-      });
-    });
+    raf = requestAnimationFrame(()=>{ grid.style.transform = "translate3d(0,0,0)"; });
   }
 
-  // Watch for rndm toggle (class change)
-  const mo = new MutationObserver(()=>{
-    if(isMobile() && isRandom()) relayout();
-    else disableMasonry();
-  });
-  mo.observe(grid, {attributes:true, attributeFilter:["class"]});
-
-  // Resize/orientation
-  const onResize = ()=>{ if(isMobile() && isRandom()) relayout(); else disableMasonry(); };
-  window.addEventListener("resize", onResize, {passive:true});
-  window.addEventListener("orientationchange", onResize, {passive:true});
-  mq.addEventListener?.("change", onResize);
-
-  // Images load later
-  grid.addEventListener("load", (e)=>{
-    if(e && e.target && e.target.tagName === "IMG" && isMobile() && isRandom()) relayout();
-  }, true);
-
-  // Scroll stabilizer
   window.addEventListener("scroll", ()=>{
-    if(!isMobile()) return;
     document.body.classList.add("isScrolling");
-    nudge();
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(()=>{ document.body.classList.remove("isScrolling"); }, 220);
+    if(grid.classList.contains("randomMode")) nudge();
+    clearTimeout(t);
+    t = setTimeout(()=>{ document.body.classList.remove("isScrolling"); }, 220);
   }, {passive:true});
 
-  // Initial
-  if(isMobile() && isRandom()) relayout();
+  grid.addEventListener("load", (e)=>{
+    if(e && e.target && e.target.tagName === "IMG" && grid.classList.contains("randomMode")) nudge();
+  }, true);
 })();
 </script>
 
