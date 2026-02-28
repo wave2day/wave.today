@@ -1062,6 +1062,46 @@ will-change: transform, filter;
 }
 </style>
 
+
+<style id="force2colTouch">
+
+/* ===== TOUCH rndm ONLY: force 2 columns (no overlay) ===== */
+html.isTouch #eventsGrid.randomMode.force2col {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px 10px !important;
+  padding: 0 8px !important;
+  align-items: start !important;
+  justify-items: stretch !important;
+}
+html.isTouch #eventsGrid.randomMode.force2col > * { min-width: 0 !important; }
+
+/* Stop Android compositor glitch: no transforms on card boxes */
+html.isTouch #eventsGrid.randomMode.force2col .poster{
+  transform: none !important;
+  transition: none !important;
+  will-change: auto !important;
+  contain: none !important;
+  overflow: visible !important;
+}
+
+/* Keep slight "random" feel safely */
+html.isTouch #eventsGrid.randomMode.force2col .poster img{
+  backface-visibility: hidden !important;
+  transform-origin: 50% 50% !important;
+  transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
+}
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+1){ --mrot: -0.9deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+2){ --mrot:  0.7deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+3){ --mrot: -0.5deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+4){ --mrot:  0.8deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+5){ --mrot: -0.6deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  0.4deg; }
+
+/* repaint nudge helper (no visible label) */
+html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
+
+</style>
 </head>
 <body>
   <div id="pageBase" aria-hidden="true"></div>
@@ -1645,5 +1685,42 @@ void wrap.offsetHeight;
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
 </script>
+
+<script>
+/* ===== FORCE-2COL controller (no overlay) ===== */
+(function(){
+  const html = document.documentElement;
+  const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+  if(isTouch) html.classList.add('isTouch');
+
+  const grid = document.getElementById('eventsGrid');
+  if(!grid) return;
+
+  function apply(){
+    const on = grid.classList.contains('randomMode');
+    grid.classList.toggle('force2col', on && isTouch);
+  }
+
+  // Repaint nudge on scroll (helps "half poster disappears")
+  let raf=0;
+  function nudge(){
+    if(!(isTouch && grid.classList.contains('randomMode'))) return;
+    grid.classList.add('paintNudge');
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(()=> grid.classList.remove('paintNudge'));
+  }
+
+  window.addEventListener('scroll', ()=>{ if(isTouch) nudge(); }, {passive:true});
+
+  // Observe mode changes (date <-> rndm)
+  new MutationObserver(apply).observe(grid, {attributes:true, attributeFilter:['class']});
+  window.addEventListener('resize', apply, {passive:true});
+  window.addEventListener('orientationchange', apply, {passive:true});
+
+  // Initial
+  apply();
+})();
+</script>
+
 </body>
 </html>
