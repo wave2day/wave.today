@@ -1063,55 +1063,37 @@ will-change: transform, filter;
 </style>
 
 
-<style id="mobileRndmColumnsOnly">
+<style id="mobileRndmFix_v10">
 
-/* ===== MOBILE rndm ONLY: 2-column "masonry" via CSS columns + anti-vanish ===== */
+/* ===== MOBILE FIX v10 (ONLY rndm): FORCE 2 columns + stop vanish ===== */
 @media (max-width: 560px){
-  /* Force rndm to columns (not grid) */
+  /* You said: ALWAYS 2 columns on phone */
   #eventsGrid.randomMode{
-    display: block !important;
-    padding: 0 10px !important;
-
-    -webkit-column-count: 2 !important;
-    column-count: 2 !important;
-
-    -webkit-column-gap: 12px !important;
-    column-gap: 12px !important;
-
-    -webkit-column-fill: auto !important;
-    column-fill: auto !important;
-
-    /* kill any grid settings that might leak */
-    grid-template-columns: unset !important;
-    gap: unset !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 10px !important;
+    padding: 0 8px !important;
+    justify-items: stretch !important;
+    align-items: start !important;
+    max-width: none !important;
+    margin: 0 auto !important;
   }
 
-  /* Keep each card intact in a column */
+  /* Kill the heavy random transforms on the card box (Android paint bug) */
   #eventsGrid.randomMode .poster{
-    break-inside: avoid !important;
-    -webkit-column-break-inside: avoid !important;
-    page-break-inside: avoid !important;
-
-    display: inline-block !important;
+    max-width: none !important;
     width: 100% !important;
-    margin: 0 0 12px !important;
-    padding: 0 !important;
-
-    /* critical for Android "invisible but clickable" */
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
+    contain: none !important;
     overflow: visible !important;
   }
 
-  /* Optional mild tilt: only the image (doesn't affect layout) */
+  /* Keep a bit of "random" feel safely: tiny tilt only on the image */
   #eventsGrid.randomMode .poster img{
-    display:block !important;
-    width:100% !important;
-    height:auto !important;
     backface-visibility: hidden !important;
-    transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
     transform-origin: 50% 50% !important;
+    transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
   }
   #eventsGrid.randomMode .poster:nth-child(6n+1){ --mrot: -0.9deg; }
   #eventsGrid.randomMode .poster:nth-child(6n+2){ --mrot:  0.7deg; }
@@ -1120,7 +1102,7 @@ will-change: transform, filter;
   #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot: -0.6deg; }
   #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot:  0.4deg; }
 
-  /* Pause ambient only while scrolling (keeps look, improves paint stability) */
+  /* Pause ambient only while scrolling (keeps look, avoids compositor stalls) */
   body.isScrolling #ambientPoster,
   body.isScrolling #ambientGlow{
     animation-play-state: paused !important;
@@ -1713,32 +1695,32 @@ void wrap.offsetHeight;
 </script>
 
 <script>
-/* ===== MOBILE rndm ONLY: Android repaint nudge + pause ambient while scrolling ===== */
+/* ===== MOBILE FIX v10 (ONLY rndm): stop "half poster disappears" on scroll ===== */
 (function(){
   const mq = matchMedia("(max-width: 560px)");
-  if(!mq.matches) return;
-
   const grid = document.getElementById("eventsGrid");
   if(!grid) return;
 
   let t=null, raf=0;
 
-  function nudge(){
-    if(!grid.classList.contains("randomMode")) return;
-    grid.style.transform = "translate3d(0,0.01px,0)";
+  function repaintNudge(){
+    // opacity toggle is safer than transform toggle (avoids clipping/half-drawn tiles)
+    grid.style.opacity = "0.999";
     cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(()=>{ grid.style.transform = "translate3d(0,0,0)"; });
+    raf = requestAnimationFrame(()=>{ grid.style.opacity = "1"; });
   }
 
   window.addEventListener("scroll", ()=>{
+    if(!mq.matches) return;
     document.body.classList.add("isScrolling");
-    nudge();
+    if(grid.classList.contains("randomMode")) repaintNudge();
     clearTimeout(t);
     t = setTimeout(()=>{ document.body.classList.remove("isScrolling"); }, 220);
   }, {passive:true});
 
   grid.addEventListener("load", (e)=>{
-    if(e && e.target && e.target.tagName === "IMG") nudge();
+    if(!mq.matches) return;
+    if(e && e.target && e.target.tagName === "IMG" && grid.classList.contains("randomMode")) repaintNudge();
   }, true);
 })();
 </script>
