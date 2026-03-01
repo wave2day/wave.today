@@ -1913,5 +1913,116 @@ void wrap.offsetHeight;
 })();
 </script>
 
+
+
+<!-- ===== v20: reveal-from-depths (hide-until-decoded) for portrait rndm ===== -->
+<style id="v20-reveal-from-depths">
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* Hide image pixels until decoded/revealed */
+  #eventsGrid.randomMode .poster img{
+    opacity: 0;
+    transition: opacity 220ms ease;
+  }
+  #eventsGrid.randomMode .poster.rndmImgReady img{
+    opacity: 1;
+  }
+
+  /* Reveal motion on every re-entry (from depths) */
+  #eventsGrid.randomMode .poster.rndmReveal{
+    animation: rndmDepthIn 420ms cubic-bezier(.16,.9,.18,1) both;
+  }
+
+  @keyframes rndmDepthIn{
+    0%{
+      opacity: 0;
+      transform:
+        translate(var(--flipX,0px), var(--flipY,0px))
+        translate(var(--tx,0px), calc(var(--ty,0px) + 34px))
+        rotate(var(--rot,0deg))
+        scale(var(--scl, 1));
+      filter: blur(.2px);
+    }
+    100%{
+      opacity: 1;
+      transform:
+        translate(var(--flipX,0px), var(--flipY,0px))
+        translate(var(--tx,0px), var(--ty,0px))
+        rotate(var(--rot,0deg))
+        scale(var(--scl, 1));
+      filter: blur(0);
+    }
+  }
+}
+</style>
+
+
+<script id="v20-reveal-from-depths-script">
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  async function decodeImg(img){
+    try{
+      img.loading = "eager";
+      img.decoding = "async";
+      if (img.decode) await img.decode();
+    }catch(e){}
+  }
+
+  function attachObserver(){
+    const g = grid();
+    if (!g) return;
+
+    const io = new IntersectionObserver(async (entries) => {
+      if (!mq.matches || !isRndm()) return;
+
+      for (const e of entries){
+        const poster = e.target;
+
+        if (!e.isIntersecting){
+          // allow re-trigger next time (but don't hide while leaving)
+          poster.classList.remove("rndmReveal");
+          continue;
+        }
+
+        const img = poster.querySelector("img");
+        if (img) await decodeImg(img);
+
+        // show pixels only after decode attempt
+        poster.classList.add("rndmImgReady");
+
+        // re-trigger reveal each time it enters
+        poster.classList.remove("rndmReveal");
+        void poster.offsetWidth;
+        poster.classList.add("rndmReveal");
+      }
+    }, {
+      root: null,
+      rootMargin: "260px 0px 260px 0px",
+      threshold: 0.01
+    });
+
+    function observeAll(){
+      g.querySelectorAll(".poster").forEach(p => io.observe(p));
+    }
+    observeAll();
+
+    new MutationObserver(() => observeAll()).observe(g, { childList:true, subtree:true });
+    new MutationObserver(() => observeAll()).observe(g, { attributes:true, attributeFilter:["class"] });
+  }
+
+  function boot(){
+    if (!mq.matches) return;
+    attachObserver();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once:true });
+  else boot();
+})();
+</script>
+
 </body>
 </html>
