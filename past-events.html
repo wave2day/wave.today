@@ -1948,5 +1948,40 @@ void wrap.offsetHeight;
 })();
 </script>
 
+
+<!-- ===== v16: force landscape-like 2-column stability in portrait ===== -->
+<style id="rndm-portrait-2col-v16">
+/* Portrait phones: behave like landscape (2 stable columns) */
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* Force exactly two columns */
+  #eventsGrid.randomMode{
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px 12px;
+    padding: 0 10px;
+  }
+
+  /* Stabilize transforms – keep layout, remove aggressive effects */
+  #eventsGrid.randomMode .poster{
+    --rot: 0deg;      /* no rotation */
+    --scl: 1;         /* no scaling */
+    transform:
+      translate(var(--flipX,0px), var(--flipY,0px))
+      translate(var(--tx,0px), var(--ty,0px))
+      rotate(0deg)
+      scale(1) !important;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-style: flat;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+</style>
+
 </body>
 </html>
