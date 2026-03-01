@@ -1099,7 +1099,16 @@ html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+5){ --mrot: -
 html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  0.4deg; }
 
 /* repaint nudge helper (no visible label) */
-html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
+html.isTouch #eventsGrid.randomMode.force2col.paintNudge{
+  opacity: 0.999; /* forces repaint */
+  transform: translateZ(0); /* forces compositing without visual change */
+}
+.paintNudge .poster img{
+  transform: translateZ(0); /* nudge image tiles to repaint */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
 
 </style>
 </head>
@@ -1845,218 +1854,6 @@ void wrap.offsetHeight;
     t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
   }
   window.addEventListener("scroll", onScroll, { passive: true });
-})();
-</script>
-
-
-<!-- ===== v18: portrait rndm scroll fix from common Chrome/Android workarounds ===== -->
-<style id="v18-portrait-rndm-scrollfix">
-/* Goal: stop partial/missing paints during portrait scrolling by removing the heaviest compositing triggers */
-@media (max-width: 560px) and (orientation: portrait){
-
-  /* 1) Avoid the known problematic combo: huge blur + mix-blend-mode on mobile Chrome */
-  #ambientPoster{
-    mix-blend-mode: normal !important;
-    opacity: .35 !important;
-    filter: blur(44px) saturate(1.12) !important; /* was ~86px */
-    animation: none !important; /* keep it static in portrait */
-  }
-  #ambientGlow{
-    opacity: .85 !important;
-    animation: none !important;
-  }
-
-  /* 2) Isolate poster paints to reduce "half-tile" and disappearing repaints */
-  #eventsGrid.randomMode .poster{
-    contain: paint;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform-style: flat;
-  }
-  #eventsGrid.randomMode .poster img{
-    contain: paint;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-}
-</style>
-
-
-<script id="v18-portrait-rndm-eager">
-(() => {
-  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
-  function grid(){ return document.getElementById("eventsGrid"); }
-  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
-
-  function apply(){
-    if (!mq.matches || !isRndm()) return;
-    const g = grid();
-    if (!g) return;
-    g.querySelectorAll(".poster img").forEach(img => {
-      img.loading = "eager";
-      img.decoding = "sync"; // prefer full decode over incremental paints
-      try { img.fetchPriority = "high"; } catch(e){}
-    });
-  }
-
-  function hook(){
-    apply();
-    const g = grid();
-    if (g){
-      new MutationObserver(apply).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
-    }
-    mq.addEventListener?.("change", apply);
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook, { once:true });
-  else hook();
-})();
-</script>
-
-
-
-<!-- ===== v20: reveal-from-depths (hide-until-decoded) for portrait rndm ===== -->
-<style id="v20-reveal-from-depths">
-@media (max-width: 560px) and (orientation: portrait){
-
-  /* Hide image pixels until decoded/revealed */
-  #eventsGrid.randomMode .poster img{
-    opacity: 0;
-    transition: opacity 220ms ease;
-  }
-  #eventsGrid.randomMode .poster.rndmImgReady img{
-    opacity: 1;
-  }
-
-  /* Reveal motion on every re-entry (from depths) */
-  #eventsGrid.randomMode .poster.rndmReveal{
-    animation: rndmDepthIn 420ms cubic-bezier(.16,.9,.18,1) both;
-  }
-
-  @keyframes rndmDepthIn{
-    0%{
-      opacity: 0;
-      transform:
-        translate(var(--flipX,0px), var(--flipY,0px))
-        translate(var(--tx,0px), calc(var(--ty,0px) + 34px))
-        rotate(var(--rot,0deg))
-        scale(var(--scl, 1));
-      filter: blur(.2px);
-    }
-    100%{
-      opacity: 1;
-      transform:
-        translate(var(--flipX,0px), var(--flipY,0px))
-        translate(var(--tx,0px), var(--ty,0px))
-        rotate(var(--rot,0deg))
-        scale(var(--scl, 1));
-      filter: blur(0);
-    }
-  }
-}
-</style>
-
-
-
-<!-- ===== v21: debug + aggressive reveal trigger (portrait rndm) ===== -->
-<style id="v21-debug-reveal">
-@media (max-width: 560px) and (orientation: portrait){
-  /* Visual proof when the code is running */
-  #eventsGrid.randomMode .poster.rndmReveal{
-    outline: 2px solid rgba(255,255,255,.22);
-    outline-offset: 2px;
-  }
-}
-</style>
-
-
-<script id="v21-reveal-from-depths-script">
-(() => {
-  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
-
-  function grid(){ return document.getElementById("eventsGrid"); }
-  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
-
-  async function decodeImg(img){
-    try{
-      img.loading = "eager";
-      img.decoding = "async";
-      if (img.decode) await img.decode();
-    }catch(e){}
-  }
-
-  function inViewport(el){
-    const r = el.getBoundingClientRect();
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    // consider "near viewport" to pre-reveal
-    return r.bottom > -220 && r.top < vh + 220;
-  }
-
-  async function revealPoster(poster){
-    if (poster.dataset.rndmRevealing === "1") return;
-    poster.dataset.rndmRevealing = "1";
-
-    const img = poster.querySelector("img");
-    if (img){
-      // If not loaded yet, wait for load then decode
-      if (!img.complete){
-        await new Promise(res => {
-          const done = () => { img.removeEventListener("load", done); img.removeEventListener("error", done); res(); };
-          img.addEventListener("load", done, { once:true });
-          img.addEventListener("error", done, { once:true });
-        });
-      }
-      await decodeImg(img);
-    }
-
-    // show pixels
-    poster.classList.add("rndmImgReady");
-
-    // re-trigger animation
-    poster.classList.remove("rndmReveal");
-    void poster.offsetWidth;
-    poster.classList.add("rndmReveal");
-
-    // allow future reveals again (so it can "re-enter" feel)
-    setTimeout(() => {
-      poster.dataset.rndmRevealing = "0";
-      poster.classList.remove("rndmReveal");
-    }, 650);
-  }
-
-  function tick(){
-    if (!mq.matches || !isRndm()) return;
-    const g = grid();
-    if (!g) return;
-    g.querySelectorAll(".poster").forEach(p => {
-      if (inViewport(p)) revealPoster(p);
-    });
-  }
-
-  function hook(){
-    // run immediately
-    tick();
-
-    // on scroll/resize, run tick (throttled by rAF)
-    let raf = 0;
-    const schedule = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => { raf = 0; tick(); });
-    };
-
-    window.addEventListener("scroll", schedule, { passive:true });
-    window.addEventListener("resize", schedule, { passive:true });
-
-    // watch randomMode toggling
-    const g = grid();
-    if (g){
-      new MutationObserver(schedule).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
-    }
-    mq.addEventListener?.("change", schedule);
-  }
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook, { once:true });
-  else hook();
 })();
 </script>
 
