@@ -1850,107 +1850,85 @@ void wrap.offsetHeight;
 
 
 
-<style id="mobile-rndm-only-fix-best">
-/* ======================================================
-   MOBILE rndm ONLY FIX (based on past-events_best.html)
-   - Desktop untouched
-   - Date mode untouched
-   - Mobile rndm: TRUE masonry via CSS columns (2 cols), edge-to-edge
-   - No transforms on .poster (prevents Android "invisible but clickable")
-   - Rotation only on img, non-symmetric pattern
-   ====================================================== */
-@media (max-width: 560px){
+<!-- ===== v14: keep EXACT look, fix Android disappearing-on-scroll in rndm (mobile only) ===== -->
+<style id="rndm-mobile-scrollfix-v14">
+@media (max-width: 768px){
 
-  #eventsGrid.randomMode{
-    display: block !important;
-    -webkit-column-count: 2 !important;
-    column-count: 2 !important;
-    -webkit-column-gap: 1px !important;
-    column-gap: 1px !important;
-
-    /* edge-to-edge even if parent has padding */
-    width: 100vw !important;
-    max-width: 100vw !important;
-    margin-left: calc(50% - 50vw) !important;
-    margin-right: calc(50% - 50vw) !important;
-
-    padding: 0 !important;
-    gap: 0 !important; /* neutralize grid gap */
-    justify-items: initial !important;
-    align-items: initial !important;
-  }
-
-  #eventsGrid.randomMode .poster{
-    display: inline-block !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 0 1px !important;
-
-    break-inside: avoid !important;
-    -webkit-column-break-inside: avoid !important;
-
-    /* critical: kill box transforms/transitions */
-    transform: none !important;
-    transition: none !important;
+  /* Apply ONLY when rndm is active */
+  body:has(#eventsGrid.randomMode) #ambientBg,
+  body:has(#eventsGrid.randomMode) #ambientPoster,
+  body:has(#eventsGrid.randomMode) #ambientGlow{
+    /* keep same visuals; just stop compositor "helping" */
     will-change: auto !important;
-
-    border-radius: 0 !important;
-    overflow: visible !important;
-    box-shadow: none !important;
-    background: transparent !important;
-  }
-
-  #eventsGrid.randomMode .poster img{
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    object-fit: contain !important;
-
-    /* only rotation, no translate */
-    transform: rotate(0deg) !important;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    transform-style: flat;
+    -webkit-transform-style: flat;
   }
 
-  /* non-symmetric rotation pattern */
-  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-4.0deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 2.6deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-1.8deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 4.3deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.1deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-3.2deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 3.5deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-0.9deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 1.9deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-4.6deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 1.4deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-2.4deg) !important; }
+  /* During scroll: pause ONLY the drifting animations (visual change is basically unnoticeable) */
+  body.rndmScrolling #ambientPoster,
+  body.rndmScrolling #ambientGlow{
+    animation-play-state: paused !important;
+  }
+
+  /* During scroll: also pause any transition on poster texture to avoid layer churn */
+  body.rndmScrolling #ambientPoster{
+    transition: none !important;
+  }
 }
 </style>
 
-<script id="mobile-rndm-only-fix-best-script">
-/* Mobile rndm stability: make poster imgs eager only when rndm active on small screens */
+<script id="rndm-mobile-scrollfix-v14-script">
 (() => {
-  const mq = window.matchMedia("(max-width: 560px)");
-  const grid = document.getElementById("eventsGrid");
-  if (!grid) return;
+  const mq = window.matchMedia("(max-width: 768px)");
+  let timer = null;
 
-  function apply(){
-    if (!(mq.matches && grid.classList.contains("randomMode"))) return;
-    const imgs = Array.from(grid.querySelectorAll(".poster img"));
-    for (const img of imgs){
+  function isRndm(){
+    const g = document.getElementById("eventsGrid");
+    return !!(g && g.classList.contains("randomMode"));
+  }
+
+  function setScrolling(on){
+    document.body.classList.toggle("rndmScrolling", on);
+  }
+
+  function onScroll(){
+    if (!mq.matches || !isRndm()) return;
+    setScrolling(true);
+    clearTimeout(timer);
+    timer = setTimeout(() => setScrolling(false), 220);
+  }
+
+  // Make images eager ONLY in mobile rndm (reduces "missing" due to lazy decode + reflow)
+  function eagerImages(){
+    if (!mq.matches || !isRndm()) return;
+    const g = document.getElementById("eventsGrid");
+    if (!g) return;
+    g.querySelectorAll(".poster img").forEach(img => {
       img.loading = "eager";
       img.decoding = "async";
       try { img.fetchPriority = "high"; } catch(e){}
-    }
+    });
   }
 
-  const mo = new MutationObserver(() => apply());
-  mo.observe(grid, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
+  function hook(){
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const g = document.getElementById("eventsGrid");
+    if (g){
+      new MutationObserver(() => {
+        eagerImages();
+        if (!isRndm()) setScrolling(false);
+      }).observe(g, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true });
+    }
+    eagerImages();
+  }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", apply, { once:true });
-  } else apply();
+    document.addEventListener("DOMContentLoaded", hook, { once: true });
+  } else {
+    hook();
+  }
 })();
 </script>
 
