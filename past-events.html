@@ -1063,6 +1063,47 @@ will-change: transform, filter;
 </style>
 
 
+<style id="force2colTouch">
+
+/* ===== TOUCH rndm ONLY: force 2 columns (no overlay) ===== */
+html.isTouch #eventsGrid.randomMode.force2col {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px 10px !important;
+  padding: 0 8px !important;
+  align-items: start !important;
+  justify-items: stretch !important;
+}
+html.isTouch #eventsGrid.randomMode.force2col > * { min-width: 0 !important; }
+
+/* Stop Android compositor glitch: no transforms on card boxes */
+html.isTouch #eventsGrid.randomMode.force2col .poster{
+  transform: none !important;
+  transition: none !important;
+  will-change: auto !important;
+  contain: none !important;
+  overflow: visible !important;
+}
+
+/* Keep slight "random" feel safely */
+html.isTouch #eventsGrid.randomMode.force2col .poster img{
+  backface-visibility: hidden !important;
+  transform-origin: 50% 50% !important;
+  transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
+}
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+1){ --mrot: -0.9deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+2){ --mrot:  0.7deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+3){ --mrot: -0.5deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+4){ --mrot:  0.8deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+5){ --mrot: -0.6deg; }
+html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  0.4deg; }
+
+/* repaint nudge helper (no visible label) */
+html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
+
+</style>
+
+
 <style id="v20-mobile-rndm-noclip">
 @media (max-width: 768px){
   /* Only affect mobile rndm */
@@ -1091,6 +1132,43 @@ will-change: transform, filter;
 </style>
 
 
+
+<style id="v21-mobile-rndm-scroll-nohalf">
+@media (max-width: 768px){
+  /* Only mobile rndm */
+  #eventsGrid.randomMode .poster img{
+    transform-origin: 50% 50% !important;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* During scroll: temporarily remove rotations to avoid partial paint tiles */
+  body.v21Scrolling #eventsGrid.randomMode .poster img{
+    transform: none !important;
+  }
+}
+</style>
+
+<script id="v21-mobile-rndm-scroll-nohalf-script">
+(() => {
+  const mq = window.matchMedia("(max-width: 768px)");
+  let t = null;
+
+  function isRndm(){
+    const g = document.getElementById("eventsGrid");
+    return !!(g && g.classList.contains("randomMode"));
+  }
+
+  function onScroll(){
+    if (!mq.matches || !isRndm()) return;
+    document.body.classList.add("v21Scrolling");
+    clearTimeout(t);
+    t = setTimeout(() => document.body.classList.remove("v21Scrolling"), 170);
+  }
+
+  window.addEventListener("scroll", onScroll, { passive:true });
+})();
+</script>
 
 </head>
 <body>
@@ -1676,6 +1754,169 @@ void wrap.offsetHeight;
   });
 </script>
 
+<script>
+/* ===== FORCE-2COL controller (no overlay) ===== */
+(function(){
+  const html = document.documentElement;
+  const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+  if(isTouch) html.classList.add('isTouch');
+
+  const grid = document.getElementById('eventsGrid');
+  if(!grid) return;
+
+  function apply(){
+    const on = grid.classList.contains('randomMode');
+    grid.classList.toggle('force2col', on && isTouch);
+  }
+
+  // Repaint nudge on scroll (helps "half poster disappears")
+  let raf=0;
+  function nudge(){
+    if(!(isTouch && grid.classList.contains('randomMode'))) return;
+    grid.classList.add('paintNudge');
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(()=> grid.classList.remove('paintNudge'));
+  }
+
+  window.addEventListener('scroll', ()=>{ if(isTouch) nudge(); }, {passive:true});
+
+  // Observe mode changes (date <-> rndm)
+  new MutationObserver(apply).observe(grid, {attributes:true, attributeFilter:['class']});
+  window.addEventListener('resize', apply, {passive:true});
+  window.addEventListener('orientationchange', apply, {passive:true});
+
+  // Initial
+  apply();
+})();
+</script>
+
+
+
+<style id="rndm-mobile-columns-v9-edge-tilt">
+@media (max-width: 768px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    display: block !important;
+    -webkit-column-count: 2 !important;
+    column-count: 2 !important;
+    -webkit-column-width: auto !important;
+    column-width: auto !important;
+    -webkit-column-gap: 1px !important;
+    column-gap: 1px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+
+    transform: none !important;
+    will-change: auto !important;
+    filter: none !important;
+    isolation: isolate;
+  }
+
+  #eventsGrid.randomMode .poster{
+    display: inline-block !important;
+    width: 100% !important;
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+    margin: 0 0 1px !important;
+
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+
+    contain: none !important;
+    overflow: visible !important;
+
+    mix-blend-mode: normal !important;
+    filter: none !important;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+
+    transform: rotate(0deg);
+    will-change: auto !important;
+
+    mix-blend-mode: normal !important;
+    filter: none !important;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* non-symmetric rotation pattern */
+  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-6.5deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 4.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-2.8deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 6.9deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-5.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 5.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-1.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 3.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-7.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 2.4deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-3.7deg); }
+
+  #eventsGrid.randomMode .wtIcon{
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  #eventsGrid.randomMode.isScrolling .poster img{
+    transform: none !important;
+  }
+}
+
+@media (max-width: 420px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    -webkit-column-gap: 0px !important;
+    column-gap: 0px !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    margin-bottom: 0px !important;
+  }
+
+  #eventsGrid.randomMode .wtIcon{
+    width: 68px !important;
+    height: 68px !important;
+  }
+}
+</style>
+
+<script id="rndm-mobile-columns-v9-script">
+(() => {
+  const mq = window.matchMedia("(max-width: 768px)");
+  let t = null;
+  function onScroll(){
+    if (!mq.matches) return;
+    const grid = document.querySelector("#eventsGrid.randomMode");
+    if (!grid) return;
+    grid.classList.add("isScrolling");
+    clearTimeout(t);
+    t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+})();
+</script>
+
+
 <!-- ===== v18: portrait rndm scroll fix from common Chrome/Android workarounds ===== -->
 <style id="v18-portrait-rndm-scrollfix">
 /* Goal: stop partial/missing paints during portrait scrolling by removing the heaviest compositing triggers */
@@ -1908,57 +2149,29 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
 })();
 </script>
 
-<!-- ===== v36: portrait-only anti-halves while KEEPING rndm masonry elsewhere ===== -->
-<!-- ===== v37: portrait rndm hard-stop halves (no rotation + micro repaint + decode) ===== -->
-<style id="v37-portrait-only">
+<!-- ===== v38: portrait-only anti-halves WITHOUT changing masonry/layout ===== -->
+<style id="v38-portrait-anti-halves">
+/* Do NOT change layout. Only add a "scroll-safety" state in portrait rndm. */
 @media (max-width: 560px) and (orientation: portrait){
-  #eventsGrid.randomMode{
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px 10px !important;
-    padding: 0 8px !important;
-
-    column-count: initial !important;
-    -webkit-column-count: initial !important;
-    column-width: initial !important;
-    -webkit-column-width: initial !important;
-    column-gap: initial !important;
-    -webkit-column-gap: initial !important;
-    column-fill: initial !important;
-  }
-
-  #eventsGrid.randomMode .poster{
-    padding: 0 !important;
-    margin: 0 !important;
-    break-inside: auto !important;
-    page-break-inside: auto !important;
-
+  /* While scrolling: temporarily disable transforms (keeps masonry, prevents half-paint) */
+  body.v38Scrolling #eventsGrid.randomMode .poster{
     transform: none !important;
-    transition: none !important;
-    will-change: auto !important;
-    contain: paint;
+  }
+  body.v38Scrolling #eventsGrid.randomMode .poster img{
+    transform: translateZ(0) !important;
   }
 
-  /* HARD: no rotations in portrait */
+  /* Anti-tile hints that don't affect layout/shape */
   #eventsGrid.randomMode .poster img{
-    display:block;
-    width:100%;
-    height:auto;
-    transform: translateZ(0) !important;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-  }
-
-  #eventsGrid.randomMode .poster,
-  #eventsGrid.randomMode .poster img{
-    clip-path: none !important;
-    -webkit-mask-image: none !important;
-    mask-image: none !important;
-    overflow: visible !important;
+    transform: translateZ(0);
+    will-change: transform;
   }
 }
 </style>
-<script id="v37-portrait-only-script">
+
+<script id="v38-portrait-anti-halves-script">
 (() => {
   const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
   if (!isTouch) return;
@@ -1967,49 +2180,20 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
   const grid = document.getElementById("eventsGrid");
   if (!grid) return;
 
+  let t = null;
   function active(){
     return mq.matches && grid.classList.contains("randomMode");
   }
 
-  // micro repaint loop (~11fps) only in portrait+rndm
-  let running = false;
-  let raf = 0;
+  // Add v38Scrolling during active scroll, then remove shortly after.
+  window.addEventListener("scroll", () => {
+    if (!active()) return;
+    document.body.classList.add("v38Scrolling");
+    clearTimeout(t);
+    t = setTimeout(() => document.body.classList.remove("v38Scrolling"), 170);
+  }, { passive:true });
 
-  function poke(){
-    const prev = grid.style.opacity;
-    grid.style.opacity = '0.999';
-    requestAnimationFrame(() => { grid.style.opacity = prev; });
-  }
-
-  function loop(){
-    if (!active()){
-      running = false;
-      raf = 0;
-      return;
-    }
-    poke();
-    setTimeout(() => { raf = requestAnimationFrame(loop); }, 90);
-  }
-
-  function sync(){
-    if (active() && !running){
-      running = true;
-      raf = requestAnimationFrame(loop);
-    }
-    if (!active() && running){
-      running = false;
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
-    }
-  }
-
-  new MutationObserver(sync).observe(grid, { attributes:true, attributeFilter:['class'] });
-  mq.addEventListener?.('change', sync);
-  window.addEventListener('orientationchange', sync, { passive:true });
-  window.addEventListener('pageshow', sync, { passive:true });
-  sync();
-
-  // after scroll settles: decode visible imgs + small repaint poke
+  // After scroll settles, force decode visible imgs (no layout changes)
   async function decodeVisible(){
     if (!active()) return;
     const vh = window.innerHeight || document.documentElement.clientHeight;
@@ -2029,9 +2213,6 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
           ]);
         }
         if (img.decode) await img.decode();
-        const prev = img.style.opacity;
-        img.style.opacity = '0.999';
-        requestAnimationFrame(() => { img.style.opacity = prev; });
       }catch(e){}
     }
   }
@@ -2040,8 +2221,9 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
   window.addEventListener("scroll", () => {
     if (!active()) return;
     clearTimeout(dt);
-    dt = setTimeout(decodeVisible, 200);
+    dt = setTimeout(decodeVisible, 220);
   }, { passive:true });
+
 })();
 </script>
 </body>
