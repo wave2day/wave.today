@@ -1063,45 +1063,35 @@ will-change: transform, filter;
 </style>
 
 
-<style id="force2colTouch">
+<style id="v20-mobile-rndm-noclip">
+@media (max-width: 768px){
+  /* Only affect mobile rndm */
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster *{
+    overflow: visible !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask: none !important;
+    -webkit-mask: none !important;
+  }
 
-/* ===== TOUCH rndm ONLY: force 2 columns (no overlay) ===== */
-html.isTouch #eventsGrid.randomMode.force2col {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 12px 10px !important;
-  padding: 0 8px !important;
-  align-items: start !important;
-  justify-items: stretch !important;
+  #eventsGrid.randomMode .poster{
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+  }
 }
-html.isTouch #eventsGrid.randomMode.force2col > * { min-width: 0 !important; }
-
-/* Stop Android compositor glitch: no transforms on card boxes */
-html.isTouch #eventsGrid.randomMode.force2col .poster{
-  transform: none !important;
-  transition: none !important;
-  will-change: auto !important;
-  contain: none !important;
-  overflow: visible !important;
-}
-
-/* Keep slight "random" feel safely */
-html.isTouch #eventsGrid.randomMode.force2col .poster img{
-  backface-visibility: hidden !important;
-  transform-origin: 50% 50% !important;
-  transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
-}
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+1){ --mrot: -0.9deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+2){ --mrot:  0.7deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+3){ --mrot: -0.5deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+4){ --mrot:  0.8deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+5){ --mrot: -0.6deg; }
-html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  0.4deg; }
-
-/* repaint nudge helper (no visible label) */
-html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
-
 </style>
+
+
+
 </head>
 <body>
   <div id="pageBase" aria-hidden="true"></div>
@@ -1686,169 +1676,6 @@ void wrap.offsetHeight;
   });
 </script>
 
-<script>
-/* ===== FORCE-2COL controller (no overlay) ===== */
-(function(){
-  const html = document.documentElement;
-  const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
-  if(isTouch) html.classList.add('isTouch');
-
-  const grid = document.getElementById('eventsGrid');
-  if(!grid) return;
-
-  function apply(){
-    const on = grid.classList.contains('randomMode');
-    grid.classList.toggle('force2col', on && isTouch);
-  }
-
-  // Repaint nudge on scroll (helps "half poster disappears")
-  let raf=0;
-  function nudge(){
-    if(!(isTouch && grid.classList.contains('randomMode'))) return;
-    grid.classList.add('paintNudge');
-    cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(()=> grid.classList.remove('paintNudge'));
-  }
-
-  window.addEventListener('scroll', ()=>{ if(isTouch) nudge(); }, {passive:true});
-
-  // Observe mode changes (date <-> rndm)
-  new MutationObserver(apply).observe(grid, {attributes:true, attributeFilter:['class']});
-  window.addEventListener('resize', apply, {passive:true});
-  window.addEventListener('orientationchange', apply, {passive:true});
-
-  // Initial
-  apply();
-})();
-</script>
-
-
-
-<style id="rndm-mobile-columns-v9-edge-tilt">
-@media (max-width: 768px){
-  #eventsGrid.randomMode,
-  #eventsGrid.randomMode.force2col,
-  html.isTouch #eventsGrid.randomMode,
-  html.isTouch #eventsGrid.randomMode.force2col{
-    display: block !important;
-    -webkit-column-count: 2 !important;
-    column-count: 2 !important;
-    -webkit-column-width: auto !important;
-    column-width: auto !important;
-    -webkit-column-gap: 1px !important;
-    column-gap: 1px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-
-    width: 100vw !important;
-    max-width: 100vw !important;
-    margin-left: calc(50% - 50vw) !important;
-    margin-right: calc(50% - 50vw) !important;
-
-    transform: none !important;
-    will-change: auto !important;
-    filter: none !important;
-    isolation: isolate;
-  }
-
-  #eventsGrid.randomMode .poster{
-    display: inline-block !important;
-    width: 100% !important;
-    break-inside: avoid !important;
-    -webkit-column-break-inside: avoid !important;
-    margin: 0 0 1px !important;
-
-    transform: none !important;
-    transition: none !important;
-    will-change: auto !important;
-
-    contain: none !important;
-    overflow: visible !important;
-
-    mix-blend-mode: normal !important;
-    filter: none !important;
-
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-
-  #eventsGrid.randomMode .poster img{
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    object-fit: contain !important;
-
-    transform: rotate(0deg);
-    will-change: auto !important;
-
-    mix-blend-mode: normal !important;
-    filter: none !important;
-
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-
-  /* non-symmetric rotation pattern */
-  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-6.5deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 4.2deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-2.8deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 6.9deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.6deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-5.1deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 5.6deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-1.2deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 3.1deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-7.2deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 2.4deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-3.7deg); }
-
-  #eventsGrid.randomMode .wtIcon{
-    width: 64px !important;
-    height: 64px !important;
-  }
-
-  #eventsGrid.randomMode.isScrolling .poster img{
-    transform: none !important;
-  }
-}
-
-@media (max-width: 420px){
-  #eventsGrid.randomMode,
-  #eventsGrid.randomMode.force2col,
-  html.isTouch #eventsGrid.randomMode,
-  html.isTouch #eventsGrid.randomMode.force2col{
-    -webkit-column-gap: 0px !important;
-    column-gap: 0px !important;
-  }
-
-  #eventsGrid.randomMode .poster{
-    margin-bottom: 0px !important;
-  }
-
-  #eventsGrid.randomMode .wtIcon{
-    width: 68px !important;
-    height: 68px !important;
-  }
-}
-</style>
-
-<script id="rndm-mobile-columns-v9-script">
-(() => {
-  const mq = window.matchMedia("(max-width: 768px)");
-  let t = null;
-  function onScroll(){
-    if (!mq.matches) return;
-    const grid = document.querySelector("#eventsGrid.randomMode");
-    if (!grid) return;
-    grid.classList.add("isScrolling");
-    clearTimeout(t);
-    t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
-  }
-  window.addEventListener("scroll", onScroll, { passive: true });
-})();
-</script>
-
-
 <!-- ===== v18: portrait rndm scroll fix from common Chrome/Android workarounds ===== -->
 <style id="v18-portrait-rndm-scrollfix">
 /* Goal: stop partial/missing paints during portrait scrolling by removing the heaviest compositing triggers */
@@ -1868,13 +1695,11 @@ void wrap.offsetHeight;
 
   /* 2) Isolate poster paints to reduce "half-tile" and disappearing repaints */
   #eventsGrid.randomMode .poster{
-    contain: paint;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     transform-style: flat;
   }
   #eventsGrid.randomMode .poster img{
-    contain: paint;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
@@ -2024,165 +1849,142 @@ void wrap.offsetHeight;
 })();
 </script>
 
-<!-- ===== v32: portrait rndm - move transforms from .poster to IMG (kills half-paints) ===== -->
-<style id="v32-portrait-transform-to-img">
-@media (max-width: 900px) and (orientation: portrait){
-  /* In rndm portrait: wrapper must not be transformed (Android partial paint trigger) */
-  #eventsGrid.randomMode .poster{
-    transform: none !important;
-    transition: none !important;
-    will-change: auto !important;
-    contain: paint;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
 
-  /* Apply the exact same transform pipeline to the image instead */
-  #eventsGrid.randomMode .poster > img{
-    transform:
-      translateZ(0)
-      translate(var(--flipX,0px), var(--flipY,0px))
-      translate(var(--tx,0px), var(--ty,0px))
-      rotate(var(--rot,0deg))
-      scale(var(--scl, 1));
-    transform-origin: 50% 50%;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    will-change: transform;
-  }
-
-  /* While scrolling: remove transform on IMG (like the "no-halves" version) */
-  body.isScrolling #eventsGrid.randomMode .poster > img{
-    transform: translateZ(0) !important;
-  }
+<!-- ===== v29: controlled micro-repaint (kurnik effect without layout chaos) ===== -->
+<style id="v29-microrepaint-style">
+/* absolutely minimal visual impact; only active while rndm is on + scrolling/animating */
+body.v29MicroRepaint #eventsGrid.randomMode .poster img{
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
 }
 </style>
-<!-- ===== v33: FIX - target real IMG (not only direct child) ===== -->
-<style id="v33-portrait-transform-to-img-fix">
-@media (max-width: 900px) and (orientation: portrait){
-  /* keep wrapper clean */
+<script id="v29-microrepaint-script">
+(() => {
+  const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+  if (!isTouch) return;
+
+  const grid = document.getElementById('eventsGrid');
+  if (!grid) return;
+
+  const mq = window.matchMedia("(orientation: portrait)");
+
+  function active(){
+    return mq.matches && grid.classList.contains('randomMode');
+  }
+
+  function nudge(){
+    const prev = grid.style.transform;
+    grid.style.transform = 'translateZ(0)';
+    requestAnimationFrame(() => { grid.style.transform = prev || 'none'; });
+  }
+
+  let t = 0;
+  function onScroll(){
+    if (!active()) return;
+    clearTimeout(t);
+    t = setTimeout(() => {
+      document.body.classList.add('v29MicroRepaint');
+      nudge();
+      setTimeout(() => document.body.classList.remove('v29MicroRepaint'), 120);
+    }, 140);
+  }
+
+  function sync(){
+    if (!active()){
+      document.body.classList.remove('v29MicroRepaint');
+    } else {
+      nudge();
+    }
+  }
+
+  new MutationObserver(sync).observe(grid, { attributes:true, attributeFilter:['class'] });
+  mq.addEventListener?.('change', sync);
+  window.addEventListener('orientationchange', sync, { passive:true });
+  window.addEventListener('pageshow', sync, { passive:true });
+  window.addEventListener('scroll', onScroll, { passive:true });
+
+  sync();
+})();
+</script>
+
+<!-- ===== v36: portrait-only anti-halves while KEEPING rndm masonry elsewhere ===== -->
+<style id="v36-portrait-only">
+@media (max-width: 560px) and (orientation: portrait){
+  /* Override masonryPatch columns ONLY here */
+  #eventsGrid.randomMode{
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px 10px !important;
+    padding: 0 8px !important;
+
+    column-count: initial !important;
+    -webkit-column-count: initial !important;
+    column-width: initial !important;
+    -webkit-column-width: initial !important;
+    column-gap: initial !important;
+    -webkit-column-gap: initial !important;
+    column-fill: initial !important;
+  }
+
   #eventsGrid.randomMode .poster{
+    padding: 0 !important;
+    margin: 0 !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
+    contain: none !important;
   }
 
-  /* REAL selector: any img inside poster (covers <a><img> / .posterCard img / etc.) */
+  /* Keep rndm feel safely on IMG only */
   #eventsGrid.randomMode .poster img{
-    transform:
-      translateZ(0)
-      translate(var(--flipX,0px), var(--flipY,0px))
-      translate(var(--tx,0px), var(--ty,0px))
-      rotate(var(--rot,0deg))
-      scale(var(--scl, 1)) !important;
+    transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
     transform-origin: 50% 50% !important;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     will-change: transform;
   }
 
-  /* While scrolling: kill rotations on the IMG */
-  body.isScrolling #eventsGrid.randomMode .poster img{
+  #eventsGrid.randomMode .poster:nth-child(6n+1){ --mrot:-0.9deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+2){ --mrot: 0.7deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+3){ --mrot:-0.5deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+4){ --mrot: 0.8deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot:-0.6deg; }
+  #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot: 0.4deg; }
+
+  /* During scroll: remove rotations to avoid half-paint tiles */
+  body.v36Scrolling #eventsGrid.randomMode .poster img{
     transform: translateZ(0) !important;
   }
 }
 </style>
-<!-- ===== v34: keep opened poster centered on orientation/resize ===== -->
-<script id="v34-hero-recenter">
+<script id="v36-portrait-only-script">
 (() => {
-  const heroOverlay = document.getElementById('heroOverlay');
-  const heroCard = heroOverlay ? heroOverlay.querySelector('.heroCard') : null;
-  if (!heroOverlay || !heroCard) return;
+  const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+  if (!isTouch) return;
 
-  // These variables live in the main script in this file.
-  // We access them via window (non-strict) lookup where possible.
-  function getHeroOpen(){
-    try{ return !!window.heroOpen; }catch(e){ return heroOverlay.classList.contains('isOpen'); }
-  }
-  function getHeroFrom(){
-    try{ return window.heroFrom; }catch(e){ return null; }
-  }
-  function setHeroFrom(v){
-    try{ window.heroFrom = v; }catch(e){}
-  }
-  function getHeroSrc(){
-    try{ return window.heroSrc; }catch(e){ return null; }
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+  const grid = document.getElementById("eventsGrid");
+  if (!grid) return;
+
+  let t = null;
+  function active(){
+    return mq.matches && grid.classList.contains("randomMode");
   }
 
-  function findThumbRectBySrc(src){
-    if (!src) return null;
-    const grid = document.getElementById('eventsGrid');
-    if (!grid) return null;
-    const imgs = Array.from(grid.querySelectorAll('.poster img'));
-    const match = imgs.find(im => (im.currentSrc && im.currentSrc === src) || im.src === src || (im.currentSrc && src && im.currentSrc.includes(src)) || (im.src && src && im.src.includes(src)));
-    if (!match) return null;
-    const r = match.getBoundingClientRect();
-    return { left: r.left, top: r.top, width: r.width, height: r.height, r: 18 };
+  function onScroll(){
+    if (!active()) return;
+    document.body.classList.add("v36Scrolling");
+    clearTimeout(t);
+    t = setTimeout(() => document.body.classList.remove("v36Scrolling"), 180);
   }
 
-  function recenterHero(snap = true){
-    if (!getHeroOpen()) return;
-    const img = heroCard.querySelector('img');
-    if (!img) return;
-
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-
-    const maxW = Math.min(vw - 32, 980);
-    const maxH = Math.min(vh - 96, 900);
-    const natW = img.naturalWidth || heroCard.offsetWidth || 800;
-    const natH = img.naturalHeight || heroCard.offsetHeight || 800;
-    const scale = Math.min(maxW / natW, maxH / natH, 1.0);
-    const tW = Math.max(240, Math.round(natW * scale));
-    const tH = Math.max(240, Math.round(natH * scale));
-    const tL = Math.round((vw - tW) / 2);
-    const tT = Math.round((vh - tH) / 2);
-
-    if (snap){
-      const prev = heroCard.style.transition;
-      heroCard.style.transition = 'none';
-      heroCard.style.left = tL + 'px';
-      heroCard.style.top = tT + 'px';
-      heroCard.style.width = tW + 'px';
-      heroCard.style.height = tH + 'px';
-      heroCard.style.borderRadius = '0px';
-      // restore
-      requestAnimationFrame(() => { heroCard.style.transition = prev; });
-    } else {
-      heroCard.style.transition = 'left 220ms cubic-bezier(.2,.85,.2,1), top 220ms cubic-bezier(.2,.85,.2,1), width 220ms cubic-bezier(.2,.85,.2,1), height 220ms cubic-bezier(.2,.85,.2,1)';
-      heroCard.style.left = tL + 'px';
-      heroCard.style.top = tT + 'px';
-      heroCard.style.width = tW + 'px';
-      heroCard.style.height = tH + 'px';
-      heroCard.style.borderRadius = '0px';
-    }
-
-    // Update heroFrom so closing animation doesn't fly to a stale position (best-effort)
-    const src = img.currentSrc || img.src || getHeroSrc();
-    const nr = findThumbRectBySrc(src);
-    if (nr) setHeroFrom(nr);
-  }
-
-  let rt = null;
-  function onResize(){
-    clearTimeout(rt);
-    rt = setTimeout(() => recenterHero(true), 60);
-  }
-
-  window.addEventListener('resize', onResize, { passive:true });
-  window.addEventListener('orientationchange', onResize, { passive:true });
-  window.addEventListener('pageshow', onResize, { passive:true });
-
-  // Also recenter if the overlay is opened while address bar changes viewport height
-  let lastVH = window.innerHeight;
-  setInterval(() => {
-    if (!getHeroOpen()) return;
-    const nowVH = window.innerHeight;
-    if (Math.abs(nowVH - lastVH) > 40){
-      lastVH = nowVH;
-      recenterHero(true);
-    }
-  }, 350);
+  window.addEventListener("scroll", onScroll, { passive:true });
+  window.addEventListener("orientationchange", () => {
+    document.body.classList.remove("v36Scrolling");
+  }, { passive:true });
 })();
 </script>
 </body>
