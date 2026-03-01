@@ -1102,6 +1102,35 @@ html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  
 html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
 
 </style>
+
+
+<style id="v20-mobile-rndm-noclip">
+@media (max-width: 768px){
+  /* Only affect mobile rndm */
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster *{
+    overflow: visible !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask: none !important;
+    -webkit-mask: none !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+  }
+}
+</style>
+
 </head>
 <body>
   <div id="pageBase" aria-hidden="true"></div>
@@ -2047,7 +2076,6 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
   }
 
   function nudge(){
-    // 1-frame, visually invisible repaint nudge
     const prev = grid.style.transform;
     grid.style.transform = 'translateZ(0)';
     requestAnimationFrame(() => { grid.style.transform = prev || 'none'; });
@@ -2060,7 +2088,6 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
     t = setTimeout(() => {
       document.body.classList.add('v29MicroRepaint');
       nudge();
-      // remove the marker shortly after; marker is just for debugging
       setTimeout(() => document.body.classList.remove('v29MicroRepaint'), 120);
     }, 140);
   }
@@ -2069,18 +2096,14 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
     if (!active()){
       document.body.classList.remove('v29MicroRepaint');
     } else {
-      // small nudge on mode/orientation switch
       nudge();
     }
   }
 
-  // watch for mode changes / orientation changes
   new MutationObserver(sync).observe(grid, { attributes:true, attributeFilter:['class'] });
   mq.addEventListener?.('change', sync);
   window.addEventListener('orientationchange', sync, { passive:true });
   window.addEventListener('pageshow', sync, { passive:true });
-
-  // only do work on scroll (instead of 12fps loop)
   window.addEventListener('scroll', onScroll, { passive:true });
 
   sync();
