@@ -994,6 +994,75 @@ will-change: transform, filter;
 
 </style>
 
+<style id="masonryPatch">
+/* ===== Masonry (CSS columns) + zachování „random“ kouzla bez ořezu =====
+   Princip:
+   - samotný .poster je jen „nosná“ krabička pro columns (bez transformu)
+   - transform (rotace/posun/scale) se aplikuje na IMG uvnitř
+   - .poster dostane padding jako bezpečný „buffer“, aby se nic neřízlo
+*/
+#eventsGrid.randomMode{
+  display: block !important;
+  column-width: 280px;
+  column-gap: 14px;
+  column-fill: balance;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 18px;
+  overflow: visible !important;
+}
+
+#eventsGrid.randomMode .poster{
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 0 14px !important;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  overflow: visible !important;
+
+  /* buffer proti „useknutí“ při rotaci/posunu */
+  padding: 12px;
+  box-sizing: border-box;
+
+  /* z-index proměnná zůstane, ale v columns je omezený – necháme jen kvůli konzistenci */
+  position: relative;
+}
+
+/* zachovat transformy, ale přesunout je z .poster na img */
+#eventsGrid.randomMode .poster{
+  transform: none !important;
+  transition: none !important;
+}
+
+#eventsGrid.randomMode .poster img{
+  display: block;
+  width: 100%;
+  height: auto;
+
+  /* původní random transformy (vars jsou na .poster a dědí se) */
+  transform:
+    translate(var(--flipX,0px), var(--flipY,0px))
+    translate(var(--tx,0px), var(--ty,0px))
+    rotate(var(--rot,0deg))
+    scale(var(--scl, 1));
+  transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* mobil: menší buffer */
+@media (max-width: 560px){
+  #eventsGrid.randomMode{ padding: 0 12px; }
+  #eventsGrid.randomMode .poster{ padding: 10px; }
+}
+@media (max-width: 420px){
+  #eventsGrid.randomMode{ padding: 0 8px; }
+  #eventsGrid.randomMode .poster{ padding: 8px; }
+}
+</style>
+
+
 <style id="force2colTouch">
 
 /* ===== TOUCH rndm ONLY: force 2 columns (no overlay) ===== */
@@ -1030,17 +1099,7 @@ html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+5){ --mrot: -
 html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  0.4deg; }
 
 /* repaint nudge helper (no visible label) */
-html.isTouch #eventsGrid.randomMode.force2col.paintNudge{
-  opacity: 0.999;
-  transform: translateZ(0);
-}
-html.isTouch #eventsGrid.randomMode.force2col.paintNudge .poster,
-html.isTouch #eventsGrid.randomMode.force2col.paintNudge .posterCard,
-html.isTouch #eventsGrid.randomMode.force2col.paintNudge .poster img{
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
+html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
 
 </style>
 </head>
@@ -1665,11 +1724,317 @@ void wrap.offsetHeight;
 
 
 
-<!-- ===== v18: portrait rndm scroll fix from common Chrome/Android workarounds ===== -->
-<!-- ===== v20: reveal-from-depths (hide-until-decoded) for portrait rndm ===== -->
+<style id="rndm-mobile-columns-v9-edge-tilt">
+@media (max-width: 768px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    display: block !important;
+    -webkit-column-count: 2 !important;
+    column-count: 2 !important;
+    -webkit-column-width: auto !important;
+    column-width: auto !important;
+    -webkit-column-gap: 1px !important;
+    column-gap: 1px !important;
+    padding: 0 !important;
+    margin: 0 !important;
 
-<!-- ===== v28: reduce half-render (decode visible posters after scroll settles) ===== -->
-<script id="v28-decode-visible">
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+
+    transform: none !important;
+    will-change: auto !important;
+    filter: none !important;
+    isolation: isolate;
+  }
+
+  #eventsGrid.randomMode .poster{
+    display: inline-block !important;
+    width: 100% !important;
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+    margin: 0 0 1px !important;
+
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+
+    contain: none !important;
+    overflow: visible !important;
+
+    mix-blend-mode: normal !important;
+    filter: none !important;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+
+    transform: rotate(0deg);
+    will-change: auto !important;
+
+    mix-blend-mode: normal !important;
+    filter: none !important;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* non-symmetric rotation pattern */
+  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-6.5deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 4.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-2.8deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 6.9deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-5.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 5.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-1.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 3.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-7.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 2.4deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-3.7deg); }
+
+  #eventsGrid.randomMode .wtIcon{
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  #eventsGrid.randomMode.isScrolling .poster img{
+    transform: none !important;
+  }
+}
+
+@media (max-width: 420px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    -webkit-column-gap: 0px !important;
+    column-gap: 0px !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    margin-bottom: 0px !important;
+  }
+
+  #eventsGrid.randomMode .wtIcon{
+    width: 68px !important;
+    height: 68px !important;
+  }
+}
+</style>
+
+<script id="rndm-mobile-columns-v9-script">
+(() => {
+  const mq = window.matchMedia("(max-width: 768px)");
+  let t = null;
+  function onScroll(){
+    if (!mq.matches) return;
+    const grid = document.querySelector("#eventsGrid.randomMode");
+    if (!grid) return;
+    grid.classList.add("isScrolling");
+    clearTimeout(t);
+    t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+})();
+</script>
+
+
+<!-- ===== v18: portrait rndm scroll fix from common Chrome/Android workarounds ===== -->
+<style id="v18-portrait-rndm-scrollfix">
+/* Goal: stop partial/missing paints during portrait scrolling by removing the heaviest compositing triggers */
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* 1) Avoid the known problematic combo: huge blur + mix-blend-mode on mobile Chrome */
+  #ambientPoster{
+    mix-blend-mode: normal !important;
+    opacity: .35 !important;
+    filter: blur(44px) saturate(1.12) !important; /* was ~86px */
+    animation: none !important; /* keep it static in portrait */
+  }
+  #ambientGlow{
+    opacity: .85 !important;
+    animation: none !important;
+  }
+
+  /* 2) Isolate poster paints to reduce "half-tile" and disappearing repaints */
+  #eventsGrid.randomMode .poster{
+    contain: paint;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-style: flat;
+  }
+  #eventsGrid.randomMode .poster img{
+    contain: paint;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+</style>
+
+
+<script id="v18-portrait-rndm-eager">
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  function apply(){
+    if (!mq.matches || !isRndm()) return;
+    const g = grid();
+    if (!g) return;
+    g.querySelectorAll(".poster img").forEach(img => {
+      img.loading = "eager";
+      img.decoding = "sync"; // prefer full decode over incremental paints
+      try { img.fetchPriority = "high"; } catch(e){}
+    });
+  }
+
+  function hook(){
+    apply();
+    const g = grid();
+    if (g){
+      new MutationObserver(apply).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
+    }
+    mq.addEventListener?.("change", apply);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook, { once:true });
+  else hook();
+})();
+</script>
+
+
+
+<!-- ===== v20: reveal-from-depths (hide-until-decoded) for portrait rndm ===== -->
+<style id="v20-reveal-from-depths">
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* Hide image pixels until decoded/revealed */
+  #eventsGrid.randomMode .poster img{
+    opacity: 0;
+    transition: opacity 220ms ease;
+  }
+  #eventsGrid.randomMode .poster.rndmImgReady img{
+    opacity: 1;
+  }
+
+  /* Reveal motion on every re-entry (from depths) */
+  #eventsGrid.randomMode .poster.rndmReveal{
+    animation: rndmDepthIn 420ms cubic-bezier(.16,.9,.18,1) both;
+  }
+
+  @keyframes rndmDepthIn{
+    0%{
+      opacity: 0;
+      transform:
+        translate(var(--flipX,0px), var(--flipY,0px))
+        translate(var(--tx,0px), calc(var(--ty,0px) + 34px))
+        rotate(var(--rot,0deg))
+        scale(var(--scl, 1));
+      filter: blur(.2px);
+    }
+    100%{
+      opacity: 1;
+      transform:
+        translate(var(--flipX,0px), var(--flipY,0px))
+        translate(var(--tx,0px), var(--ty,0px))
+        rotate(var(--rot,0deg))
+        scale(var(--scl, 1));
+      filter: blur(0);
+    }
+  }
+}
+</style>
+
+
+<script id="v20-reveal-from-depths-script">
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  async function decodeImg(img){
+    try{
+      img.loading = "eager";
+      img.decoding = "async";
+      if (img.decode) await img.decode();
+    }catch(e){}
+  }
+
+  function attachObserver(){
+    const g = grid();
+    if (!g) return;
+
+    const io = new IntersectionObserver(async (entries) => {
+      if (!mq.matches || !isRndm()) return;
+
+      for (const e of entries){
+        const poster = e.target;
+
+        if (!e.isIntersecting){
+          // allow re-trigger next time (but don't hide while leaving)
+          poster.classList.remove("rndmReveal");
+          continue;
+        }
+
+        const img = poster.querySelector("img");
+        if (img) await decodeImg(img);
+
+        // show pixels only after decode attempt
+        poster.classList.add("rndmImgReady");
+
+        // re-trigger reveal each time it enters
+        poster.classList.remove("rndmReveal");
+        void poster.offsetWidth;
+        poster.classList.add("rndmReveal");
+      }
+    }, {
+      root: null,
+      rootMargin: "260px 0px 260px 0px",
+      threshold: 0.01
+    });
+
+    function observeAll(){
+      g.querySelectorAll(".poster").forEach(p => io.observe(p));
+    }
+    observeAll();
+
+    new MutationObserver(() => observeAll()).observe(g, { childList:true, subtree:true });
+    new MutationObserver(() => observeAll()).observe(g, { attributes:true, attributeFilter:["class"] });
+  }
+
+  function boot(){
+    if (!mq.matches) return;
+    attachObserver();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once:true });
+  else boot();
+})();
+</script>
+
+
+<!-- ===== v29: controlled micro-repaint (kurnik effect without layout chaos) ===== -->
+<style id="v29-microrepaint-style">
+/* absolutely minimal visual impact; only active while rndm is on + scrolling/animating */
+body.v29MicroRepaint #eventsGrid.randomMode .poster img{
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+</style>
+<script id="v29-microrepaint-script">
 (() => {
   const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
   if (!isTouch) return;
@@ -1677,57 +2042,58 @@ void wrap.offsetHeight;
   const grid = document.getElementById('eventsGrid');
   if (!grid) return;
 
-  function isRndm(){ return grid.classList.contains('randomMode'); }
+  const mq = window.matchMedia("(orientation: portrait)");
 
-  function visiblePosters(){
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    const out = [];
-    grid.querySelectorAll('.poster').forEach(p => {
-      const r = p.getBoundingClientRect();
-      if (r.bottom > -200 && r.top < vh + 200) out.push(p);
-    });
-    return out;
+  // micro repaint toggle (no visible change)
+  function poke(){
+    // Toggle a tiny, reversible property on the grid to force repaint.
+    // Using opacity avoids layout; using rAF keeps it lightweight.
+    const prev = grid.style.opacity;
+    grid.style.opacity = '0.999';
+    requestAnimationFrame(() => { grid.style.opacity = prev; });
   }
 
-  async function decodeImg(img){
-    try{
-      img.loading = 'eager';
-      img.decoding = 'async';
-      if (img.decode) await img.decode();
-    }catch(e){}
+  function active(){
+    return mq.matches && grid.classList.contains('randomMode');
   }
 
-  function nudge(el){
-    // micro repaint poke without visible change
-    const prev = el.style.opacity;
-    el.style.opacity = '0.999';
-    requestAnimationFrame(() => { el.style.opacity = prev; });
+  let raf = 0;
+  function loop(){
+    raf = 0;
+    if (!active()) {
+      document.body.classList.remove('v29MicroRepaint');
+      return;
+    }
+    document.body.classList.add('v29MicroRepaint');
+    poke();
+    // run at a low cadence (~12fps) to mimic kurnik "always repaint" without heavy cost
+    setTimeout(() => {
+      raf = requestAnimationFrame(loop);
+    }, 80);
   }
 
-  let t = null;
-  function onScroll(){
-    if (!isRndm()) return;
-    clearTimeout(t);
-    t = setTimeout(async () => {
-      // After scroll settles, decode what is (near) visible
-      const posters = visiblePosters();
-      for (const p of posters){
-        const img = p.querySelector('img');
-        if (!img) continue;
-        if (!img.complete){
-          // wait briefly for load; don't hang
-          await Promise.race([
-            new Promise(res => img.addEventListener('load', res, { once:true })),
-            new Promise(res => setTimeout(res, 250))
-          ]);
-        }
-        await decodeImg(img);
-        nudge(img);
-      }
-    }, 180);
+  function start(){
+    if (raf) return;
+    raf = requestAnimationFrame(loop);
+  }
+  function stop(){
+    if (!raf) return;
+    cancelAnimationFrame(raf);
+    raf = 0;
+    document.body.classList.remove('v29MicroRepaint');
   }
 
-  window.addEventListener('scroll', onScroll, { passive:true });
+  function sync(){
+    if (active()) start();
+    else stop();
+  }
+
+  // watch for mode changes / orientation changes
+  new MutationObserver(sync).observe(grid, { attributes:true, attributeFilter:['class'] });
+  mq.addEventListener?.('change', sync);
+  window.addEventListener('orientationchange', sync, { passive:true });
+  window.addEventListener('pageshow', sync, { passive:true }); // after reload/restart
+  sync();
 })();
 </script>
 
