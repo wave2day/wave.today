@@ -2024,5 +2024,38 @@ void wrap.offsetHeight;
 })();
 </script>
 
+<!-- ===== v32: portrait rndm - move transforms from .poster to IMG (kills half-paints) ===== -->
+<style id="v32-portrait-transform-to-img">
+@media (max-width: 900px) and (orientation: portrait){
+  /* In rndm portrait: wrapper must not be transformed (Android partial paint trigger) */
+  #eventsGrid.randomMode .poster{
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+    contain: paint;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* Apply the exact same transform pipeline to the image instead */
+  #eventsGrid.randomMode .poster > img{
+    transform:
+      translateZ(0)
+      translate(var(--flipX,0px), var(--flipY,0px))
+      translate(var(--tx,0px), var(--ty,0px))
+      rotate(var(--rot,0deg))
+      scale(var(--scl, 1));
+    transform-origin: 50% 50%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
+  }
+
+  /* While scrolling: remove transform on IMG (like the "no-halves" version) */
+  body.isScrolling #eventsGrid.randomMode .poster > img{
+    transform: translateZ(0) !important;
+  }
+}
+</style>
 </body>
 </html>
