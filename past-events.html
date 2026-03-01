@@ -1849,51 +1849,99 @@ void wrap.offsetHeight;
 </script>
 
 
-<!-- ===== v22: minimal portrait rndm reveal (obvious debug) ===== -->
-<style id="v22-min-reveal">
+<!-- ===== v18: portrait rndm scroll fix from common Chrome/Android workarounds ===== -->
+<style id="v18-portrait-rndm-scrollfix">
+/* Goal: stop partial/missing paints during portrait scrolling by removing the heaviest compositing triggers */
 @media (max-width: 560px) and (orientation: portrait){
 
-  /* Debug badge */
-  body.rndmPortraitActive::before{
-    content: "RNDM PORTRAIT REVEAL ACTIVE";
-    position: fixed;
-    left: 10px;
-    top: calc(env(safe-area-inset-top) + 10px);
-    z-index: 999999;
-    padding: 6px 10px;
-    font: 700 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    letter-spacing: .4px;
-    color: rgba(255,255,255,.92);
-    background: rgba(0,0,0,.55);
-    border: 1px solid rgba(255,255,255,.18);
-    border-radius: 10px;
-    pointer-events: none;
+  /* 1) Avoid the known problematic combo: huge blur + mix-blend-mode on mobile Chrome */
+  #ambientPoster{
+    mix-blend-mode: normal !important;
+    opacity: .35 !important;
+    filter: blur(44px) saturate(1.12) !important; /* was ~86px */
+    animation: none !important; /* keep it static in portrait */
+  }
+  #ambientGlow{
+    opacity: .85 !important;
+    animation: none !important;
   }
 
-  /* Hide pixels until reveal marks ready */
+  /* 2) Isolate poster paints to reduce "half-tile" and disappearing repaints */
+  #eventsGrid.randomMode .poster{
+    contain: paint;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-style: flat;
+  }
+  #eventsGrid.randomMode .poster img{
+    contain: paint;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+</style>
+
+
+<script id="v18-portrait-rndm-eager">
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  function apply(){
+    if (!mq.matches || !isRndm()) return;
+    const g = grid();
+    if (!g) return;
+    g.querySelectorAll(".poster img").forEach(img => {
+      img.loading = "eager";
+      img.decoding = "sync"; // prefer full decode over incremental paints
+      try { img.fetchPriority = "high"; } catch(e){}
+    });
+  }
+
+  function hook(){
+    apply();
+    const g = grid();
+    if (g){
+      new MutationObserver(apply).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
+    }
+    mq.addEventListener?.("change", apply);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook, { once:true });
+  else hook();
+})();
+</script>
+
+
+
+<!-- ===== v20: reveal-from-depths (hide-until-decoded) for portrait rndm ===== -->
+<style id="v20-reveal-from-depths">
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* Hide image pixels until decoded/revealed */
   #eventsGrid.randomMode .poster img{
     opacity: 0;
+    transition: opacity 220ms ease;
   }
   #eventsGrid.randomMode .poster.rndmImgReady img{
     opacity: 1;
-    transition: opacity 200ms ease;
   }
 
-  /* Strong visible "from depths" motion */
+  /* Reveal motion on every re-entry (from depths) */
   #eventsGrid.randomMode .poster.rndmReveal{
-    animation: v22DepthIn 520ms cubic-bezier(.16,.9,.18,1) both;
-    outline: 2px solid rgba(255,255,255,.25);
-    outline-offset: 2px;
+    animation: rndmDepthIn 420ms cubic-bezier(.16,.9,.18,1) both;
   }
-  @keyframes v22DepthIn{
+
+  @keyframes rndmDepthIn{
     0%{
       opacity: 0;
       transform:
         translate(var(--flipX,0px), var(--flipY,0px))
-        translate(var(--tx,0px), calc(var(--ty,0px) + 70px))
+        translate(var(--tx,0px), calc(var(--ty,0px) + 34px))
         rotate(var(--rot,0deg))
         scale(var(--scl, 1));
-      filter: blur(.6px);
+      filter: blur(.2px);
     }
     100%{
       opacity: 1;
@@ -1909,7 +1957,20 @@ void wrap.offsetHeight;
 </style>
 
 
-<script id="v22-min-reveal-script">
+
+<!-- ===== v21: debug + aggressive reveal trigger (portrait rndm) ===== -->
+<style id="v21-debug-reveal">
+@media (max-width: 560px) and (orientation: portrait){
+  /* Visual proof when the code is running */
+  #eventsGrid.randomMode .poster.rndmReveal{
+    outline: 2px solid rgba(255,255,255,.22);
+    outline-offset: 2px;
+  }
+}
+</style>
+
+
+<script id="v21-reveal-from-depths-script">
 (() => {
   const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
 
@@ -1927,18 +1988,20 @@ void wrap.offsetHeight;
   function inViewport(el){
     const r = el.getBoundingClientRect();
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    return r.bottom > -260 && r.top < vh + 260;
+    // consider "near viewport" to pre-reveal
+    return r.bottom > -220 && r.top < vh + 220;
   }
 
-  async function reveal(p){
-    if (p.dataset.v22Busy === "1") return;
-    p.dataset.v22Busy = "1";
+  async function revealPoster(poster){
+    if (poster.dataset.rndmRevealing === "1") return;
+    poster.dataset.rndmRevealing = "1";
 
-    const img = p.querySelector("img");
+    const img = poster.querySelector("img");
     if (img){
+      // If not loaded yet, wait for load then decode
       if (!img.complete){
         await new Promise(res => {
-          const done = () => res();
+          const done = () => { img.removeEventListener("load", done); img.removeEventListener("error", done); res(); };
           img.addEventListener("load", done, { once:true });
           img.addEventListener("error", done, { once:true });
         });
@@ -1946,32 +2009,35 @@ void wrap.offsetHeight;
       await decodeImg(img);
     }
 
-    p.classList.add("rndmImgReady");
-    p.classList.remove("rndmReveal");
-    void p.offsetWidth;
-    p.classList.add("rndmReveal");
+    // show pixels
+    poster.classList.add("rndmImgReady");
 
+    // re-trigger animation
+    poster.classList.remove("rndmReveal");
+    void poster.offsetWidth;
+    poster.classList.add("rndmReveal");
+
+    // allow future reveals again (so it can "re-enter" feel)
     setTimeout(() => {
-      p.dataset.v22Busy = "0";
-      p.classList.remove("rndmReveal");
-    }, 800);
+      poster.dataset.rndmRevealing = "0";
+      poster.classList.remove("rndmReveal");
+    }, 650);
   }
 
   function tick(){
+    if (!mq.matches || !isRndm()) return;
     const g = grid();
     if (!g) return;
-
-    const active = mq.matches && isRndm();
-    document.body.classList.toggle("rndmPortraitActive", active);
-    if (!active) return;
-
     g.querySelectorAll(".poster").forEach(p => {
-      if (inViewport(p)) reveal(p);
+      if (inViewport(p)) revealPoster(p);
     });
   }
 
   function hook(){
+    // run immediately
     tick();
+
+    // on scroll/resize, run tick (throttled by rAF)
     let raf = 0;
     const schedule = () => {
       if (raf) return;
@@ -1981,6 +2047,7 @@ void wrap.offsetHeight;
     window.addEventListener("scroll", schedule, { passive:true });
     window.addEventListener("resize", schedule, { passive:true });
 
+    // watch randomMode toggling
     const g = grid();
     if (g){
       new MutationObserver(schedule).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
