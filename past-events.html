@@ -992,30 +992,6 @@ will-change: transform, filter;
   opacity: 1;
 }
 
-
-/* ===== v24: portrait rndm anti-flicker (no debug, no outlines) ===== */
-@media (max-width: 680px) and (orientation: portrait){
-  /* Remove any accidental borders/outlines that look like "sections" */
-  #eventsGrid.randomMode .poster,
-  #eventsGrid.randomMode .posterCard,
-  #eventsGrid.randomMode .poster img{
-    outline: none !important;
-    border: none !important;
-  }
-
-  /* Reduce known mobile-chrome compositing triggers */
-  #ambientPoster{
-    mix-blend-mode: normal !important;
-    opacity: .35 !important;
-    filter: blur(44px) saturate(1.12) !important;
-    animation: none !important;
-  }
-  #ambientGlow{
-    opacity: .85 !important;
-    animation: none !important;
-  }
-}
-
 </style>
 
 <style id="masonryPatch">
@@ -1123,24 +1099,8 @@ html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+5){ --mrot: -
 html.isTouch #eventsGrid.randomMode.force2col .poster:nth-child(6n+6){ --mrot:  0.4deg; }
 
 /* repaint nudge helper (no visible label) */
-html.isTouch #eventsGrid.randomMode.force2col.paintNudge{ opacity: 0.999; transform: translateZ(0); }
+html.isTouch #eventsGrid.randomMode.force2col.paintNudge { opacity: 0.999; }
 
-
-.paintNudge{
-  opacity: 0.999; /* forces repaint */
-  transform: translateZ(0); /* compositing nudge */
-}
-.paintNudge .poster,
-.paintNudge .posterCard{
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-.paintNudge .poster img{
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
 </style>
 </head>
 <body>
@@ -1885,6 +1845,151 @@ void wrap.offsetHeight;
     t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
   }
   window.addEventListener("scroll", onScroll, { passive: true });
+})();
+</script>
+
+
+<!-- ===== v22: minimal portrait rndm reveal (obvious debug) ===== -->
+<style id="v22-min-reveal">
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* Debug badge */
+  body.rndmPortraitActive::before{
+    content: "RNDM PORTRAIT REVEAL ACTIVE";
+    position: fixed;
+    left: 10px;
+    top: calc(env(safe-area-inset-top) + 10px);
+    z-index: 999999;
+    padding: 6px 10px;
+    font: 700 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    letter-spacing: .4px;
+    color: rgba(255,255,255,.92);
+    background: rgba(0,0,0,.55);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 10px;
+    pointer-events: none;
+  }
+
+  /* Hide pixels until reveal marks ready */
+  #eventsGrid.randomMode .poster img{
+    opacity: 0;
+  }
+  #eventsGrid.randomMode .poster.rndmImgReady img{
+    opacity: 1;
+    transition: opacity 200ms ease;
+  }
+
+  /* Strong visible "from depths" motion */
+  #eventsGrid.randomMode .poster.rndmReveal{
+    animation: v22DepthIn 520ms cubic-bezier(.16,.9,.18,1) both;
+    outline: 2px solid rgba(255,255,255,.25);
+    outline-offset: 2px;
+  }
+  @keyframes v22DepthIn{
+    0%{
+      opacity: 0;
+      transform:
+        translate(var(--flipX,0px), var(--flipY,0px))
+        translate(var(--tx,0px), calc(var(--ty,0px) + 70px))
+        rotate(var(--rot,0deg))
+        scale(var(--scl, 1));
+      filter: blur(.6px);
+    }
+    100%{
+      opacity: 1;
+      transform:
+        translate(var(--flipX,0px), var(--flipY,0px))
+        translate(var(--tx,0px), var(--ty,0px))
+        rotate(var(--rot,0deg))
+        scale(var(--scl, 1));
+      filter: blur(0);
+    }
+  }
+}
+</style>
+
+
+<script id="v22-min-reveal-script">
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  async function decodeImg(img){
+    try{
+      img.loading = "eager";
+      img.decoding = "async";
+      if (img.decode) await img.decode();
+    }catch(e){}
+  }
+
+  function inViewport(el){
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    return r.bottom > -260 && r.top < vh + 260;
+  }
+
+  async function reveal(p){
+    if (p.dataset.v22Busy === "1") return;
+    p.dataset.v22Busy = "1";
+
+    const img = p.querySelector("img");
+    if (img){
+      if (!img.complete){
+        await new Promise(res => {
+          const done = () => res();
+          img.addEventListener("load", done, { once:true });
+          img.addEventListener("error", done, { once:true });
+        });
+      }
+      await decodeImg(img);
+    }
+
+    p.classList.add("rndmImgReady");
+    p.classList.remove("rndmReveal");
+    void p.offsetWidth;
+    p.classList.add("rndmReveal");
+
+    setTimeout(() => {
+      p.dataset.v22Busy = "0";
+      p.classList.remove("rndmReveal");
+    }, 800);
+  }
+
+  function tick(){
+    const g = grid();
+    if (!g) return;
+
+    const active = mq.matches && isRndm();
+    document.body.classList.toggle("rndmPortraitActive", active);
+    if (!active) return;
+
+    g.querySelectorAll(".poster").forEach(p => {
+      if (inViewport(p)) reveal(p);
+    });
+  }
+
+  function hook(){
+    tick();
+    let raf = 0;
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; tick(); });
+    };
+
+    window.addEventListener("scroll", schedule, { passive:true });
+    window.addEventListener("resize", schedule, { passive:true });
+
+    const g = grid();
+    if (g){
+      new MutationObserver(schedule).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
+    }
+    mq.addEventListener?.("change", schedule);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook, { once:true });
+  else hook();
 })();
 </script>
 
