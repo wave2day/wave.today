@@ -2087,5 +2087,103 @@ void wrap.offsetHeight;
   }
 }
 </style>
+<!-- ===== v34: keep opened poster centered on orientation/resize ===== -->
+<script id="v34-hero-recenter">
+(() => {
+  const heroOverlay = document.getElementById('heroOverlay');
+  const heroCard = heroOverlay ? heroOverlay.querySelector('.heroCard') : null;
+  if (!heroOverlay || !heroCard) return;
+
+  // These variables live in the main script in this file.
+  // We access them via window (non-strict) lookup where possible.
+  function getHeroOpen(){
+    try{ return !!window.heroOpen; }catch(e){ return heroOverlay.classList.contains('isOpen'); }
+  }
+  function getHeroFrom(){
+    try{ return window.heroFrom; }catch(e){ return null; }
+  }
+  function setHeroFrom(v){
+    try{ window.heroFrom = v; }catch(e){}
+  }
+  function getHeroSrc(){
+    try{ return window.heroSrc; }catch(e){ return null; }
+  }
+
+  function findThumbRectBySrc(src){
+    if (!src) return null;
+    const grid = document.getElementById('eventsGrid');
+    if (!grid) return null;
+    const imgs = Array.from(grid.querySelectorAll('.poster img'));
+    const match = imgs.find(im => (im.currentSrc && im.currentSrc === src) || im.src === src || (im.currentSrc && src && im.currentSrc.includes(src)) || (im.src && src && im.src.includes(src)));
+    if (!match) return null;
+    const r = match.getBoundingClientRect();
+    return { left: r.left, top: r.top, width: r.width, height: r.height, r: 18 };
+  }
+
+  function recenterHero(snap = true){
+    if (!getHeroOpen()) return;
+    const img = heroCard.querySelector('img');
+    if (!img) return;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    const maxW = Math.min(vw - 32, 980);
+    const maxH = Math.min(vh - 96, 900);
+    const natW = img.naturalWidth || heroCard.offsetWidth || 800;
+    const natH = img.naturalHeight || heroCard.offsetHeight || 800;
+    const scale = Math.min(maxW / natW, maxH / natH, 1.0);
+    const tW = Math.max(240, Math.round(natW * scale));
+    const tH = Math.max(240, Math.round(natH * scale));
+    const tL = Math.round((vw - tW) / 2);
+    const tT = Math.round((vh - tH) / 2);
+
+    if (snap){
+      const prev = heroCard.style.transition;
+      heroCard.style.transition = 'none';
+      heroCard.style.left = tL + 'px';
+      heroCard.style.top = tT + 'px';
+      heroCard.style.width = tW + 'px';
+      heroCard.style.height = tH + 'px';
+      heroCard.style.borderRadius = '0px';
+      // restore
+      requestAnimationFrame(() => { heroCard.style.transition = prev; });
+    } else {
+      heroCard.style.transition = 'left 220ms cubic-bezier(.2,.85,.2,1), top 220ms cubic-bezier(.2,.85,.2,1), width 220ms cubic-bezier(.2,.85,.2,1), height 220ms cubic-bezier(.2,.85,.2,1)';
+      heroCard.style.left = tL + 'px';
+      heroCard.style.top = tT + 'px';
+      heroCard.style.width = tW + 'px';
+      heroCard.style.height = tH + 'px';
+      heroCard.style.borderRadius = '0px';
+    }
+
+    // Update heroFrom so closing animation doesn't fly to a stale position (best-effort)
+    const src = img.currentSrc || img.src || getHeroSrc();
+    const nr = findThumbRectBySrc(src);
+    if (nr) setHeroFrom(nr);
+  }
+
+  let rt = null;
+  function onResize(){
+    clearTimeout(rt);
+    rt = setTimeout(() => recenterHero(true), 60);
+  }
+
+  window.addEventListener('resize', onResize, { passive:true });
+  window.addEventListener('orientationchange', onResize, { passive:true });
+  window.addEventListener('pageshow', onResize, { passive:true });
+
+  // Also recenter if the overlay is opened while address bar changes viewport height
+  let lastVH = window.innerHeight;
+  setInterval(() => {
+    if (!getHeroOpen()) return;
+    const nowVH = window.innerHeight;
+    if (Math.abs(nowVH - lastVH) > 40){
+      lastVH = nowVH;
+      recenterHero(true);
+    }
+  }, 350);
+})();
+</script>
 </body>
 </html>
