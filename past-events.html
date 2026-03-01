@@ -1909,9 +1909,9 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
 </script>
 
 <!-- ===== v36: portrait-only anti-halves while KEEPING rndm masonry elsewhere ===== -->
-<style id="v36-portrait-only">
+<!-- ===== v37: portrait rndm hard-stop halves (no rotation + micro repaint + decode) ===== -->
+<style id="v37-portrait-only">
 @media (max-width: 560px) and (orientation: portrait){
-  /* Override masonryPatch columns ONLY here */
   #eventsGrid.randomMode{
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -1932,35 +1932,33 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
     margin: 0 !important;
     break-inside: auto !important;
     page-break-inside: auto !important;
+
     transform: none !important;
     transition: none !important;
     will-change: auto !important;
-    contain: none !important;
+    contain: paint;
   }
 
-  /* Keep rndm feel safely on IMG only */
+  /* HARD: no rotations in portrait */
   #eventsGrid.randomMode .poster img{
-    transform: translateZ(0) rotate(var(--mrot, 0deg)) !important;
-    transform-origin: 50% 50% !important;
+    display:block;
+    width:100%;
+    height:auto;
+    transform: translateZ(0) !important;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    will-change: transform;
   }
 
-  #eventsGrid.randomMode .poster:nth-child(6n+1){ --mrot:-0.9deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+2){ --mrot: 0.7deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+3){ --mrot:-0.5deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+4){ --mrot: 0.8deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+5){ --mrot:-0.6deg; }
-  #eventsGrid.randomMode .poster:nth-child(6n+6){ --mrot: 0.4deg; }
-
-  /* During scroll: remove rotations to avoid half-paint tiles */
-  body.v36Scrolling #eventsGrid.randomMode .poster img{
-    transform: translateZ(0) !important;
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster img{
+    clip-path: none !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    overflow: visible !important;
   }
 }
 </style>
-<script id="v36-portrait-only-script">
+<script id="v37-portrait-only-script">
 (() => {
   const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
   if (!isTouch) return;
@@ -1969,21 +1967,80 @@ body.v29MicroRepaint #eventsGrid.randomMode .poster img{
   const grid = document.getElementById("eventsGrid");
   if (!grid) return;
 
-  let t = null;
   function active(){
     return mq.matches && grid.classList.contains("randomMode");
   }
 
-  function onScroll(){
-    if (!active()) return;
-    document.body.classList.add("v36Scrolling");
-    clearTimeout(t);
-    t = setTimeout(() => document.body.classList.remove("v36Scrolling"), 180);
+  // micro repaint loop (~11fps) only in portrait+rndm
+  let running = false;
+  let raf = 0;
+
+  function poke(){
+    const prev = grid.style.opacity;
+    grid.style.opacity = '0.999';
+    requestAnimationFrame(() => { grid.style.opacity = prev; });
   }
 
-  window.addEventListener("scroll", onScroll, { passive:true });
-  window.addEventListener("orientationchange", () => {
-    document.body.classList.remove("v36Scrolling");
+  function loop(){
+    if (!active()){
+      running = false;
+      raf = 0;
+      return;
+    }
+    poke();
+    setTimeout(() => { raf = requestAnimationFrame(loop); }, 90);
+  }
+
+  function sync(){
+    if (active() && !running){
+      running = true;
+      raf = requestAnimationFrame(loop);
+    }
+    if (!active() && running){
+      running = false;
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    }
+  }
+
+  new MutationObserver(sync).observe(grid, { attributes:true, attributeFilter:['class'] });
+  mq.addEventListener?.('change', sync);
+  window.addEventListener('orientationchange', sync, { passive:true });
+  window.addEventListener('pageshow', sync, { passive:true });
+  sync();
+
+  // after scroll settles: decode visible imgs + small repaint poke
+  async function decodeVisible(){
+    if (!active()) return;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const imgs = Array.from(grid.querySelectorAll(".poster img")).filter(img => {
+      const r = img.getBoundingClientRect();
+      return r.bottom > -220 && r.top < vh + 220;
+    });
+
+    for (const img of imgs){
+      try{
+        img.loading = "eager";
+        img.decoding = "sync";
+        if (!img.complete){
+          await Promise.race([
+            new Promise(res => img.addEventListener("load", res, { once:true })),
+            new Promise(res => setTimeout(res, 250))
+          ]);
+        }
+        if (img.decode) await img.decode();
+        const prev = img.style.opacity;
+        img.style.opacity = '0.999';
+        requestAnimationFrame(() => { img.style.opacity = prev; });
+      }catch(e){}
+    }
+  }
+
+  let dt = null;
+  window.addEventListener("scroll", () => {
+    if (!active()) return;
+    clearTimeout(dt);
+    dt = setTimeout(decodeVisible, 200);
   }, { passive:true });
 })();
 </script>
