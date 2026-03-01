@@ -1957,20 +1957,7 @@ void wrap.offsetHeight;
 </style>
 
 
-
-<!-- ===== v21: debug + aggressive reveal trigger (portrait rndm) ===== -->
-<style id="v21-debug-reveal">
-@media (max-width: 560px) and (orientation: portrait){
-  /* Visual proof when the code is running */
-  #eventsGrid.randomMode .poster.rndmReveal{
-    outline: 2px solid rgba(255,255,255,.22);
-    outline-offset: 2px;
-  }
-}
-</style>
-
-
-<script id="v21-reveal-from-depths-script">
+<script id="v20-reveal-from-depths-script">
 (() => {
   const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
 
@@ -1985,78 +1972,55 @@ void wrap.offsetHeight;
     }catch(e){}
   }
 
-  function inViewport(el){
-    const r = el.getBoundingClientRect();
-    const vh = window.innerHeight || document.documentElement.clientHeight;
-    // consider "near viewport" to pre-reveal
-    return r.bottom > -220 && r.top < vh + 220;
-  }
-
-  async function revealPoster(poster){
-    if (poster.dataset.rndmRevealing === "1") return;
-    poster.dataset.rndmRevealing = "1";
-
-    const img = poster.querySelector("img");
-    if (img){
-      // If not loaded yet, wait for load then decode
-      if (!img.complete){
-        await new Promise(res => {
-          const done = () => { img.removeEventListener("load", done); img.removeEventListener("error", done); res(); };
-          img.addEventListener("load", done, { once:true });
-          img.addEventListener("error", done, { once:true });
-        });
-      }
-      await decodeImg(img);
-    }
-
-    // show pixels
-    poster.classList.add("rndmImgReady");
-
-    // re-trigger animation
-    poster.classList.remove("rndmReveal");
-    void poster.offsetWidth;
-    poster.classList.add("rndmReveal");
-
-    // allow future reveals again (so it can "re-enter" feel)
-    setTimeout(() => {
-      poster.dataset.rndmRevealing = "0";
-      poster.classList.remove("rndmReveal");
-    }, 650);
-  }
-
-  function tick(){
-    if (!mq.matches || !isRndm()) return;
+  function attachObserver(){
     const g = grid();
     if (!g) return;
-    g.querySelectorAll(".poster").forEach(p => {
-      if (inViewport(p)) revealPoster(p);
+
+    const io = new IntersectionObserver(async (entries) => {
+      if (!mq.matches || !isRndm()) return;
+
+      for (const e of entries){
+        const poster = e.target;
+
+        if (!e.isIntersecting){
+          // allow re-trigger next time (but don't hide while leaving)
+          poster.classList.remove("rndmReveal");
+          continue;
+        }
+
+        const img = poster.querySelector("img");
+        if (img) await decodeImg(img);
+
+        // show pixels only after decode attempt
+        poster.classList.add("rndmImgReady");
+
+        // re-trigger reveal each time it enters
+        poster.classList.remove("rndmReveal");
+        void poster.offsetWidth;
+        poster.classList.add("rndmReveal");
+      }
+    }, {
+      root: null,
+      rootMargin: "260px 0px 260px 0px",
+      threshold: 0.01
     });
-  }
 
-  function hook(){
-    // run immediately
-    tick();
-
-    // on scroll/resize, run tick (throttled by rAF)
-    let raf = 0;
-    const schedule = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => { raf = 0; tick(); });
-    };
-
-    window.addEventListener("scroll", schedule, { passive:true });
-    window.addEventListener("resize", schedule, { passive:true });
-
-    // watch randomMode toggling
-    const g = grid();
-    if (g){
-      new MutationObserver(schedule).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
+    function observeAll(){
+      g.querySelectorAll(".poster").forEach(p => io.observe(p));
     }
-    mq.addEventListener?.("change", schedule);
+    observeAll();
+
+    new MutationObserver(() => observeAll()).observe(g, { childList:true, subtree:true });
+    new MutationObserver(() => observeAll()).observe(g, { attributes:true, attributeFilter:["class"] });
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook, { once:true });
-  else hook();
+  function boot(){
+    if (!mq.matches) return;
+    attachObserver();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once:true });
+  else boot();
 })();
 </script>
 
