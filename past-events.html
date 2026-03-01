@@ -489,7 +489,8 @@ border-radius: 0 !important;
 }
 
     /* Mobile: 2–3 vedle sebe (menší základ), pořád bez fragmentace */
-    @media (max-width: 560px){
+    /*
+@media (max-width: 560px){
       #eventsGrid.randomMode{
         grid-template-columns: repeat(auto-fit, minmax(clamp(190px, 48vw, 320px), 1fr));
         gap: 16px 14px;
@@ -499,6 +500,7 @@ border-radius: 0 !important;
         max-width: none;
       }
     }
+*/
     @media (max-width: 420px){
       #eventsGrid.randomMode{
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1847,141 +1849,6 @@ void wrap.offsetHeight;
   window.addEventListener("scroll", onScroll, { passive: true });
 })();
 </script>
-
-
-<!-- ===== v15: rndm portrait stability (minimal, no layout change) ===== -->
-<style id="rndm-portrait-stability-v15">
-/* Only affects narrow portrait where the issue happens */
-@media (max-width: 560px) and (orientation: portrait){
-
-  /* When rndm is active, tell compositor to chill on big fixed layers */
-  body.rndmOn #ambientBg,
-  body.rndmOn #ambientPoster,
-  body.rndmOn #ambientGlow{
-    will-change: auto !important;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform-style: flat;
-    -webkit-transform-style: flat;
-  }
-
-  /* While scrolling in rndm: pause ONLY the drifting animations (visual impact minimal) */
-  body.rndmOn.rndmScrolling #ambientPoster,
-  body.rndmOn.rndmScrolling #ambientGlow{
-    animation-play-state: paused !important;
-  }
-
-  /* Also pause transitions on the poster texture during scroll to avoid churn */
-  body.rndmOn.rndmScrolling #ambientPoster{
-    transition: none !important;
-  }
-}
-</style>
-
-
-<script id="rndm-portrait-stability-v15-script">
-(() => {
-  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
-  let t = null;
-
-  function grid(){
-    return document.getElementById("eventsGrid");
-  }
-  function isRndm(){
-    const g = grid();
-    return !!(g && g.classList.contains("randomMode"));
-  }
-  function setRndmOn(on){
-    document.body.classList.toggle("rndmOn", on);
-    if (!on) document.body.classList.remove("rndmScrolling");
-  }
-  function setScrolling(on){
-    document.body.classList.toggle("rndmScrolling", on);
-  }
-
-  function onScroll(){
-    if (!mq.matches || !isRndm()) return;
-    setScrolling(true);
-    clearTimeout(t);
-    t = setTimeout(() => setScrolling(false), 200);
-  }
-
-  // Make images eager ONLY for narrow portrait rndm (reduces missing frames from lazy decode)
-  function eagerImages(){
-    if (!mq.matches || !isRndm()) return;
-    const g = grid();
-    if (!g) return;
-    g.querySelectorAll(".poster img").forEach(img => {
-      img.loading = "eager";
-      img.decoding = "async";
-      try { img.fetchPriority = "high"; } catch(e){}
-    });
-  }
-
-  function hook(){
-    setRndmOn(isRndm());
-    window.addEventListener("scroll", onScroll, { passive: true });
-
-    const g = grid();
-    if (g){
-      new MutationObserver(() => {
-        const on = isRndm();
-        setRndmOn(on);
-        if (on) eagerImages();
-      }).observe(g, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true });
-    }
-
-    // If orientation / width changes, recompute
-    mq.addEventListener?.("change", () => {
-      setRndmOn(isRndm() && mq.matches);
-      eagerImages();
-    });
-
-    eagerImages();
-  }
-
-  if (document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", hook, { once:true });
-  } else {
-    hook();
-  }
-})();
-</script>
-
-
-<!-- ===== v16: force landscape-like 2-column stability in portrait ===== -->
-<style id="rndm-portrait-2col-v16">
-/* Portrait phones: behave like landscape (2 stable columns) */
-@media (max-width: 560px) and (orientation: portrait){
-
-  /* Force exactly two columns */
-  #eventsGrid.randomMode{
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 14px 12px;
-    padding: 0 10px;
-  }
-
-  /* Stabilize transforms – keep layout, remove aggressive effects */
-  #eventsGrid.randomMode .poster{
-    --rot: 0deg;      /* no rotation */
-    --scl: 1;         /* no scaling */
-    transform:
-      translate(var(--flipX,0px), var(--flipY,0px))
-      translate(var(--tx,0px), var(--ty,0px))
-      rotate(0deg)
-      scale(1) !important;
-
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform-style: flat;
-  }
-
-  #eventsGrid.randomMode .poster img{
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-}
-</style>
 
 </body>
 </html>
