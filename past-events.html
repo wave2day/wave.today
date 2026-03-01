@@ -489,8 +489,7 @@ border-radius: 0 !important;
 }
 
     /* Mobile: 2–3 vedle sebe (menší základ), pořád bez fragmentace */
-    /*
-@media (max-width: 560px){
+    @media (max-width: 560px){
       #eventsGrid.randomMode{
         grid-template-columns: repeat(auto-fit, minmax(clamp(190px, 48vw, 320px), 1fr));
         gap: 16px 14px;
@@ -500,7 +499,6 @@ border-radius: 0 !important;
         max-width: none;
       }
     }
-*/
     @media (max-width: 420px){
       #eventsGrid.randomMode{
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1847,6 +1845,163 @@ void wrap.offsetHeight;
     t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
   }
   window.addEventListener("scroll", onScroll, { passive: true });
+})();
+</script>
+
+
+<!-- ===== v18: portrait rndm scroll fix from common Chrome/Android workarounds ===== -->
+<style id="v18-portrait-rndm-scrollfix">
+/* Goal: stop partial/missing paints during portrait scrolling by removing the heaviest compositing triggers */
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* 1) Avoid the known problematic combo: huge blur + mix-blend-mode on mobile Chrome */
+  #ambientPoster{
+    mix-blend-mode: normal !important;
+    opacity: .35 !important;
+    filter: blur(44px) saturate(1.12) !important; /* was ~86px */
+    animation: none !important; /* keep it static in portrait */
+  }
+  #ambientGlow{
+    opacity: .85 !important;
+    animation: none !important;
+  }
+
+  /* 2) Isolate poster paints to reduce "half-tile" and disappearing repaints */
+  #eventsGrid.randomMode .poster{
+    contain: paint;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-style: flat;
+  }
+  #eventsGrid.randomMode .poster img{
+    contain: paint;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+</style>
+
+
+<script id="v18-portrait-rndm-eager">
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  function apply(){
+    if (!mq.matches || !isRndm()) return;
+    const g = grid();
+    if (!g) return;
+    g.querySelectorAll(".poster img").forEach(img => {
+      img.loading = "eager";
+      img.decoding = "sync"; // prefer full decode over incremental paints
+      try { img.fetchPriority = "high"; } catch(e){}
+    });
+  }
+
+  function hook(){
+    apply();
+    const g = grid();
+    if (g){
+      new MutationObserver(apply).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
+    }
+    mq.addEventListener?.("change", apply);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook, { once:true });
+  else hook();
+})();
+</script>
+
+
+<!-- ===== v19: re-animate posters on re-entry (portrait rndm) ===== -->
+<style id="v19-reveal-on-return">
+@media (max-width: 560px) and (orientation: portrait){
+  /* default state for rndm posters */
+  #eventsGrid.randomMode .poster{
+    opacity: 1;
+    transform: translate(var(--flipX,0px), var(--flipY,0px))
+      translate(var(--tx,0px), var(--ty,0px))
+      rotate(var(--rot,0deg))
+      scale(var(--scl, 1));
+    transition: transform 520ms cubic-bezier(.2,.8,.2,1);
+  }
+
+  /* reveal animation: a tiny upward drift + fade-in */
+  #eventsGrid.randomMode .poster.rndmReveal{
+    animation: rndmRevealIn 260ms cubic-bezier(.16,.9,.18,1) both;
+  }
+
+  @keyframes rndmRevealIn{
+    0%   { opacity: 0; transform: translate(var(--flipX,0px), var(--flipY,0px)) translate(var(--tx,0px), calc(var(--ty,0px) + 14px)) rotate(var(--rot,0deg)) scale(var(--scl, 1)); }
+    100% { opacity: 1; transform: translate(var(--flipX,0px), var(--flipY,0px)) translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl, 1)); }
+  }
+}
+</style>
+
+
+<script id="v19-reveal-on-return-script">
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  async function decodeImg(img){
+    try{
+      img.loading = "eager";
+      img.decoding = "async";
+      if (img.decode) await img.decode();
+    }catch(e){}
+  }
+
+  function observe(){
+    const g = grid();
+    if (!g) return;
+
+    const io = new IntersectionObserver(async (entries) => {
+      if (!mq.matches || !isRndm()) return;
+
+      for (const e of entries){
+        if (!e.isIntersecting) continue;
+
+        const poster = e.target;
+        const img = poster.querySelector("img");
+        if (img) await decodeImg(img);
+
+        // Re-trigger reveal animation each time it re-enters viewport
+        poster.classList.remove("rndmReveal");
+        // force reflow to restart animation reliably
+        void poster.offsetWidth;
+        poster.classList.add("rndmReveal");
+      }
+    }, {
+      root: null,
+      rootMargin: "220px 0px 220px 0px",
+      threshold: 0.01
+    });
+
+    function attachAll(){
+      g.querySelectorAll(".poster").forEach(p => io.observe(p));
+    }
+
+    attachAll();
+
+    new MutationObserver(() => attachAll()).observe(g, { childList:true, subtree:true });
+
+    // Also react to mode change
+    new MutationObserver(() => {
+      if (mq.matches && isRndm()) attachAll();
+    }).observe(g, { attributes:true, attributeFilter:["class"] });
+  }
+
+  function boot(){
+    if (!mq.matches) return;
+    observe();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once:true });
+  else boot();
 })();
 </script>
 
