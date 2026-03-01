@@ -1724,251 +1724,186 @@ void wrap.offsetHeight;
 
 
 
-<style id="rndm-mobile-bake-fix-v12">
-/* MOBILE rndm: 2-col masonry, edge-to-edge, no live transforms (bake rotation).
-   Fixes v11 issues:
-   - reduced tilt (subtle)
-   - removes "gaps" caused by transparent padding by trimming the baked bitmap to non-transparent bounds
-   Scope: ONLY @media + selectors targeting #eventsGrid.randomMode
-*/
+<style id="mobile-rndm-v13-ambient-bake">
+/* ======================================================
+   MOBILE rndm (keep the good look) + FIX disappearing-on-scroll
+   Hypothesis from your file: #ambientPoster uses heavy blur + mix-blend + transform on a fixed layer.
+   On some Android/Chromium builds this causes foreground items to stop painting when scrolling back up.
+   Solution: keep the SAME visual intent, but remove runtime filter/compositing:
+   - bake a blurred tiny texture into background-image via canvas
+   - on mobile set #ambientPoster filter/mix-blend/transform to none
+   - keep #eventsGrid.randomMode 2-col columns masonry as in v9
+   ====================================================== */
 @media (max-width: 768px){
+
+  /* Keep your current good masonry look for rndm */
   #eventsGrid.randomMode,
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
-    display: block !important;
-    -webkit-column-count: 2 !important;
-    column-count: 2 !important;
-    -webkit-column-width: auto !important;
-    column-width: auto !important;
+    display:block !important;
+    -webkit-column-count:2 !important;
+    column-count:2 !important;
+    -webkit-column-gap:1px !important;
+    column-gap:1px !important;
 
-    -webkit-column-gap: 0px !important;
-    column-gap: 0px !important;
-
-    padding: 0 !important;
-    margin: 0 !important;
-
-    width: 100vw !important;
-    max-width: 100vw !important;
-    margin-left: calc(50% - 50vw) !important;
-    margin-right: calc(50% - 50vw) !important;
-
-    transform: none !important;
-    will-change: auto !important;
-    filter: none !important;
-    isolation: isolate;
+    width:100vw !important;
+    max-width:100vw !important;
+    margin-left:calc(50% - 50vw) !important;
+    margin-right:calc(50% - 50vw) !important;
+    padding:0 !important;
   }
 
   #eventsGrid.randomMode .poster{
-    display: inline-block !important;
-    width: 100% !important;
-
-    break-inside: avoid !important;
-    -webkit-column-break-inside: avoid !important;
-
-    margin: 0 !important;
-
-    transform: none !important;
-    transition: none !important;
-    will-change: auto !important;
-    contain: none !important;
-    overflow: visible !important;
-
-    mix-blend-mode: normal !important;
-    filter: none !important;
+    display:inline-block !important;
+    width:100% !important;
+    break-inside:avoid !important;
+    -webkit-column-break-inside:avoid !important;
+    margin:0 0 1px !important;
+    transform:none !important;
+    will-change:auto !important;
+    contain:none !important;
   }
 
   #eventsGrid.randomMode .poster img{
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    object-fit: contain !important;
-
-    transform: none !important;
-    will-change: auto !important;
-
-    mix-blend-mode: normal !important;
-    filter: none !important;
+    display:block !important;
+    width:100% !important;
+    height:auto !important;
+    object-fit:contain !important;
+    /* keep the same rotation pattern (subtle, non-symmetric) */
+    transform: rotate(0deg);
+    will-change:auto !important;
   }
 
-  #eventsGrid.randomMode .wtIcon{
-    width: 64px !important;
-    height: 64px !important;
+  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-6.5deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 4.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-2.8deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 6.9deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-5.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 5.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-1.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 3.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-7.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 2.4deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-3.7deg); }
+
+  /* Bigger icons (as you wanted earlier) */
+  #eventsGrid.randomMode .wtIcon{ width:64px !important; height:64px !important; }
+
+  /* Critical: remove heavy runtime compositing on mobile */
+  #ambientPoster{
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    transform: none !important;
+    opacity: .12 !important;  /* keep presence */
+    background-size: cover !important;
+    background-position: center !important;
   }
 }
 </style>
 
-<script id="rndm-mobile-bake-fix-v12-script">
+<script id="mobile-rndm-v13-ambient-bake-script">
+/*
+  Mobile-only: bake the blurred ambientPoster texture into a bitmap (data URL / blob URL),
+  so we keep the same "poster glow" feel WITHOUT CSS filter blur/mix-blend/transform layers.
+
+  This targets the background layer, not the posters/grid layout.
+*/
 (() => {
   const mq = window.matchMedia("(max-width: 768px)");
+  let lastKey = "";
 
-  // Subtle angles (v11 was too aggressive)
-  const ROT = [-3.2, 2.1, -1.4, 3.4, 0.9, -2.6, 2.8, -0.7, 1.6, -3.6, 1.2, -1.9];
+  function getCurrentPosterImg(){
+    // pick the first visible poster image in the grid; falls back to first poster.
+    const grid = document.getElementById("eventsGrid");
+    if (!grid) return null;
+    const imgs = Array.from(grid.querySelectorAll(".poster img"));
+    return imgs.find(i => i.complete && i.naturalWidth) || imgs[0] || null;
+  }
 
-  function gridEl(){ return document.getElementById("eventsGrid"); }
-  function isRndmActive(){ const g = gridEl(); return !!(g && g.classList.contains("randomMode")); }
-  function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
-
-  function waitImg(img){
-    if (!img) return Promise.resolve(false);
-    if (img.complete && img.naturalWidth) return Promise.resolve(true);
-    return new Promise(res => {
-      img.addEventListener("load", () => res(true), { once: true });
-      img.addEventListener("error", () => res(false), { once: true });
+  function blobUrlFromCanvas(canvas){
+    return new Promise((resolve) => {
+      canvas.toBlob(b => resolve(b ? URL.createObjectURL(b) : ""), "image/webp", 0.85);
     });
   }
 
-  function deg2rad(d){ return d * Math.PI / 180; }
+  async function bakeAmbientFrom(img){
+    const amb = document.getElementById("ambientPoster");
+    if (!amb || !img) return;
 
-  function trimCanvasToAlpha(srcCanvas){
-    const ctx = srcCanvas.getContext("2d");
-    if (!ctx) return srcCanvas;
-    const { width: w, height: h } = srcCanvas;
-    if (!w || !h) return srcCanvas;
+    // if same source already baked, skip
+    const src = img.currentSrc || img.src || "";
+    if (!src) return;
+    const key = src;
+    if (key === lastKey) return;
+    lastKey = key;
 
-    const img = ctx.getImageData(0, 0, w, h);
-    const data = img.data;
+    // wait for decode
+    try { if (img.decode) await img.decode(); } catch(e){}
 
-    let minX = w, minY = h, maxX = -1, maxY = -1;
-    const alphaThreshold = 3;
-
-    // scan alpha
-    for (let y = 0; y < h; y++){
-      let rowHas = false;
-      for (let x = 0; x < w; x++){
-        const a = data[(y * w + x) * 4 + 3];
-        if (a > alphaThreshold){
-          rowHas = true;
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-        }
-      }
-      if (rowHas){
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-    }
-
-    if (maxX < 0 || maxY < 0) return srcCanvas; // fully transparent (shouldn't happen)
-
-    // add 1px safety border
-    minX = Math.max(0, minX - 1);
-    minY = Math.max(0, minY - 1);
-    maxX = Math.min(w - 1, maxX + 1);
-    maxY = Math.min(h - 1, maxY + 1);
-
-    const tw = (maxX - minX + 1);
-    const th = (maxY - minY + 1);
-
-    const out = document.createElement("canvas");
-    out.width = tw;
-    out.height = th;
-    const octx = out.getContext("2d");
-    if (!octx) return srcCanvas;
-
-    octx.drawImage(srcCanvas, minX, minY, tw, th, 0, 0, tw, th);
-    return out;
-  }
-
-  async function bakeOne(img, deg){
-    if (!img || img.dataset.baked === "1") return;
-    if (!img.dataset.src0) img.dataset.src0 = img.currentSrc || img.src;
-
-    const ok = await waitImg(img);
-    if (!ok) return;
-
-    const w0 = img.naturalWidth;
-    const h0 = img.naturalHeight;
-    if (!w0 || !h0) return;
-
-    const rad = deg2rad(deg);
-    const cos = Math.abs(Math.cos(rad));
-    const sin = Math.abs(Math.sin(rad));
-    const w1 = Math.ceil(w0 * cos + h0 * sin);
-    const h1 = Math.ceil(w0 * sin + h0 * cos);
-
+    // very small canvas -> cheap; blur via ctx.filter while drawing (offscreen)
+    const size = 90;  // keep low-res to mimic blur
     const canvas = document.createElement("canvas");
-    canvas.width = w1;
-    canvas.height = h1;
-
-    const ctx = canvas.getContext("2d", { alpha: true, willReadFrequently: true });
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.translate(w1 / 2, h1 / 2);
-    ctx.rotate(rad);
-    ctx.drawImage(img, -w0 / 2, -h0 / 2);
+    // draw image cover into square
+    const iw = img.naturalWidth || 1;
+    const ih = img.naturalHeight || 1;
+    const scale = Math.max(size / iw, size / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const dx = (size - dw) / 2;
+    const dy = (size - dh) / 2;
 
-    // TRIM away transparent padding -> removes "gaps"
-    const trimmed = trimCanvasToAlpha(canvas);
+    ctx.clearRect(0,0,size,size);
+    ctx.filter = "blur(8px) saturate(1.15)";
+    ctx.drawImage(img, dx, dy, dw, dh);
 
-    const blob = await new Promise(res => trimmed.toBlob(res, "image/webp", 0.92));
-    if (!blob) return;
+    // soften + brighten a little (mimic "screen-ish" feel)
+    ctx.filter = "blur(2px)";
+    ctx.globalAlpha = 0.65;
+    ctx.drawImage(canvas, 0, 0);
+    ctx.globalAlpha = 1;
 
-    const url = URL.createObjectURL(blob);
-    img.src = url;
-    img.dataset.baked = "1";
-    img.dataset.bakedUrl = url;
-  }
+    const url = await blobUrlFromCanvas(canvas);
+    if (!url) return;
 
-  function cleanupIfNeeded(){
-    const g = gridEl();
-    if (!g) return;
-    const shouldBeBaked = mq.matches && g.classList.contains("randomMode");
-    if (shouldBeBaked) return;
-
-    const imgs = Array.from(g.querySelectorAll(".poster img"));
-    for (const img of imgs){
-      if (img.dataset.bakedUrl){
-        try { URL.revokeObjectURL(img.dataset.bakedUrl); } catch(e){}
-        delete img.dataset.bakedUrl;
-      }
-      if (img.dataset.src0){
-        img.src = img.dataset.src0;
-      }
-      delete img.dataset.baked;
+    // revoke previous
+    if (amb.dataset.bakedUrl){
+      try { URL.revokeObjectURL(amb.dataset.bakedUrl); } catch(e){}
     }
+    amb.dataset.bakedUrl = url;
+
+    amb.style.backgroundImage = `url("${url}")`;
   }
 
-  async function bakeAll(){
+  function tick(){
     if (!mq.matches) return;
-    const g = gridEl();
-    if (!g || !g.classList.contains("randomMode")) return;
+    const grid = document.getElementById("eventsGrid");
+    if (!grid || !grid.classList.contains("randomMode")) return;
 
-    const posters = Array.from(g.querySelectorAll(".poster"));
-    for (let i = 0; i < posters.length; i++){
-      const img = posters[i].querySelector("img");
-      const deg = ROT[i % ROT.length];
-      try{
-        await bakeOne(img, deg);
-      }catch(e){
-        break;
-      }
-      if (i % 3 === 2) await sleep(0);
-    }
-  }
-
-  function scheduleBake(){
-    cleanupIfNeeded();
-    if (mq.matches && isRndmActive()){
-      setTimeout(bakeAll, 60);
-    }
+    const img = getCurrentPosterImg();
+    if (img) bakeAmbientFrom(img);
   }
 
   function init(){
-    const g = gridEl();
-    if (!g) return;
-
-    const mo = new MutationObserver(() => scheduleBake());
-    mo.observe(g, { attributes: true, attributeFilter: ["class"], childList: true, subtree: true });
-
-    if (mq.addEventListener) mq.addEventListener("change", scheduleBake);
-
-    scheduleBake();
-    setTimeout(scheduleBake, 250);
+    tick();
+    // update on mode changes / new images
+    const grid = document.getElementById("eventsGrid");
+    if (grid){
+      const mo = new MutationObserver(() => tick());
+      mo.observe(grid, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
+    }
+    // light periodic refresh (covers scroll without heavy work)
+    setInterval(tick, 1200);
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, { once: true });
+    document.addEventListener("DOMContentLoaded", init, { once:true });
   } else {
     init();
   }
