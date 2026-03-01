@@ -2057,5 +2057,35 @@ void wrap.offsetHeight;
   }
 }
 </style>
+<!-- ===== v33: FIX - target real IMG (not only direct child) ===== -->
+<style id="v33-portrait-transform-to-img-fix">
+@media (max-width: 900px) and (orientation: portrait){
+  /* keep wrapper clean */
+  #eventsGrid.randomMode .poster{
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  /* REAL selector: any img inside poster (covers <a><img> / .posterCard img / etc.) */
+  #eventsGrid.randomMode .poster img{
+    transform:
+      translateZ(0)
+      translate(var(--flipX,0px), var(--flipY,0px))
+      translate(var(--tx,0px), var(--ty,0px))
+      rotate(var(--rot,0deg))
+      scale(var(--scl, 1)) !important;
+    transform-origin: 50% 50% !important;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
+  }
+
+  /* While scrolling: kill rotations on the IMG */
+  body.isScrolling #eventsGrid.randomMode .poster img{
+    transform: translateZ(0) !important;
+  }
+}
+</style>
 </body>
 </html>
