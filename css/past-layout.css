@@ -286,3 +286,52 @@
     opacity: 1 !important;
   }
 }
+
+/* ===== PORTRAIT NO-HOLES PATCH (disable heavy layers during scroll) ===== */
+@media (max-width: 768px) and (orientation: portrait){
+
+  /* ensure posters fill column width (avoid min(100vw...) interfering) */
+  #eventsGrid.randomMode .poster{
+    width: 100% !important;
+    margin: 0 0 1px !important;
+  }
+  #eventsGrid.randomMode .poster img{
+    height: auto !important;
+    opacity: 1 !important; /* hard guard */
+  }
+
+  /* keep list images simple (reduce GPU issues) */
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster img{
+    transform: none !important;
+    filter: none !important;
+    animation: none !important;
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  /* anti half-render basics */
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster img{
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* repaint nudge trigger */
+  #eventsGrid.randomMode.paintNudge{
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* during scroll: disable ambient load */
+  html.pScroll #ambientBg,
+  html.pScroll #ambientPoster,
+  html.pScroll #ambientGlow{
+    filter: none !important;
+    animation: none !important;
+    opacity: .22 !important;
+    mix-blend-mode: normal !important;
+  }
+}
