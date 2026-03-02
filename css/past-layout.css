@@ -1,32 +1,18 @@
-/* past-layout.css
-   Responsive patche (landscape/portrait).
-   Desktop core je v past-core.css beze změny.
-*/
-
-/* TEST – po ověření smaž */
-body{ background: red !important; }
-
-/* LANDSCAPE: rndm = 2-column masonry + vypnout klik */
 @media (orientation: landscape) and (max-width: 1024px){
-
   #eventsGrid.randomMode{
-    display: block !important;
-    column-count: 2 !important;
-    column-gap: 14px !important;
-
-    /* přebít případný grid */
-    grid-template-columns: none !important;
-    gap: 0 !important;
+    display:block !important;
+    column-count:2 !important;
+    column-gap:14px !important;
+    grid-template-columns:none !important;
+    gap:0 !important;
   }
 
   #eventsGrid.randomMode .poster{
-    display: inline-block !important;
-    width: 100% !important;
-    margin: 0 0 14px !important;
-
-    break-inside: avoid;
-    -webkit-column-break-inside: avoid;
-
-    pointer-events: none; /* vypnout klik */
+    display:inline-block !important;
+    width:100% !important;
+    margin:0 0 14px !important;
+    break-inside:avoid;
+    -webkit-column-break-inside:avoid;
+    pointer-events:none;
   }
 }
