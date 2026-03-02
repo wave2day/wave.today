@@ -119,13 +119,6 @@
     "link": ""
   },
   {
-    "id": 18,
-    "date": "2019-01-03",
-    "title": "Ofdream",
-    "image": "assets/img/2019-01-03_Ofdream.jpg",
-    "link": ""
-  },
-  {
     "id": 19,
     "date": "2025-01-26",
     "title": "Crimewave",
@@ -153,11 +146,4 @@
     "image": "assets/img/2025-05-10_stm.jpeg",
     "link": ""
   },
-  {
-    "id": 23,
-    "date": "2025-04-26",
-    "title": "Juche",
-    "image": "assets/img/2026-04-26_juche.jpeg",
-    "link": ""
-  }
 ]
