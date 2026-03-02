@@ -1211,37 +1211,62 @@ void wrap.offsetHeight;
   window.addEventListener("resize", () => setTimeout(tick, 60), { passive: true });
 })();
 
-/* ===== LANDSCAPE: no click + close hero on rotate (keep existing roll logic) ===== */
-(() => {
-  const grid = document.getElementById("eventsGrid");
-  const hero = document.getElementById("heroOverlay");
-  if (!grid || !hero) return;
 
-  function isLandscapeTouch(){
-    return window.matchMedia("(orientation: landscape) and (pointer: coarse)").matches;
-  }
-  function heroIsOpen(){
-    return hero.getAttribute("aria-hidden") === "false";
+/* ===== HERO RECENTER ON ROTATION (keep existing roll/rollUp) ===== */
+(()=>{
+  // Works with the later (advanced) hero implementation that defines: heroOpen, heroCard, heroOverlay, heroSrc
+  if (typeof heroOpen === "undefined" || typeof heroCard === "undefined" || typeof heroOverlay === "undefined") return;
+
+  function isHeroOpen(){
+    try{
+      if (!heroOpen) return false;
+      if (!heroOverlay) return false;
+      return heroOverlay.getAttribute("aria-hidden") === "false";
+    }catch(e){ return false; }
   }
 
-  // Block poster activation ONLY in landscape touch (do not touch portrait behavior)
-  function stopInLandscape(ev){
-    if (!isLandscapeTouch()) return;
-    const p = ev.target && ev.target.closest ? ev.target.closest(".poster") : null;
-    if (!p) return;
-    if (ev.cancelable) ev.preventDefault();
-    ev.stopPropagation();
-    ev.stopImmediatePropagation();
-  }
-  grid.addEventListener("click", stopInLandscape, true);
-  grid.addEventListener("pointerup", stopInLandscape, true);
+  function recenterHero(){
+    if (!isHeroOpen()) return;
+    const imgEl = heroCard && heroCard.querySelector ? heroCard.querySelector("img") : null;
 
-  // If hero is open and user rotates to landscape, close it (prevents off-center)
-  function closeIfNeeded(){
-    if (!isLandscapeTouch()) return;
-    if (!heroIsOpen()) return;
-    if (typeof window.closeHero === "function") window.closeHero();
+    const vw = window.innerWidth || document.documentElement.clientWidth;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+
+    // Target max size (same philosophy as openHero)
+    const maxW = Math.min(vw - 32, 980);
+    const maxH = Math.min(vh - 96, 900);
+
+    const natW = (imgEl && imgEl.naturalWidth) ? imgEl.naturalWidth : (heroCard.offsetWidth || 800);
+    const natH = (imgEl && imgEl.naturalHeight) ? imgEl.naturalHeight : (heroCard.offsetHeight || 800);
+
+    const scale = Math.min(maxW / natW, maxH / natH, 1.0);
+    const tW = Math.max(240, Math.round(natW * scale));
+    const tH = Math.max(240, Math.round(natH * scale));
+    const tL = Math.round((vw - tW) / 2);
+    const tT = Math.round((vh - tH) / 2);
+
+    // Recenter without changing classes (keeps roll/unroll visuals)
+    heroCard.style.transition = "none";
+    heroCard.style.left = tL + "px";
+    heroCard.style.top = tT + "px";
+    heroCard.style.width = tW + "px";
+    heroCard.style.height = tH + "px";
+    heroCard.style.borderRadius = "0px";
+    // force reflow then restore transitions for next close/open
+    void heroCard.offsetHeight;
   }
-  window.addEventListener("orientationchange", () => setTimeout(closeIfNeeded, 60), { passive: true });
-  window.addEventListener("resize", () => setTimeout(closeIfNeeded, 60), { passive: true });
+
+  // Recenter on orientation/resize while open
+  window.addEventListener("orientationchange", ()=> setTimeout(recenterHero, 80), {passive:true});
+  window.addEventListener("resize", ()=> setTimeout(recenterHero, 80), {passive:true});
+
+  // Also recenter when the hero image finishes decoding (mobile sometimes reports 0 natural size initially)
+  document.addEventListener("load", (e)=>{
+    try{
+      const t = e.target;
+      if (!t || t.tagName !== "IMG") return;
+      if (!isHeroOpen()) return;
+      if (heroCard && heroCard.contains && heroCard.contains(t)) setTimeout(recenterHero, 40);
+    }catch(_e){}
+  }, true);
 })();
