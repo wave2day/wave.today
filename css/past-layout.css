@@ -1,4 +1,23 @@
 /* past-layout.css
    Sem budeme dávat jen responsive patche (landscape/portrait).
    Desktop (core) necháváme v past-core.css beze změny.
-*/
+/* LANDSCAPE */
+@media (orientation: landscape) and (max-width: 1024px){
+
+  #eventsGrid.randomMode{
+    display: block;
+    column-count: 2;
+    column-gap: 14px;
+  }
+
+  #eventsGrid.randomMode .poster{
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    margin: 0 0 14px;
+  }
+
+  /* vypnutí klikání */
+  #eventsGrid.randomMode .poster{
+    pointer-events: none;
+  }
+}
