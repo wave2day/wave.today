@@ -1182,31 +1182,100 @@ void wrap.offsetHeight;
   }, 200);
 })();
 
-/* ===== PORTRAIT NO-HOLES PATCH (toggle html.pScroll + repaint nudge) ===== */
+/* ===== HERO ROLL + CENTER ON ROTATION (portrait-first, deterministic) ===== */
 (() => {
-  const mq = window.matchMedia("(max-width: 768px) and (orientation: portrait)");
-  let t = null, raf1 = 0, raf2 = 0;
+  const hero = document.getElementById("heroOverlay");
+  const grid = document.getElementById("eventsGrid");
+  if (!hero || !grid) return;
 
-  function tick(){
-    if (!mq.matches) return;
-    const grid = document.querySelector("#eventsGrid.randomMode");
-    if (!grid) return;
+  // Store last triggering poster so we can scroll back on close
+  let lastPoster = null;
 
-    // mark scrolling on <html> to disable ambient while scrolling
-    document.documentElement.classList.add("pScroll");
-    clearTimeout(t);
-    t = setTimeout(() => document.documentElement.classList.remove("pScroll"), 180);
-
-    // repaint nudge (helps with half posters)
-    cancelAnimationFrame(raf1);
-    cancelAnimationFrame(raf2);
-    raf1 = requestAnimationFrame(() => {
-      grid.classList.add("paintNudge");
-      raf2 = requestAnimationFrame(() => grid.classList.remove("paintNudge"));
-    });
+  function isLandscapeTouch(){
+    return window.matchMedia("(orientation: landscape) and (pointer: coarse)").matches;
   }
 
-  window.addEventListener("scroll", tick, { passive: true });
-  window.addEventListener("orientationchange", () => setTimeout(tick, 60), { passive: true });
-  window.addEventListener("resize", () => setTimeout(tick, 60), { passive: true });
+  function heroIsOpen(){
+    return hero.getAttribute("aria-hidden") === "false";
+  }
+
+  // Wrap existing openHero/closeHero if they exist; otherwise implement minimal.
+  const _openHero = (typeof window.openHero === "function") ? window.openHero.bind(window) : null;
+  const _closeHero = (typeof window.closeHero === "function") ? window.closeHero.bind(window) : null;
+
+  function scrollBackToPoster(){
+    if (!lastPoster) return;
+    // scroll into view of the original poster card
+    try{
+      lastPoster.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    }catch(e){
+      // fallback
+      const r = lastPoster.getBoundingClientRect();
+      window.scrollTo(0, window.scrollY + r.top - (window.innerHeight/2 - r.height/2));
+    }
+  }
+
+  // If there is no closeHero, provide minimal close.
+  function closeHeroSafe(){
+    if (_closeHero){
+      _closeHero();
+    }else{
+      hero.setAttribute("aria-hidden", "true");
+    }
+    // after close, roll back
+    setTimeout(scrollBackToPoster, 60);
+  }
+
+  function openHeroSafe(posterEl){
+    lastPoster = posterEl;
+    if (_openHero){
+      _openHero(posterEl);
+    }else{
+      hero.setAttribute("aria-hidden", "false");
+      // minimal: clone image into hero if structure exists
+      const img = posterEl.querySelector("img");
+      const heroImg = hero.querySelector(".rollWrap img");
+      if (img && heroImg) heroImg.src = img.currentSrc || img.src;
+    }
+  }
+
+  // Deterministic interaction:
+  // - Portrait: click poster toggles hero open/close with scroll-back on close
+  // - Landscape (touch): do nothing (prevents off-center/awkward small hero)
+  function onPosterClick(ev){
+    const p = ev.target.closest ? ev.target.closest(".poster") : null;
+    if (!p) return;
+
+    if (isLandscapeTouch()){
+      // In landscape on touch devices we do not open hero at all.
+      ev.preventDefault();
+      ev.stopPropagation();
+      ev.stopImmediatePropagation();
+      return;
+    }
+
+    if (heroIsOpen()){
+      ev.preventDefault();
+      ev.stopPropagation();
+      closeHeroSafe();
+      return;
+    }
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    openHeroSafe(p);
+  }
+
+  // Capture phase to beat any existing handlers (but only for poster clicks)
+  grid.addEventListener("click", onPosterClick, true);
+  grid.addEventListener("pointerup", onPosterClick, true);
+
+  // On rotation to landscape: close hero if open (prevents off-center)
+  function onRotate(){
+    if (isLandscapeTouch() && heroIsOpen()){
+      closeHeroSafe();
+    }
+  }
+  window.addEventListener("orientationchange", () => setTimeout(onRotate, 60), { passive: true });
+  window.addEventListener("resize", () => setTimeout(onRotate, 60), { passive: true });
 })();
