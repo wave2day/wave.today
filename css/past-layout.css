@@ -1,54 +1,32 @@
 /* past-layout.css
-   Sem budeme dávat jen responsive patche (landscape/portrait).
-   Desktop (core) necháváme v past-core.css beze změny.
+   Responsive patche (landscape/portrait).
+   Desktop core je v past-core.css beze změny.
+*/
 
-body{ background:red !important; }
-/* LANDSCAPE */
+/* TEST – po ověření smaž */
+body{ background: red !important; }
+
+/* LANDSCAPE: rndm = 2-column masonry + vypnout klik */
 @media (orientation: landscape) and (max-width: 1024px){
 
   #eventsGrid.randomMode{
-    display: block;
-    column-count: 2;
-    column-gap: 14px;
-  }
-
-  #eventsGrid.randomMode .poster{
-    break-inside: avoid;
-    -webkit-column-break-inside: avoid;
-    margin: 0 0 14px;
-  }
-
-  /* vypnutí klikání */
-  #eventsGrid.randomMode .poster{
-    pointer-events: none;
-  }
-}
-/* ===== LANDSCAPE: FORCE MASONRY (CSS columns) in rndm ===== */
-@media (orientation: landscape) and (max-width: 1024px){
-
-  #eventsGrid.randomMode{
-    display: block !important;          /* přebije grid/flex */
-    column-count: 2 !important;         /* 2 sloupce */
+    display: block !important;
+    column-count: 2 !important;
     column-gap: 14px !important;
-    column-fill: balance;
-    /* pojistky proti grid stylům */
+
+    /* přebít případný grid */
     grid-template-columns: none !important;
     gap: 0 !important;
   }
 
   #eventsGrid.randomMode .poster{
-    display: inline-block !important;   /* nutné pro columns/masonry */
+    display: inline-block !important;
     width: 100% !important;
-    max-width: none !important;
     margin: 0 0 14px !important;
 
     break-inside: avoid;
     -webkit-column-break-inside: avoid;
-    page-break-inside: avoid;
-  }
 
-  /* Landscape: vypnout klikání v rndm */
-  #eventsGrid.randomMode .poster{
-    pointer-events: none;
+    pointer-events: none; /* vypnout klik */
   }
 }
