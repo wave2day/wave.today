@@ -1,33 +1,243 @@
-@media (orientation: landscape) and (max-width: 1024px){
+/* past-layout.css
+   Sem budeme dávat jen responsive patche (landscape/portrait).
+   Desktop (core) necháváme v past-core.css beze změny.
+*/
 
-  /* MASONRY – skutečné sloupce (ne grid) */
-  #eventsGrid.randomMode{
+/* ===== PORTRAIT PATCH FROM past-eventsl.html ===== */
+@media (max-width: 560px){
+      #eventsGrid.randomMode{
+        grid-template-columns: repeat(auto-fit, minmax(clamp(190px, 48vw, 320px), 1fr));
+        gap: 16px 14px;
+        padding: 0 12px;
+      }
+      #eventsGrid.randomMode .poster{
+        max-width: none;
+      }
+    }
+
+@media (max-width: 420px){
+      #eventsGrid.randomMode{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 10px;
+        padding: 0 8px;
+      }
+    }
+
+@media (max-width: 560px){
+  #eventsGrid.randomMode{ padding: 0 12px; }
+  #eventsGrid.randomMode .poster{ padding: 10px; }
+}
+
+@media (max-width: 420px){
+  #eventsGrid.randomMode{ padding: 0 8px; }
+  #eventsGrid.randomMode .poster{ padding: 8px; }
+}
+
+@media (max-width: 768px){
+  /* Only affect mobile rndm */
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster *{
+    overflow: visible !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
+    mask: none !important;
+    -webkit-mask: none !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #eventsGrid.randomMode .poster img{
     display: block !important;
-    column-count: 2 !important;
-    column-gap: 14px !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+  }
+}
 
-    /* vypne grid z core */
-    grid-template-columns: none !important;
-    grid-auto-flow: unset !important;
-    gap: 0 !important;
+@media (max-width: 768px){
+  /* Only mobile rndm */
+  #eventsGrid.randomMode .poster img{
+    transform-origin: 50% 50% !important;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* During scroll: temporarily remove rotations to avoid partial paint tiles */
+  body.v21Scrolling #eventsGrid.randomMode .poster img{
+    transform: none !important;
+  }
+}
+
+@media (max-width: 768px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    display: block !important;
+    -webkit-column-count: 2 !important;
+    column-count: 2 !important;
+    -webkit-column-width: auto !important;
+    column-width: auto !important;
+    -webkit-column-gap: 1px !important;
+    column-gap: 1px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+
+    transform: none !important;
+    will-change: auto !important;
+    filter: none !important;
+    isolation: isolate;
   }
 
   #eventsGrid.randomMode .poster{
     display: inline-block !important;
     width: 100% !important;
-    margin: 0 0 14px !important;
-    vertical-align: top;
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+    margin: 0 0 1px !important;
 
-    /* důležité pro masonry */
-    break-inside: avoid;
-    -webkit-column-break-inside: avoid;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
 
-    /* vypnutí klikání v landscape */
-    pointer-events: none;
+    contain: none !important;
+    overflow: visible !important;
 
-    /* pojistky proti rozbití layoutu */
-    float: none !important;
-    position: relative !important;
+    mix-blend-mode: normal !important;
+    filter: none !important;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
+  #eventsGrid.randomMode .poster img{
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+
+    transform: rotate(0deg);
+    will-change: auto !important;
+
+    mix-blend-mode: normal !important;
+    filter: none !important;
+
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* non-symmetric rotation pattern */
+  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-6.5deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 4.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-2.8deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 6.9deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-5.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 5.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-1.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 3.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-7.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 2.4deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-3.7deg); }
+
+  #eventsGrid.randomMode .wtIcon{
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  #eventsGrid.randomMode.isScrolling .poster img{
+    transform: none !important;
+  }
+}
+
+@media (max-width: 420px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    -webkit-column-gap: 0px !important;
+    column-gap: 0px !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    margin-bottom: 0px !important;
+  }
+
+  #eventsGrid.randomMode .wtIcon{
+    width: 68px !important;
+    height: 68px !important;
+  }
+}
+
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* 1) Avoid the known problematic combo: huge blur + mix-blend-mode on mobile Chrome */
+  #ambientPoster{
+    mix-blend-mode: normal !important;
+    opacity: .35 !important;
+    filter: blur(44px) saturate(1.12) !important; /* was ~86px */
+    animation: none !important; /* keep it static in portrait */
+  }
+  #ambientGlow{
+    opacity: .85 !important;
+    animation: none !important;
+  }
+
+  /* 2) Isolate poster paints to reduce "half-tile" and disappearing repaints */
+  #eventsGrid.randomMode .poster{
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-style: flat;
+  }
+  #eventsGrid.randomMode .poster img{
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+
+@media (max-width: 560px) and (orientation: portrait){
+
+  /* Hide image pixels until decoded/revealed */
+  #eventsGrid.randomMode .poster img{
+    opacity: 0;
+    transition: opacity 220ms ease;
+  }
+  #eventsGrid.randomMode .poster.rndmImgReady img{
+    opacity: 1;
+  }
+
+  /* Reveal motion on every re-entry (from depths) */
+  #eventsGrid.randomMode .poster.rndmReveal{
+    animation: rndmDepthIn 420ms cubic-bezier(.16,.9,.18,1) both;
+  }
+
+  @keyframes rndmDepthIn{
+    0%{
+      opacity: 0;
+      transform:
+        translate(var(--flipX,0px), var(--flipY,0px))
+        translate(var(--tx,0px), calc(var(--ty,0px) + 34px))
+        rotate(var(--rot,0deg))
+        scale(var(--scl, 1));
+      filter: blur(.2px);
+    }
+    100%{
+      opacity: 1;
+      transform:
+        translate(var(--flipX,0px), var(--flipY,0px))
+        translate(var(--tx,0px), var(--ty,0px))
+        rotate(var(--rot,0deg))
+        scale(var(--scl, 1));
+      filter: blur(0);
+    }
+  }
 }
