@@ -1129,7 +1129,8 @@ void wrap.offsetHeight;
   // Initial
   apply();
 })
-/* PORTRAIT: scroll repaint nudge (anti díry/půlky) */
+
+/* ===== PORTRAIT STABILITY PATCH (anti díry/půlky při scrollu) ===== */
 (() => {
   const mq = window.matchMedia("(max-width: 768px) and (orientation: portrait)");
   let t = null, raf1 = 0, raf2 = 0;
@@ -1139,12 +1140,10 @@ void wrap.offsetHeight;
     const grid = document.querySelector("#eventsGrid.randomMode");
     if (!grid) return;
 
-    // během scrollu zjednodušíme rendering přes CSS
     grid.classList.add("isScrolling");
     clearTimeout(t);
     t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
 
-    // repaint nudge – 2 rAF (spolehlivější)
     cancelAnimationFrame(raf1);
     cancelAnimationFrame(raf2);
     raf1 = requestAnimationFrame(() => {
