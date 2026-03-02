@@ -1,18 +1,33 @@
 @media (orientation: landscape) and (max-width: 1024px){
+
+  /* MASONRY – skutečné sloupce (ne grid) */
   #eventsGrid.randomMode{
-    display:block !important;
-    column-count:2 !important;
-    column-gap:14px !important;
-    grid-template-columns:none !important;
-    gap:0 !important;
+    display: block !important;
+    column-count: 2 !important;
+    column-gap: 14px !important;
+
+    /* vypne grid z core */
+    grid-template-columns: none !important;
+    grid-auto-flow: unset !important;
+    gap: 0 !important;
   }
 
   #eventsGrid.randomMode .poster{
-    display:inline-block !important;
-    width:100% !important;
-    margin:0 0 14px !important;
-    break-inside:avoid;
-    -webkit-column-break-inside:avoid;
-    pointer-events:none;
+    display: inline-block !important;
+    width: 100% !important;
+    margin: 0 0 14px !important;
+    vertical-align: top;
+
+    /* důležité pro masonry */
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+
+    /* vypnutí klikání v landscape */
+    pointer-events: none;
+
+    /* pojistky proti rozbití layoutu */
+    float: none !important;
+    position: relative !important;
   }
+
 }
