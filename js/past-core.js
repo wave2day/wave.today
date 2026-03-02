@@ -921,3 +921,211 @@ void wrap.offsetHeight;
     setTimeout(scrollToFirstPoster, 60);
   }, { capture: true });
 })();
+
+/* ===== PORTRAIT PATCH FROM past-eventsl.html ===== */
+(() => {
+  const mq = window.matchMedia("(max-width: 768px)");
+  let t = null;
+
+  function isRndm(){
+    const g = document.getElementById("eventsGrid");
+    return !!(g && g.classList.contains("randomMode"));
+  }
+
+  function onScroll(){
+    if (!mq.matches || !isRndm()) return;
+    document.body.classList.add("v21Scrolling");
+    clearTimeout(t);
+    t = setTimeout(() => document.body.classList.remove("v21Scrolling"), 170);
+  }
+
+  window.addEventListener("scroll", onScroll, { passive:true });
+})
+
+(() => {
+  const mq = window.matchMedia("(max-width: 768px)");
+  let t = null;
+  function onScroll(){
+    if (!mq.matches) return;
+    const grid = document.querySelector("#eventsGrid.randomMode");
+    if (!grid) return;
+    grid.classList.add("isScrolling");
+    clearTimeout(t);
+    t = setTimeout(() => grid.classList.remove("isScrolling"), 180);
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+})
+
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  function apply(){
+    if (!mq.matches || !isRndm()) return;
+    const g = grid();
+    if (!g) return;
+    g.querySelectorAll(".poster img").forEach(img => {
+      img.loading = "eager";
+      img.decoding = "sync"; // prefer full decode over incremental paints
+      try { img.fetchPriority = "high"; } catch(e){}
+    });
+  }
+
+  function hook(){
+    apply();
+    const g = grid();
+    if (g){
+      new MutationObserver(apply).observe(g, { attributes:true, attributeFilter:["class"], childList:true, subtree:true });
+    }
+    mq.addEventListener?.("change", apply);
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook, { once:true });
+  else hook();
+})
+
+(() => {
+  const mq = window.matchMedia("(max-width: 560px) and (orientation: portrait)");
+
+  function grid(){ return document.getElementById("eventsGrid"); }
+  function isRndm(){ const g = grid(); return !!(g && g.classList.contains("randomMode")); }
+
+  async function decodeImg(img){
+    try{
+      img.loading = "eager";
+      img.decoding = "async";
+      if (img.decode) await img.decode();
+    }catch(e){}
+  }
+
+  function attachObserver(){
+    const g = grid();
+    if (!g) return;
+
+    const io = new IntersectionObserver(async (entries) => {
+      if (!mq.matches || !isRndm()) return;
+
+      for (const e of entries){
+        const poster = e.target;
+
+        if (!e.isIntersecting){
+          // allow re-trigger next time (but don't hide while leaving)
+          poster.classList.remove("rndmReveal");
+          continue;
+        }
+
+        const img = poster.querySelector("img");
+        if (img) await decodeImg(img);
+
+        // show pixels only after decode attempt
+        poster.classList.add("rndmImgReady");
+
+        // re-trigger reveal each time it enters
+        poster.classList.remove("rndmReveal");
+        void poster.offsetWidth;
+        poster.classList.add("rndmReveal");
+      }
+    }, {
+      root: null,
+      rootMargin: "260px 0px 260px 0px",
+      threshold: 0.01
+    });
+
+    function observeAll(){
+      g.querySelectorAll(".poster").forEach(p => io.observe(p));
+    }
+    observeAll();
+
+    new MutationObserver(() => observeAll()).observe(g, { childList:true, subtree:true });
+    new MutationObserver(() => observeAll()).observe(g, { attributes:true, attributeFilter:["class"] });
+  }
+
+  function boot(){
+    if (!mq.matches) return;
+    attachObserver();
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once:true });
+  else boot();
+})
+
+(() => {
+  const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+  if (!isTouch) return;
+
+  const grid = document.getElementById('eventsGrid');
+  if (!grid) return;
+
+  const mq = window.matchMedia("(orientation: portrait)");
+
+  function active(){
+    return mq.matches && grid.classList.contains('randomMode');
+  }
+
+  function nudge(){
+    const prev = grid.style.transform;
+    grid.style.transform = 'translateZ(0)';
+    requestAnimationFrame(() => { grid.style.transform = prev || 'none'; });
+  }
+
+  let t = 0;
+  function onScroll(){
+    if (!active()) return;
+    clearTimeout(t);
+    t = setTimeout(() => {
+      document.body.classList.add('v29MicroRepaint');
+      nudge();
+      setTimeout(() => document.body.classList.remove('v29MicroRepaint'), 120);
+    }, 140);
+  }
+
+  function sync(){
+    if (!active()){
+      document.body.classList.remove('v29MicroRepaint');
+    } else {
+      nudge();
+    }
+  }
+
+  new MutationObserver(sync).observe(grid, { attributes:true, attributeFilter:['class'] });
+  mq.addEventListener?.('change', sync);
+  window.addEventListener('orientationchange', sync, { passive:true });
+  window.addEventListener('pageshow', sync, { passive:true });
+  window.addEventListener('scroll', onScroll, { passive:true });
+
+  sync();
+})
+
+(function(){
+  const html = document.documentElement;
+  const isTouch = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ('ontouchstart' in window);
+  if(isTouch) html.classList.add('isTouch');
+
+  const grid = document.getElementById('eventsGrid');
+  if(!grid) return;
+
+  function apply(){
+    const on = grid.classList.contains('randomMode');
+    grid.classList.toggle('force2col', on && isTouch);
+  }
+
+  // Repaint nudge on scroll (helps "half poster disappears")
+  let raf=0;
+  function nudge(){
+    if(!(isTouch && grid.classList.contains('randomMode'))) return;
+    grid.classList.add('paintNudge');
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(()=> grid.classList.remove('paintNudge'));
+  }
+
+  window.addEventListener('scroll', ()=>{ if(isTouch) nudge(); }, {passive:true});
+
+  // Observe mode changes (date <-> rndm)
+  new MutationObserver(apply).observe(grid, {attributes:true, attributeFilter:['class']});
+  window.addEventListener('resize', apply, {passive:true});
+  window.addEventListener('orientationchange', apply, {passive:true});
+
+  // Initial
+  apply();
+})
