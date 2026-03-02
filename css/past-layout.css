@@ -241,3 +241,9 @@
     }
   }
 }
+/* PORTRAIT – FIX: nikdy neschovávat plakáty na 0 opacity */
+@media (max-width: 768px) and (orientation: portrait){
+  #eventsGrid.randomMode .poster img{
+    opacity: 1 !important;
+  }
+}
