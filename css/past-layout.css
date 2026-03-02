@@ -21,3 +21,32 @@
     pointer-events: none;
   }
 }
+/* ===== LANDSCAPE: FORCE MASONRY (CSS columns) in rndm ===== */
+@media (orientation: landscape) and (max-width: 1024px){
+
+  #eventsGrid.randomMode{
+    display: block !important;          /* přebije grid/flex */
+    column-count: 2 !important;         /* 2 sloupce */
+    column-gap: 14px !important;
+    column-fill: balance;
+    /* pojistky proti grid stylům */
+    grid-template-columns: none !important;
+    gap: 0 !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    display: inline-block !important;   /* nutné pro columns/masonry */
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 0 14px !important;
+
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Landscape: vypnout klikání v rndm */
+  #eventsGrid.randomMode .poster{
+    pointer-events: none;
+  }
+}
