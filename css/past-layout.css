@@ -336,31 +336,9 @@
   }
 }
 
-/* ===== LANDSCAPE: disable poster activation (touch) + ensure hero centers ===== */
-@media (orientation: landscape) and (pointer: coarse){
-  #eventsGrid .poster,
-  #eventsGrid .poster *{
-    pointer-events: none !important;
-  }
-}
 
-/* center hero overlay reliably */
-#heroOverlay{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+/* ===== HERO CENTER FIX (keep roll logic) ===== */
+/* Overlay centered reliably across rotation; does not change unroll/rollUp logic */
+#heroOverlay{ display:flex; align-items:center; justify-content:center; }
 #heroOverlay[aria-hidden="true"]{ display:none; }
-#heroOverlay .rollWrap{
-  width:100%;
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#heroOverlay .rollWrap img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  display:block;
-}
+#heroOverlay .heroCard{ position:fixed; }
