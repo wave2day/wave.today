@@ -1,6 +1,8 @@
 /* past-layout.css
    Sem budeme dávat jen responsive patche (landscape/portrait).
    Desktop (core) necháváme v past-core.css beze změny.
+
+body{ background:red !important; }
 /* LANDSCAPE */
 @media (orientation: landscape) and (max-width: 1024px){
 
