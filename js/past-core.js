@@ -1181,3 +1181,32 @@ void wrap.offsetHeight;
     if (n >= 15) clearInterval(iv); // ~3s total
   }, 200);
 })();
+
+/* ===== PORTRAIT NO-HOLES PATCH (toggle html.pScroll + repaint nudge) ===== */
+(() => {
+  const mq = window.matchMedia("(max-width: 768px) and (orientation: portrait)");
+  let t = null, raf1 = 0, raf2 = 0;
+
+  function tick(){
+    if (!mq.matches) return;
+    const grid = document.querySelector("#eventsGrid.randomMode");
+    if (!grid) return;
+
+    // mark scrolling on <html> to disable ambient while scrolling
+    document.documentElement.classList.add("pScroll");
+    clearTimeout(t);
+    t = setTimeout(() => document.documentElement.classList.remove("pScroll"), 180);
+
+    // repaint nudge (helps with half posters)
+    cancelAnimationFrame(raf1);
+    cancelAnimationFrame(raf2);
+    raf1 = requestAnimationFrame(() => {
+      grid.classList.add("paintNudge");
+      raf2 = requestAnimationFrame(() => grid.classList.remove("paintNudge"));
+    });
+  }
+
+  window.addEventListener("scroll", tick, { passive: true });
+  window.addEventListener("orientationchange", () => setTimeout(tick, 60), { passive: true });
+  window.addEventListener("resize", () => setTimeout(tick, 60), { passive: true });
+})();
