@@ -1156,3 +1156,28 @@ void wrap.offsetHeight;
   window.addEventListener("orientationchange", () => setTimeout(tick, 60), { passive: true });
   window.addEventListener("resize", () => setTimeout(tick, 60), { passive: true });
 })();
+
+/* ===== PORTRAIT IMGREADY FALLBACK (prevents invisible posters) ===== */
+(() => {
+  const mq = window.matchMedia("(max-width: 768px) and (orientation: portrait)");
+  function markReady(){
+    if (!mq.matches) return;
+    const posters = document.querySelectorAll("#eventsGrid.randomMode .poster");
+    posters.forEach(p => {
+      const img = p.querySelector("img");
+      if (!img) return;
+      // If image is already available, force reveal
+      if (img.complete) p.classList.add("rndmImgReady");
+    });
+  }
+  window.addEventListener("load", () => setTimeout(markReady, 120), { passive: true });
+  window.addEventListener("orientationchange", () => setTimeout(markReady, 180), { passive: true });
+  window.addEventListener("resize", () => setTimeout(markReady, 180), { passive: true });
+  // Also run periodically for a short time (covers async JSON render)
+  let n = 0;
+  const iv = setInterval(() => {
+    markReady();
+    n += 1;
+    if (n >= 15) clearInterval(iv); // ~3s total
+  }, 200);
+})();
