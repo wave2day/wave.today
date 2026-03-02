@@ -117,5 +117,47 @@
     "title": "Signal",
     "image": "assets/img/2025-08-15_signal.jpg",
     "link": ""
+  },
+  {
+    "id": 18,
+    "date": "2019-01-03",
+    "title": "Ofdream",
+    "image": "assets/img/2019-01-03_ofdream.jpg",
+    "link": ""
+  },
+  {
+    "id": 19,
+    "date": "2025-01-26",
+    "title": "Crimewave",
+    "image": "assets/img/2025-01-26_crimewave.png",
+    "link": ""
+  },
+  {
+    "id": 20,
+    "date": "2025-02-22",
+    "title": "Crimewave",
+    "image": "assets/img/2025-02-22_crimewave.png",
+    "link": ""
+  },
+  {
+    "id": 21,
+    "date": "2025-03-08",
+    "title": "Crimewave",
+    "image": "assets/img/2025-03-08_crimewave.png",
+    "link": ""
+  },
+  {
+    "id": 22,
+    "date": "2025-05-10",
+    "title": "STM",
+    "image": "assets/img/2025-05-10_stm.jpeg",
+    "link": ""
+  },
+  {
+    "id": 23,
+    "date": "2026-04-26",
+    "title": "Juche",
+    "image": "assets/img/2026-04-26_juche.jpeg",
+    "link": ""
   }
 ]
