@@ -279,3 +279,10 @@
     transform: translateZ(0);
   }
 }
+
+/* ===== PORTRAIT VISIBILITY FIX: never keep posters invisible ===== */
+@media (max-width: 768px) and (orientation: portrait){
+  #eventsGrid.randomMode .poster img{
+    opacity: 1 !important;
+  }
+}
