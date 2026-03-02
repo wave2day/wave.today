@@ -247,3 +247,36 @@
     opacity: 1 !important;
   }
 }
+/* PORTRAIT: anti-díry při scrollu (CSS columns) */
+@media (max-width: 768px) and (orientation: portrait){
+
+  /* základní pojistky proti “half render” */
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster img{
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* během scrollu: vypnout věci, co mobile často rozbije */
+  #eventsGrid.randomMode.isScrolling .poster,
+  #eventsGrid.randomMode.isScrolling .poster img{
+    -webkit-transform: none !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* ať se nic neřeže */
+  #eventsGrid.randomMode .poster{
+    overflow: visible !important;
+  }
+
+  /* repaint nudge (jen CSS trigger) */
+  #eventsGrid.randomMode.paintNudge{
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+}
