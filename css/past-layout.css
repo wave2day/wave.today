@@ -336,71 +336,9 @@
   }
 }
 
-/* ===== LANDSCAPE: disable poster activation (touch) + ensure hero centers ===== */
-@media (orientation: landscape) and (pointer: coarse){
-  #eventsGrid .poster,
-  #eventsGrid .poster *{
-    pointer-events: none !important;
-  }
-}
 
-/* center hero overlay reliably */
+/* ===== HERO OVERLAY FULLSCREEN GUARD ===== */
 #heroOverlay{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#heroOverlay[aria-hidden="true"]{ display:none; }
-#heroOverlay .rollWrap{
-  width:100%;
-  height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#heroOverlay .rollWrap img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  display:block;
-}
-
-/* ===== HERO CENTER (robust) + LANDSCAPE NO-CLICK (touch) ===== */
-#heroOverlay{
-  position: fixed !important;
-  inset: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 9999;
-}
-#heroOverlay[aria-hidden="true"]{ display:none !important; }
-
-/* heroCard should size itself but stay centered */
-#heroOverlay .heroCard{
-  width: min(980px, calc(100vw - 24px)) !important;
-  height: min(900px, calc(100vh - 72px)) !important;
-}
-
-#heroOverlay .rollWrap{
-  width: 100%;
-  height: 100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#heroOverlay .rollWrap img{
-  width:100%;
-  height:100%;
-  object-fit: contain;
-  display:block;
-  background: transparent;
-}
-
-/* LANDSCAPE touch: posters not clickable */
-@media (orientation: landscape) and (pointer: coarse){
-  #eventsGrid .poster,
-  #eventsGrid .poster *{ pointer-events:none !important; }
+  position: fixed;
+  inset: 0;
 }
