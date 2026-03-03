@@ -993,23 +993,25 @@ will-change: transform, filter;
   }
 }
 
-
-/* ===== LANDSCAPE RANDOM: 2-COLUMN MASONRY FORCE ===== */
-@media (orientation: landscape) and (max-width: 1024px){
+/* ===== LANDSCAPE RNDM MASONRY 2-COLUMNS ===== */
+@media (orientation: landscape) and (max-width: 1024px) {
+  /* rndm = masonry přes CSS columns */
   #eventsGrid.randomMode{
     display: block !important;
     column-count: 2 !important;
     column-gap: 14px !important;
     column-fill: balance;
-    /* pojistky proti grid/flex stylům */
+    /* pojistky proti grid/flex */
     grid-template-columns: none !important;
     gap: 0 !important;
   }
+
   #eventsGrid.randomMode .poster{
     display: inline-block !important;
     width: 100% !important;
     max-width: none !important;
     margin: 0 0 14px !important;
+
     break-inside: avoid;
     -webkit-column-break-inside: avoid;
     page-break-inside: avoid;
