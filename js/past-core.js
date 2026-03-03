@@ -1300,6 +1300,12 @@ void wrap.offsetHeight;
       const next = cur === "1" ? "0" : "1";
       grid.setAttribute("data-rp", next);
 
+      // Also toggle an inline 3D transform to force compositor repaint on some Android builds
+      grid.style.webkitTransform = (next === "1") ? "translate3d(0,0,0)" : "translate3d(0,0.1px,0)";
+      grid.style.transform = grid.style.webkitTransform;
+      void grid.offsetHeight;
+
+
       // Nudge multicol layout to repaint as well (no visual difference)
       const gap = window.getComputedStyle(grid).columnGap || "";
       if (gap){
@@ -1316,7 +1322,7 @@ void wrap.offsetHeight;
     const vp = getViewportRect();
     const posters = grid.querySelectorAll(".poster");
     posters.forEach((p) => {
-      if (!isInViewport(p, vp)) return;
+      if (!inView(p, vp)) return;
       const prev = p.style.transform;
       const prevWC = p.style.willChange;
 
