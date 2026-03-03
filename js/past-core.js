@@ -204,6 +204,11 @@
     } else {
       clearRandomVars();
       restoreOrder();
+
+      // When switching back to Date, jump to the top (first poster)
+      requestAnimationFrame(() => {
+        try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch (_e) { window.scrollTo(0, 0); }
+      });
     }
   }
 
