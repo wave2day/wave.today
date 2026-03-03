@@ -335,3 +335,14 @@
     mix-blend-mode: normal !important;
   }
 }
+
+
+/* ===== HERO FORCE CENTER (transform) =====
+   Když je hero otevřený, vynutí centrování přes translate(-50%,-50%).
+   Neřeší výpočet rozměrů, jen polohu (aby neujel na kraj po otočení).
+*/
+html.heroCentered #heroOverlay .heroCard{
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
