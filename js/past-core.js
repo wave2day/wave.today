@@ -1250,126 +1250,86 @@ void wrap.offsetHeight;
 })();
 
 
-/* ===== Mobile half-poster repaint fix (no layout/background changes) =====
-   Symptom: on some Android Chrome builds + heavy compositing, posters can render "half" / disappear while scrolling,
-   even though they exist in DOM. Workaround: force a tiny layer/paint refresh for visible posters on scroll/resize.
-   References: multicol/paint bugs often mitigated by translateZ(0) / GPU layer promotion. */
-(function(){
-  const isMobile = () => window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
-  const isPortrait = () => window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
-  const prefersFix = () => isMobile() && isPortrait();
+/* ===== PATCH: Mobile portrait rndm repaint via IMG swap (stable paint) =====
+   - Does NOT touch hero logic (centerfix stays as-is).
+   - In rndm mode (href removed), after scroll end / resize / orientationchange:
+     swap <img> for a fresh clone with the same src (from cache) for posters near viewport.
+*/
+(() => {
+  const mq = window.matchMedia('(max-width: 768px) and (orientation: portrait)');
 
-  let rafId = 0;
-  let scrollEndT = 0;
-
-  function getViewportRect(){
-    const vv = window.visualViewport;
-    if (vv) return { left: 0, top: 0, right: vv.width, bottom: vv.height, width: vv.width, height: vv.height };
-    return { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight, width: window.innerWidth, height: window.innerHeight };
+  function isRndm(){
+    const g = document.getElementById('eventsGrid');
+    return !!(g && g.classList.contains('randomMode'));
   }
 
-  function inView(el, vp){
+  function inView(el, pad=260){
     const r = el.getBoundingClientRect();
-    // generous margins to catch near-viewport tiles
-    const m = 120;
-    return (r.bottom >= -m && r.top <= vp.bottom + m && r.right >= -m && r.left <= vp.right + m);
+    const vh = window.innerHeight || 0;
+    return (r.bottom > -pad) && (r.top < vh + pad);
   }
 
-  function forceRepaintVisiblePosters(){
-    if (!prefersFix()) return;
-    const grid = document.getElementById("eventsGrid");
-    if (!grid) return;
+  let t = 0;
+  let busy = false;
 
-    // Inject minimal CSS once (no file edits needed)
-    if (!document.getElementById("rpFixStyle")){
-      const st = document.createElement("style");
-      st.id = "rpFixStyle";
-      st.textContent = `
-        /* Force compositor re-paint without visible change */
-        #eventsGrid[data-rp="1"]{ transform: translateZ(0); }
-        #eventsGrid[data-rp="0"]{ transform: translateZ(0.01px); }
-        #eventsGrid[data-rp] .poster{ backface-visibility: hidden; transform-style: preserve-3d; }
-        #eventsGrid[data-rp] img{ backface-visibility: hidden; }
-      `;
-      document.head.appendChild(st);
-    }
+  async function repaintPass(){
+    if(busy) return;
+    if(!mq.matches || !isRndm()) return;
 
-    // 1) Force a grid-level repaint (this is the "whole page refresh" effect you described)
+    const grid = document.getElementById('eventsGrid');
+    if(!grid) return;
+
+    // Process in visual order (top -> bottom)
+    const posters = Array.from(grid.querySelectorAll('.poster'))
+      .filter(p => inView(p))
+      .sort((a,b)=> a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+
+    if(!posters.length) return;
+
+    busy = true;
     try{
-      const cur = grid.getAttribute("data-rp") === "1" ? "1" : "0";
-      const next = cur === "1" ? "0" : "1";
-      grid.setAttribute("data-rp", next);
+      for(const p of posters){
+        const img = p.querySelector('img');
+        if(!img) continue;
+        if(!img.currentSrc && !img.src) continue;
+        if(!img.complete) continue;
 
-      // Also toggle an inline 3D transform to force compositor repaint on some Android builds
-      grid.style.webkitTransform = (next === "1") ? "translate3d(0,0,0)" : "translate3d(0,0.1px,0)";
-      grid.style.transform = grid.style.webkitTransform;
-      void grid.offsetHeight;
+        const src = img.currentSrc || img.src;
 
+        // Clone & swap (forces full repaint/re-tile). Uses cache; should not re-download.
+        const clone = img.cloneNode(false);
+        clone.loading = img.loading || 'lazy';
+        clone.decoding = img.decoding || 'async';
+        clone.src = src;
+        clone.alt = img.alt || '';
 
-      // Nudge multicol layout to repaint as well (no visual difference)
-      const gap = window.getComputedStyle(grid).columnGap || "";
-      if (gap){
-        grid.style.columnGap = gap;
-        // force style flush
-        void grid.offsetHeight;
-        grid.style.columnGap = gap;
-      } else {
-        void grid.offsetHeight;
+        img.replaceWith(clone);
+
+        if(clone.decode){
+          try{ await clone.decode(); }catch(_e){}
+        }
+
+        // Small yield so the browser can paint progressively (gives the "refresh" effect)
+        await new Promise(r => requestAnimationFrame(r));
       }
-    } catch(e){}
-
-    // 2) Also repaint visible posters (cheaper than repainting all)
-    const vp = getViewportRect();
-    const posters = grid.querySelectorAll(".poster");
-    posters.forEach((p) => {
-      if (!inView(p, vp)) return;
-      const prev = p.style.transform;
-      const prevWC = p.style.willChange;
-
-      p.style.willChange = "transform";
-      // toggle between two transforms to force repaint; keep any existing rotate set elsewhere
-      p.style.transform = (prev && prev.includes("translateZ")) ? prev.replace(/translateZ\([^)]+\)/g, "translateZ(0)") : (prev ? prev + " translateZ(0)" : "translateZ(0)");
-
-      // Force flush
-      void p.offsetHeight;
-
-      // restore quickly
-      setTimeout(() => {
-        p.style.willChange = prevWC || "";
-        p.style.transform = prev || "";
-      }, 0);
-    });
+    }finally{
+      busy = false;
+    }
   }
 
-  function scheduleFix(){
-    if (!prefersFix()) return;
-    if (rafId) return;
-    rafId = requestAnimationFrame(() => {
-      rafId = 0;
-      forceRepaintVisiblePosters();
-    });
+  function schedule(){
+    if(!mq.matches || !isRndm()) return;
+    clearTimeout(t);
+    t = window.setTimeout(() => { repaintPass(); }, 120);
   }
 
-  function onScroll(){
-    if (!prefersFix()) return;
-    scheduleFix();
-    clearTimeout(scrollEndT);
-    scrollEndT = setTimeout(() => {
-      // one more pass after scroll settles
-      forceRepaintVisiblePosters();
-    }, 90);
+  // Trigger on scroll end + viewport changes
+  window.addEventListener('scroll', schedule, { passive:true });
+  window.addEventListener('resize', schedule, { passive:true });
+  window.addEventListener('orientationchange', () => setTimeout(schedule, 80), { passive:true });
+
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', schedule, { passive:true });
+    window.visualViewport.addEventListener('scroll', schedule, { passive:true });
   }
-
-  // Attach listeners (passive to not block scroll)
-  window.addEventListener("scroll", onScroll, { passive: true });
-  window.addEventListener("resize", () => { scheduleFix(); }, { passive: true });
-  window.addEventListener("orientationchange", () => { setTimeout(scheduleFix, 50); }, { passive: true });
-
-  if (window.visualViewport){
-    window.visualViewport.addEventListener("scroll", onScroll, { passive: true });
-    window.visualViewport.addEventListener("resize", () => { scheduleFix(); }, { passive: true });
-  }
-
-  // initial pass after content loads
-  setTimeout(() => { try { forceRepaintVisiblePosters(); } catch(e){} }, 300);
-})()
+})();
