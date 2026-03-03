@@ -115,82 +115,7 @@
         setTimeout(()=> heroCard.classList.remove('unrolling'), 560);
       }
 
-  // ===== HERO: keep centered on resize/orientation (mobile) =====
-  function _heroViewport(){
-    // visualViewport is more reliable on mobile (accounts for browser UI)
-    const vv = window.visualViewport;
-    if(vv){
-      return { vw: vv.width, vh: vv.height, ox: vv.offsetLeft, oy: vv.offsetTop };
-    }
-    return { vw: window.innerWidth, vh: window.innerHeight, ox: 0, oy: 0 };
-  }
-
-  function relayoutHero(opts){
-    opts = opts || {};
-    if(!heroOverlay || !heroCard || !heroOpen) return;
-
-    const hi = heroCard.querySelector('img');
-    if(!hi) return;
-
-    const vp = _heroViewport();
-    const vw = vp.vw, vh = vp.vh, ox = vp.ox, oy = vp.oy;
-
-    // margins: leave some breathing room for top bar / gesture area
-    const maxW = Math.min(vw - 32, 980);
-    const maxH = Math.min(vh - 96, 900);
-
-    const natW = hi.naturalWidth || maxW;
-    const natH = hi.naturalHeight || maxH;
-    const scale = Math.min(maxW / natW, maxH / natH, 1.0);
-
-    const tW = Math.max(240, Math.round(natW * scale));
-    const tH = Math.max(240, Math.round(natH * scale));
-    const tL = Math.round(ox + (vw - tW) / 2);
-    const tT = Math.round(oy + (vh - tH) / 2);
-
-    // IMPORTANT: neutralize CSS `inset:0` so left/top centering actually works
-    heroCard.style.inset = 'auto';
-    heroCard.style.right = 'auto';
-    heroCard.style.bottom = 'auto';
-
-    if(opts.immediate){
-      heroCard.style.transition = 'none';
-      heroCard.style.left = tL + 'px';
-      heroCard.style.top = tT + 'px';
-      heroCard.style.width = tW + 'px';
-      heroCard.style.height = tH + 'px';
-      return;
-    }
-
-    heroCard.style.transition = 'left 180ms cubic-bezier(.2,.85,.2,1), top 180ms cubic-bezier(.2,.85,.2,1), width 180ms cubic-bezier(.2,.85,.2,1), height 180ms cubic-bezier(.2,.85,.2,1)';
-    heroCard.style.left = tL + 'px';
-    heroCard.style.top = tT + 'px';
-    heroCard.style.width = tW + 'px';
-    heroCard.style.height = tH + 'px';
-  }
-
-  // Debounced relayout on rotation / resize
-  let _heroRelayoutRaf = 0;
-  function scheduleHeroRelayout(immediate){
-    if(!heroOpen) return;
-    cancelAnimationFrame(_heroRelayoutRaf);
-    _heroRelayoutRaf = requestAnimationFrame(() => relayoutHero({ immediate: !!immediate }));
-  }
-
-  window.addEventListener('resize', () => scheduleHeroRelayout(false), { passive:true });
-  window.addEventListener('orientationchange', () => {
-    // orientationchange often fires before sizes settle
-    setTimeout(() => scheduleHeroRelayout(true), 80);
-    setTimeout(() => scheduleHeroRelayout(false), 220);
-  }, { passive:true });
-
-  if(window.visualViewport){
-    visualViewport.addEventListener('resize', () => scheduleHeroRelayout(true), { passive:true });
-    visualViewport.addEventListener('scroll', () => scheduleHeroRelayout(true), { passive:true });
-  }
-
-
-  function closeHero(){
+      function closeHero(){
         if(!heroOpen) return;
 
         heroCard.classList.remove('unrolling');
@@ -720,11 +645,6 @@ void wrap.offsetHeight;
 
 
     // Start at original rect
-    // neutralize CSS inset so left/top sizing works
-    heroCard.style.inset = 'auto';
-    heroCard.style.right = 'auto';
-    heroCard.style.bottom = 'auto';
-
     heroCard.style.left = heroFrom.left + 'px';
     heroCard.style.top = heroFrom.top + 'px';
     heroCard.style.width = heroFrom.width + 'px';
@@ -807,6 +727,73 @@ void wrap.offsetHeight;
       if(e.key === 'Escape') closeHero();
     });
   }
+  // ===== HERO: keep centered on orientation change / resize =====
+  // Problém: heroCard dostane při otevření left/top/width/height, ale po otočení telefonu se to nepřepočítá,
+  // takže plakát ujede mimo viewport. Navíc CSS používá inset:0, které je v konfliktu s left/top.
+  function recenterHeroCard(){
+    try{
+      if(!heroOpen || !heroCard) return;
+      const hi = heroCard.querySelector('img');
+      if(!hi) return;
+
+      const vv = window.visualViewport;
+      const vw = vv ? vv.width : window.innerWidth;
+      const vh = vv ? vv.height : window.innerHeight;
+      const offL = vv ? vv.offsetLeft : 0;
+      const offT = vv ? vv.offsetTop : 0;
+
+      const maxW = Math.min(vw - 32, 980);
+      const maxH = Math.min(vh - 96, 900);
+
+      const natW = hi.naturalWidth || parseFloat(heroCard.style.width) || vw;
+      const natH = hi.naturalHeight || parseFloat(heroCard.style.height) || vh;
+
+      const scale = Math.min(maxW / natW, maxH / natH, 1.0);
+      const tW = Math.max(240, Math.round(natW * scale));
+      const tH = Math.max(240, Math.round(natH * scale));
+
+      const tL = Math.round(offL + (vw - tW) / 2);
+      const tT = Math.round(offT + (vh - tH) / 2);
+
+      // zruš konflikt s CSS inset:0
+      heroCard.style.inset = 'auto';
+      heroCard.style.right = 'auto';
+      heroCard.style.bottom = 'auto';
+
+      heroCard.style.transition = 'none';
+      heroCard.style.left = tL + 'px';
+      heroCard.style.top = tT + 'px';
+      heroCard.style.width = tW + 'px';
+      heroCard.style.height = tH + 'px';
+
+      // když se viewport hne (adresní řádek), tak ať se to chytí hned
+      requestAnimationFrame(()=>{ heroCard.style.transition = ''; });
+    }catch(_e){}
+  }
+
+  let _heroResizeRaf = 0;
+  function scheduleHeroRecenter(){
+    if(!_heroResizeRaf){
+      _heroResizeRaf = requestAnimationFrame(()=>{
+        _heroResizeRaf = 0;
+        recenterHeroCard();
+      });
+    }
+  }
+
+  window.addEventListener('resize', scheduleHeroRecenter, { passive:true });
+  window.addEventListener('orientationchange', () => {
+    // na některých mobilech přijde nejdřív orientationchange a až pak resize; udělej obojí
+    scheduleHeroRecenter();
+    setTimeout(scheduleHeroRecenter, 60);
+    setTimeout(scheduleHeroRecenter, 180);
+  }, { passive:true });
+
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', scheduleHeroRecenter, { passive:true });
+    window.visualViewport.addEventListener('scroll', scheduleHeroRecenter, { passive:true });
+  }
+
 
 
   function setupAmbientObserver(){
