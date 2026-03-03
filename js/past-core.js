@@ -1280,27 +1280,58 @@ void wrap.offsetHeight;
     const grid = document.getElementById("eventsGrid");
     if (!grid) return;
 
+    // Inject minimal CSS once (no file edits needed)
+    if (!document.getElementById("rpFixStyle")){
+      const st = document.createElement("style");
+      st.id = "rpFixStyle";
+      st.textContent = `
+        /* Force compositor re-paint without visible change */
+        #eventsGrid[data-rp="1"]{ transform: translateZ(0); }
+        #eventsGrid[data-rp="0"]{ transform: translateZ(0.01px); }
+        #eventsGrid[data-rp] .poster{ backface-visibility: hidden; transform-style: preserve-3d; }
+        #eventsGrid[data-rp] img{ backface-visibility: hidden; }
+      `;
+      document.head.appendChild(st);
+    }
+
+    // 1) Force a grid-level repaint (this is the "whole page refresh" effect you described)
+    try{
+      const cur = grid.getAttribute("data-rp") === "1" ? "1" : "0";
+      const next = cur === "1" ? "0" : "1";
+      grid.setAttribute("data-rp", next);
+
+      // Nudge multicol layout to repaint as well (no visual difference)
+      const gap = window.getComputedStyle(grid).columnGap || "";
+      if (gap){
+        grid.style.columnGap = gap;
+        // force style flush
+        void grid.offsetHeight;
+        grid.style.columnGap = gap;
+      } else {
+        void grid.offsetHeight;
+      }
+    } catch(e){}
+
+    // 2) Also repaint visible posters (cheaper than repainting all)
     const vp = getViewportRect();
-    // posters are .poster; images inside are .posterImg or just img
     const posters = grid.querySelectorAll(".poster");
-    posters.forEach(p => {
-      if (!inView(p, vp)) return;
+    posters.forEach((p) => {
+      if (!isInViewport(p, vp)) return;
+      const prev = p.style.transform;
+      const prevWC = p.style.willChange;
 
-      // 1) promote to its own layer (often fixes half-paint tiles)
-      const prevTransform = p.style.transform;
       p.style.willChange = "transform";
-      p.style.transform = (prevTransform && prevTransform !== "none") ? prevTransform + " translateZ(0)" : "translateZ(0)";
-      p.style.backfaceVisibility = "hidden";
+      // toggle between two transforms to force repaint; keep any existing rotate set elsewhere
+      p.style.transform = (prev && prev.includes("translateZ")) ? prev.replace(/translateZ\([^)]+\)/g, "translateZ(0)") : (prev ? prev + " translateZ(0)" : "translateZ(0)");
 
-      // 2) force a reflow *once* (cheap, scoped)
-      // eslint-disable-next-line no-unused-expressions
-      p.offsetHeight;
+      // Force flush
+      void p.offsetHeight;
 
-      // 3) restore transform on next frame (avoid accumulating translateZ)
-      requestAnimationFrame(() => {
-        // keep a stable layer hint, but don't keep stacking transforms
-        p.style.transform = prevTransform || "";
-      });
+      // restore quickly
+      setTimeout(() => {
+        p.style.willChange = prevWC || "";
+        p.style.transform = prev || "";
+      }, 0);
     });
   }
 
