@@ -532,3 +532,30 @@ void wrap.offsetHeight;
   init().catch(err => {
     grid.innerHTML = '<div class="err">'+String(err.message || err)+'</div>';
   });
+
+
+/* ===== LANDSCAPE ROTATE: CLOSE HERO IF OPEN =====
+   Když je hero otevřený a otočíš do LANDSCAPE (touch), zavři ho.
+   Tím zmizí ten problém „plakát vlevo/dole“.
+*/
+(() => {
+  function isLandscapeTouch(){
+    return window.matchMedia("(orientation: landscape) and (pointer: coarse)").matches;
+  }
+  function heroIsOpen(){
+    try {
+      if (typeof heroOpen !== "undefined") return !!heroOpen;
+      const ov = document.getElementById("heroOverlay");
+      return ov && ov.getAttribute("aria-hidden") === "false";
+    } catch(e) { return false; }
+  }
+  function closeIfNeeded(){
+    try {
+      if (!isLandscapeTouch()) return;
+      if (!heroIsOpen()) return;
+      if (typeof closeHero === "function") closeHero();
+    } catch(e) {}
+  }
+  window.addEventListener("orientationchange", () => setTimeout(closeIfNeeded, 80), { passive:true });
+  window.addEventListener("resize", () => setTimeout(closeIfNeeded, 80), { passive:true });
+})();
