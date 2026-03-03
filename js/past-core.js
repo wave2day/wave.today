@@ -1211,49 +1211,43 @@ void wrap.offsetHeight;
   window.addEventListener("resize", () => setTimeout(tick, 60), { passive: true });
 })();
 
-
-/* ===== RECENTER HERO ON ROTATION (deterministic) =====
-   Po otočení/resize znovu spočítá střed pro otevřený hero bez zásahu do open/close animace.
+/* ===== CENTER HERO BY REOPENING ON ROTATE =====
+   Nezasahuje do existující roll/unroll logiky.
+   Jen si pamatuje poslední posterEl pro openHero a po otočení/resize
+   znovu zavolá původní openHero, aby se přepočítal střed pro nový viewport.
 */
 (() => {
+  if (typeof window === "undefined") return;
+
+  // Wrap openHero once to remember the source poster element
+  if (typeof window.openHero === "function" && !window.__openHeroWrapped) {
+    window.__openHeroWrapped = true;
+    const _openHero = window.openHero.bind(window);
+    window.__openHeroOriginal = _openHero;
+    window.openHero = function(posterEl){
+      try { window.__heroPosterEl = posterEl; } catch(e){}
+      return _openHero(posterEl);
+    };
+  }
+
   function heroIsOpen(){
-    try { return (typeof heroOpen !== "undefined") && !!heroOpen; }
-    catch(e) { return false; }
-  }
-
-  function recenterHero(){
-    if (!heroIsOpen()) return;
     try {
-      if (typeof heroCard === "undefined" || !heroCard) return;
-      const img = heroCard.querySelector ? heroCard.querySelector("img") : null;
-      if (!img) return;
-
-      const vw = window.innerWidth || document.documentElement.clientWidth;
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-
-      const maxW = Math.min(vw - 32, 980);
-      const maxH = Math.min(vh - 96, 900);
-
-      const natW = img.naturalWidth || heroCard.offsetWidth || 800;
-      const natH = img.naturalHeight || heroCard.offsetHeight || 900;
-
-      const scale = Math.min(maxW / natW, maxH / natH, 1);
-      const tW = Math.max(240, Math.round(natW * scale));
-      const tH = Math.max(240, Math.round(natH * scale));
-      const tL = Math.round((vw - tW) / 2);
-      const tT = Math.round((vh - tH) / 2);
-
-      const prev = heroCard.style.transition;
-      heroCard.style.transition = "none";
-      heroCard.style.left = tL + "px";
-      heroCard.style.top = tT + "px";
-      heroCard.style.width = tW + "px";
-      heroCard.style.height = tH + "px";
-      void heroCard.offsetHeight;
-      heroCard.style.transition = prev;
-    } catch(e) {}
+      if (typeof heroOpen !== "undefined") return !!heroOpen;
+      const overlay = document.getElementById("heroOverlay");
+      return overlay && overlay.getAttribute("aria-hidden") === "false";
+    } catch(e) { return false; }
   }
 
-  window.addEventListener("orientationchange", () => setTimeout(recenterHero, 90), { passive:true });
-  window.addEventListener("resize", () => setTimeout(recenterHero, 90), { passive:true });
+  function reopen(){
+    try {
+      if (!heroIsOpen()) return;
+      const el = window.__heroPosterEl;
+      const fn = window.__openHeroOriginal || window.openHero;
+      if (!el || typeof fn !== "function") return;
+      setTimeout(() => fn(el), 120);
+    } catch(e){}
+  }
+
+  window.addEventListener("orientationchange", reopen, { passive:true });
+  window.addEventListener("resize", () => setTimeout(reopen, 60), { passive:true });
 })();
