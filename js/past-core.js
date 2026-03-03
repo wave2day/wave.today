@@ -1211,54 +1211,49 @@ void wrap.offsetHeight;
   window.addEventListener("resize", () => setTimeout(tick, 60), { passive: true });
 })();
 
-/* ===== LANDSCAPE: no click + close hero on rotate (keep existing roll logic) ===== */
-(() => {
-  const grid = document.getElementById("eventsGrid");
-  const hero = document.getElementById("heroOverlay");
-  if (!grid || !hero) return;
 
-  function isLandscapeTouch(){
-    return window.matchMedia("(orientation: landscape) and (pointer: coarse)").matches;
-  }
+/* ===== RECENTER HERO ON ROTATION (deterministic) =====
+   Po otočení/resize znovu spočítá střed pro otevřený hero bez zásahu do open/close animace.
+*/
+(() => {
   function heroIsOpen(){
-    return hero.getAttribute("aria-hidden") === "false";
+    try { return (typeof heroOpen !== "undefined") && !!heroOpen; }
+    catch(e) { return false; }
   }
 
-  // Block poster activation ONLY in landscape touch (do not touch portrait behavior)
-  function stopInLandscape(ev){
-    if (!isLandscapeTouch()) return;
-    const p = ev.target && ev.target.closest ? ev.target.closest(".poster") : null;
-    if (!p) return;
-    if (ev.cancelable) ev.preventDefault();
-    ev.stopPropagation();
-    ev.stopImmediatePropagation();
-  }
-  grid.addEventListener("click", stopInLandscape, true);
-  grid.addEventListener("pointerup", stopInLandscape, true);
-
-  // If hero is open and user rotates to landscape, close it (prevents off-center)
-  function closeIfNeeded(){
-    if (!isLandscapeTouch()) return;
+  function recenterHero(){
     if (!heroIsOpen()) return;
-    if (typeof window.closeHero === "function") window.closeHero();
+    try {
+      if (typeof heroCard === "undefined" || !heroCard) return;
+      const img = heroCard.querySelector ? heroCard.querySelector("img") : null;
+      if (!img) return;
+
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+
+      const maxW = Math.min(vw - 32, 980);
+      const maxH = Math.min(vh - 96, 900);
+
+      const natW = img.naturalWidth || heroCard.offsetWidth || 800;
+      const natH = img.naturalHeight || heroCard.offsetHeight || 900;
+
+      const scale = Math.min(maxW / natW, maxH / natH, 1);
+      const tW = Math.max(240, Math.round(natW * scale));
+      const tH = Math.max(240, Math.round(natH * scale));
+      const tL = Math.round((vw - tW) / 2);
+      const tT = Math.round((vh - tH) / 2);
+
+      const prev = heroCard.style.transition;
+      heroCard.style.transition = "none";
+      heroCard.style.left = tL + "px";
+      heroCard.style.top = tT + "px";
+      heroCard.style.width = tW + "px";
+      heroCard.style.height = tH + "px";
+      void heroCard.offsetHeight;
+      heroCard.style.transition = prev;
+    } catch(e) {}
   }
-  window.addEventListener("orientationchange", () => setTimeout(closeIfNeeded, 60), { passive: true });
-  window.addEventListener("resize", () => setTimeout(closeIfNeeded, 60), { passive: true });
-})();
 
-/* ===== LANDSCAPE: close hero on rotate (keep existing roll logic) ===== */
-(() => {
-  // We do NOT replace openHero/closeHero. We only close hero when rotating into landscape touch,
-  // so it never ends up “on the side”.
-  const mq = window.matchMedia("(orientation: landscape) and (pointer: coarse)");
-
-  function closeIfNeeded(){
-    try{
-      if (!mq.matches) return;
-      if (typeof heroOpen !== "undefined" && heroOpen && typeof closeHero === "function") closeHero();
-    }catch(e){}
-  }
-
-  window.addEventListener("orientationchange", () => setTimeout(closeIfNeeded, 60), { passive:true });
-  window.addEventListener("resize", () => setTimeout(closeIfNeeded, 60), { passive:true });
+  window.addEventListener("orientationchange", () => setTimeout(recenterHero, 90), { passive:true });
+  window.addEventListener("resize", () => setTimeout(recenterHero, 90), { passive:true });
 })();
