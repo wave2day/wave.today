@@ -1248,3 +1248,91 @@ void wrap.offsetHeight;
     if (n >= 15) clearInterval(iv); // ~3s total
   }, 200);
 })();
+
+
+/* ===== Mobile half-poster repaint fix (no layout/background changes) =====
+   Symptom: on some Android Chrome builds + heavy compositing, posters can render "half" / disappear while scrolling,
+   even though they exist in DOM. Workaround: force a tiny layer/paint refresh for visible posters on scroll/resize.
+   References: multicol/paint bugs often mitigated by translateZ(0) / GPU layer promotion. */
+(function(){
+  const isMobile = () => window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+  const isPortrait = () => window.matchMedia && window.matchMedia("(orientation: portrait)").matches;
+  const prefersFix = () => isMobile() && isPortrait();
+
+  let rafId = 0;
+  let scrollEndT = 0;
+
+  function getViewportRect(){
+    const vv = window.visualViewport;
+    if (vv) return { left: 0, top: 0, right: vv.width, bottom: vv.height, width: vv.width, height: vv.height };
+    return { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight, width: window.innerWidth, height: window.innerHeight };
+  }
+
+  function inView(el, vp){
+    const r = el.getBoundingClientRect();
+    // generous margins to catch near-viewport tiles
+    const m = 120;
+    return (r.bottom >= -m && r.top <= vp.bottom + m && r.right >= -m && r.left <= vp.right + m);
+  }
+
+  function forceRepaintVisiblePosters(){
+    if (!prefersFix()) return;
+    const grid = document.getElementById("eventsGrid");
+    if (!grid) return;
+
+    const vp = getViewportRect();
+    // posters are .poster; images inside are .posterImg or just img
+    const posters = grid.querySelectorAll(".poster");
+    posters.forEach(p => {
+      if (!inView(p, vp)) return;
+
+      // 1) promote to its own layer (often fixes half-paint tiles)
+      const prevTransform = p.style.transform;
+      p.style.willChange = "transform";
+      p.style.transform = (prevTransform && prevTransform !== "none") ? prevTransform + " translateZ(0)" : "translateZ(0)";
+      p.style.backfaceVisibility = "hidden";
+
+      // 2) force a reflow *once* (cheap, scoped)
+      // eslint-disable-next-line no-unused-expressions
+      p.offsetHeight;
+
+      // 3) restore transform on next frame (avoid accumulating translateZ)
+      requestAnimationFrame(() => {
+        // keep a stable layer hint, but don't keep stacking transforms
+        p.style.transform = prevTransform || "";
+      });
+    });
+  }
+
+  function scheduleFix(){
+    if (!prefersFix()) return;
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      forceRepaintVisiblePosters();
+    });
+  }
+
+  function onScroll(){
+    if (!prefersFix()) return;
+    scheduleFix();
+    clearTimeout(scrollEndT);
+    scrollEndT = setTimeout(() => {
+      // one more pass after scroll settles
+      forceRepaintVisiblePosters();
+    }, 90);
+  }
+
+  // Attach listeners (passive to not block scroll)
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", () => { scheduleFix(); }, { passive: true });
+  window.addEventListener("orientationchange", () => { setTimeout(scheduleFix, 50); }, { passive: true });
+
+  if (window.visualViewport){
+    window.visualViewport.addEventListener("scroll", onScroll, { passive: true });
+    window.visualViewport.addEventListener("resize", () => { scheduleFix(); }, { passive: true });
+  }
+
+  // initial pass after content loads
+  setTimeout(() => { try { forceRepaintVisiblePosters(); } catch(e){} }, 300);
+})()
