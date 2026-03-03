@@ -1211,23 +1211,19 @@ void wrap.offsetHeight;
   window.addEventListener("resize", () => setTimeout(tick, 60), { passive: true });
 })();
 
-/* ===== CENTER HERO BY REOPENING ON ROTATE =====
-   Nezasahuje do existující roll/unroll logiky.
-   Jen si pamatuje poslední posterEl pro openHero a po otočení/resize
-   znovu zavolá původní openHero, aby se přepočítal střed pro nový viewport.
+
+/* ===== HERO FORCE CENTER ON OPEN + ROTATE (no edge drift) =====
+   1) Po otevření hero (unroll hotový) zapne html.heroCentered -> karta je vždy uprostřed.
+   2) Před zavřením hero to vypne, aby rollUp mohl jet zpátky do plakátu.
+   3) Po otočení/resize, pokud je hero otevřený, centrum drží automaticky (CSS).
 */
 (() => {
-  if (typeof window === "undefined") return;
+  const UNROLL_MS = 520; // sladěno s tvými 520ms přechody
 
-  // Wrap openHero once to remember the source poster element
-  if (typeof window.openHero === "function" && !window.__openHeroWrapped) {
-    window.__openHeroWrapped = true;
-    const _openHero = window.openHero.bind(window);
-    window.__openHeroOriginal = _openHero;
-    window.openHero = function(posterEl){
-      try { window.__heroPosterEl = posterEl; } catch(e){}
-      return _openHero(posterEl);
-    };
+  function setCentered(on){
+    try {
+      document.documentElement.classList.toggle('heroCentered', !!on);
+    } catch(e){}
   }
 
   function heroIsOpen(){
@@ -1238,16 +1234,30 @@ void wrap.offsetHeight;
     } catch(e) { return false; }
   }
 
-  function reopen(){
-    try {
-      if (!heroIsOpen()) return;
-      const el = window.__heroPosterEl;
-      const fn = window.__openHeroOriginal || window.openHero;
-      if (!el || typeof fn !== "function") return;
-      setTimeout(() => fn(el), 120);
-    } catch(e){}
+  if (typeof window !== "undefined" && typeof window.openHero === "function" && !window.__heroCenterWrapOpen) {
+    window.__heroCenterWrapOpen = true;
+    const _open = window.openHero.bind(window);
+    window.openHero = function(posterEl){
+      setCentered(false); // nech unroll dojet podle původních left/top
+      const res = _open(posterEl);
+      setTimeout(() => { if (heroIsOpen()) setCentered(true); }, UNROLL_MS + 30);
+      return res;
+    };
   }
 
-  window.addEventListener("orientationchange", reopen, { passive:true });
-  window.addEventListener("resize", () => setTimeout(reopen, 60), { passive:true });
+  if (typeof window !== "undefined" && typeof window.closeHero === "function" && !window.__heroCenterWrapClose) {
+    window.__heroCenterWrapClose = true;
+    const _close = window.closeHero.bind(window);
+    window.closeHero = function(){
+      setCentered(false); // umožní rollUp zpět do plakátu
+      return _close();
+    };
+  }
+
+  function ensure(){
+    if (heroIsOpen()) setCentered(true);
+    else setCentered(false);
+  }
+  window.addEventListener('orientationchange', () => setTimeout(ensure, 80), {passive:true});
+  window.addEventListener('resize', () => setTimeout(ensure, 80), {passive:true});
 })();
