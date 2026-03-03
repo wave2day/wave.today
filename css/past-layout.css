@@ -335,10 +335,3 @@
     mix-blend-mode: normal !important;
   }
 }
-
-
-/* ===== HERO OVERLAY FULLSCREEN GUARD ===== */
-#heroOverlay{
-  position: fixed;
-  inset: 0;
-}
