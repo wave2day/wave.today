@@ -151,11 +151,12 @@
 
   function randomizeVars() {
     Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
-      const tx = (Math.random() * 2 - 1) * 14;
-      const ty = (Math.random() * 2 - 1) * 22;
-      const rot = (Math.random() * 2 - 1) * 1.6;
-      const scl = 0.99 + Math.random() * 0.05;
-      const z = 1 + Math.round(Math.random() * 3);
+      // Jemnější rozhození (méně přepálené naklony/posuny)
+      const tx = (Math.random() * 2 - 1) * 8;    // px
+      const ty = (Math.random() * 2 - 1) * 12;   // px
+      const rot = (Math.random() * 2 - 1) * 0.8; // deg
+      const scl = 0.995 + Math.random() * 0.02;  // 0.995..1.015
+      const z = 1 + Math.round(Math.random() * 2); // 1..3
 
       el.style.setProperty('--tx', tx.toFixed(1) + 'px');
       el.style.setProperty('--ty', ty.toFixed(1) + 'px');
@@ -205,10 +206,15 @@
       clearRandomVars();
       restoreOrder();
 
-      // When switching back to Date, jump to the top (first poster)
-      requestAnimationFrame(() => {
-        try { window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); } catch (_e) { window.scrollTo(0, 0); }
-      });
+      // DATE: po přepnutí vždy skoč na první (nejmladší) plakát
+      const first = grid.querySelector('.poster');
+      if (first) {
+        const barH = topBar ? topBar.getBoundingClientRect().height : 0;
+        const y = window.scrollY + first.getBoundingClientRect().top - (barH + 12);
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   }
 
@@ -241,12 +247,29 @@
     wrap.appendChild(hi);
     heroCard.appendChild(wrap);
 
-    // start unroll anim (CSS driven)
-    heroCard.classList.remove('rollingUp');
-    heroCard.classList.add('unrolling');
-    setTimeout(() => heroCard.classList.remove('unrolling'), 560);
+    // Start at the clicked poster rect (so closing can roll back into it)
+    heroCard.style.inset = 'auto';
+    heroCard.style.right = 'auto';
+    heroCard.style.bottom = 'auto';
+    heroCard.style.transition = 'none';
+    heroCard.style.left = heroFrom.left + 'px';
+    heroCard.style.top = heroFrom.top + 'px';
+    heroCard.style.width = heroFrom.width + 'px';
+    heroCard.style.height = heroFrom.height + 'px';
+    heroCard.style.borderRadius = '0px';
 
-    recenterHeroCard(true);
+    // force reflow so the transition always triggers
+    void heroCard.offsetHeight;
+
+    // Animate to centered size
+    requestAnimationFrame(() => {
+      recenterHeroCard(false);
+
+      // start "odrolování" efekt (CSS driven)
+      heroCard.classList.remove('rollingUp');
+      heroCard.classList.add('unrolling');
+      setTimeout(() => heroCard.classList.remove('unrolling'), 560);
+    });
   }
 
   function closeHero() {
@@ -254,6 +277,18 @@
 
     heroCard.classList.remove('unrolling');
     heroCard.classList.add('rollingUp');
+
+    if (heroFrom) {
+      heroCard.style.inset = 'auto';
+      heroCard.style.right = 'auto';
+      heroCard.style.bottom = 'auto';
+      heroCard.style.transition =
+        'left 260ms cubic-bezier(.2,.8,.2,1), top 260ms cubic-bezier(.2,.8,.2,1), width 260ms cubic-bezier(.2,.8,.2,1), height 260ms cubic-bezier(.2,.8,.2,1)';
+      heroCard.style.left = heroFrom.left + 'px';
+      heroCard.style.top = heroFrom.top + 'px';
+      heroCard.style.width = heroFrom.width + 'px';
+      heroCard.style.height = heroFrom.height + 'px';
+    }
 
     setTimeout(() => {
       heroOpen = false;
@@ -264,6 +299,7 @@
       heroFrom = null;
       heroSrc = null;
       heroJustOpenedAt = 0;
+      heroCard.style.transition = '';
     }, 280);
   }
 
@@ -297,7 +333,7 @@
       heroCard.style.right = 'auto';
       heroCard.style.bottom = 'auto';
 
-      heroCard.style.transition = noTransition ? 'none' : '';
+      heroCard.style.transition = noTransition ? 'none' : 'left 360ms cubic-bezier(.2,.85,.2,1), top 360ms cubic-bezier(.2,.85,.2,1), width 360ms cubic-bezier(.2,.85,.2,1), height 360ms cubic-bezier(.2,.85,.2,1)';
       heroCard.style.left = tL + 'px';
       heroCard.style.top = tT + 'px';
       heroCard.style.width = tW + 'px';
