@@ -15,15 +15,16 @@
   width:100%;
   break-inside:avoid;
   -webkit-column-break-inside:avoid;
-  margin:0 0 -22px 0; /* allow gentle overlap */
-  overflow: visible; /* prevent rotated look from being clipped */
+  margin: 0 0 -12px 0; /* overlap */
+  overflow: visible;
   position: relative;
   z-index: var(--z,1);
-  transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1));
-  transform-origin:center center;
-  transition: none;
+  transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
+  transform-origin: center center;
+  transition: none !important;
   will-change: transform;
 }
+
 
     }
 
@@ -301,3 +302,6 @@
 /* ---- overrides: random mode should not clip rotated posters ---- */
 #eventsGrid.randomMode .poster{ overflow: visible !important; }
 #eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; transform: none !important; }
+/* ---- FIX: random mode uses JS vars for tilt/offset; do not clip ---- */
+#eventsGrid.randomMode .poster{ overflow: visible !important; }
+#eventsGrid.randomMode .poster img{ transform: none !important; }
