@@ -1,10 +1,27 @@
 
-/* Force poster tilt from JS variables */
+/* RANDOM MODE LAYOUT */
+#eventsGrid.randomMode{
+  column-count: 2;
+  column-gap: 10px;
+}
+
+/* POSTER BEHAVIOUR */
 #eventsGrid.randomMode .poster{
+  display: inline-block;
+  width: 100%;
+  break-inside: avoid;
+  margin: 0 0 -12px 0;
+
   transform:
     translate(var(--tx,0px), var(--ty,0px))
     rotate(var(--rot,0deg))
-    scale(var(--scl,1)) !important;
+    scale(var(--scl,1));
 
   transform-origin: center center;
+}
+
+/* IMAGE */
+#eventsGrid.randomMode .poster img{
+  width:100%;
+  display:block;
 }
