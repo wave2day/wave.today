@@ -11,8 +11,19 @@
         padding: 0 12px;
       }
       #eventsGrid.randomMode .poster{
-        max-width: none;
-      }
+  display:inline-block;
+  width:100%;
+  break-inside:avoid;
+  -webkit-column-break-inside:avoid;
+  margin:0 0 1px 0;
+  transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1));
+  transform-origin:center center;
+  transition: none;
+  will-change: transform;
+  position: relative;
+  z-index: var(--z,1);
+}
+
     }
 
 @media (max-width: 420px){
@@ -136,18 +147,18 @@
   }
 
   /* non-symmetric rotation pattern */
-  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-6.5deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-0.35deg); }
   #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 4.2deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-2.8deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-0.35deg); }
   #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 6.9deg); }
   #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.6deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-5.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-0.35deg); }
   #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 5.6deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-1.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-0.22deg); }
   #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 3.1deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-7.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-0.35deg); }
   #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 2.4deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-3.7deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-0.35deg); }
 
   #eventsGrid.randomMode .wtIcon{
     width: 64px !important;
