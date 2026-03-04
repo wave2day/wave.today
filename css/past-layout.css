@@ -15,16 +15,15 @@
   width:100%;
   break-inside:avoid;
   -webkit-column-break-inside:avoid;
-  margin: 0 0 -12px 0; /* overlap */
-  overflow: visible;
+  margin:0 0 -12px 0; /* allow gentle overlap */
+  overflow: visible; /* prevent rotated look from being clipped */
   position: relative;
   z-index: var(--z,1);
-  transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
-  transform-origin: center center;
-  transition: none !important;
+  transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1));
+  transform-origin:center center;
+  transition: none;
   will-change: transform;
 }
-
 
     }
 
@@ -81,7 +80,7 @@
 
   /* During scroll: temporarily remove rotations to avoid partial paint tiles */
   body.v21Scrolling #eventsGrid.randomMode .poster img{
-    transform: none !important;
+    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
   }
 }
 
@@ -105,7 +104,7 @@
     margin-left: calc(50% - 50vw) !important;
     margin-right: calc(50% - 50vw) !important;
 
-    transform: none !important;
+    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
     will-change: auto !important;
     filter: none !important;
     isolation: isolate;
@@ -116,9 +115,9 @@
     width: 100% !important;
     break-inside: avoid !important;
     -webkit-column-break-inside: avoid !important;
-    margin: 0 0 1px !important;
+    margin: 0 0 -18px !important;
 
-    transform: none !important;
+    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
     transition: none !important;
     will-change: auto !important;
 
@@ -168,7 +167,7 @@
   }
 
   #eventsGrid.randomMode.isScrolling .poster img{
-    transform: none !important;
+    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
   }
 }
 
@@ -261,7 +260,7 @@
   /* V random 2-sloupce musí být item 100% šířky sloupce (ne min(100vw...)) */
   #eventsGrid.randomMode .poster{
     width: 100% !important;
-    margin: 0 0 1px !important;
+    margin: 0 0 -18px !important;
   }
   #eventsGrid.randomMode .poster img{
     height: auto !important;
@@ -279,8 +278,8 @@
   /* během scrollu zjednodušit rendering */
   #eventsGrid.randomMode.isScrolling .poster,
   #eventsGrid.randomMode.isScrolling .poster img{
-    -webkit-transform: none !important;
-    transform: none !important;
+    -webkit-transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
+    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
     filter: none !important;
     transition: none !important;
     animation: none !important;
@@ -301,7 +300,4 @@
 }
 /* ---- overrides: random mode should not clip rotated posters ---- */
 #eventsGrid.randomMode .poster{ overflow: visible !important; }
-#eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; transform: none !important; }
-/* ---- FIX: random mode uses JS vars for tilt/offset; do not clip ---- */
-#eventsGrid.randomMode .poster{ overflow: visible !important; }
-#eventsGrid.randomMode .poster img{ transform: none !important; }
+#eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important; }
