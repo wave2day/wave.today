@@ -136,73 +136,6 @@
     setAmbientTarget(rgb);
   }
 
-// ===== AMBIENT: auto-update on scroll (poster closest to viewport center) =====
-// Idea: as you scroll, we pick the poster that is most "in view" and use its colors for the ambient fog.
-// This keeps the background alive even without hover (mobile-friendly).
-let _ambObserver = null;
-let _ambPickRAF = 0;
-let _ambLastSrc = null;
-let _ambHoverLockUntil = 0;
-
-function _now(){
-  return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-}
-
-function setupAmbientObserver(){
-  if(_ambObserver) { try{ _ambObserver.disconnect(); } catch(_e){} }
-  _ambObserver = null;
-
-  const imgs = Array.from(grid.querySelectorAll('.poster img'));
-  if(!imgs.length) return;
-
-  // set initial from first loaded image (if already available)
-  const first = imgs[0];
-  if(first && (first.currentSrc || first.src)){
-    // do it only once; this does not fight the later observer
-    setAmbientFromImg(first.currentSrc || first.src);
-  }
-
-  // Throttle picks to RAF to avoid spamming during fast scroll
-  function pickBest(entries){
-    if(_ambPickRAF) return;
-    _ambPickRAF = requestAnimationFrame(async () => {
-      _ambPickRAF = 0;
-
-      // If user just hovered a poster, don't overwrite immediately.
-      if(_now() < _ambHoverLockUntil) return;
-
-      const best = entries
-        .filter(e => e && e.isIntersecting && e.target)
-        .sort((a,b) => (b.intersectionRatio || 0) - (a.intersectionRatio || 0))[0];
-
-      if(!best) return;
-      const img = best.target;
-      if(!img) return;
-
-      const src = img.currentSrc || img.src;
-      if(!src) return;
-      if(src === _ambLastSrc) return;
-
-      _ambLastSrc = src;
-      await setAmbientFromImg(src);
-    });
-  }
-
-  _ambObserver = new IntersectionObserver(pickBest, {
-    root: null,
-    // A bit of margin so it reacts before the poster fully enters
-    rootMargin: '180px 0px 180px 0px',
-    threshold: [0.20, 0.35, 0.55, 0.72]
-  });
-
-  imgs.forEach(img => {
-    // observe once the image exists (lazy images may not be loaded yet)
-    if(img.complete) _ambObserver.observe(img);
-    else img.addEventListener('load', () => { try{ _ambObserver && _ambObserver.observe(img); }catch(_e){} }, { once:true });
-  });
-}
-
-
   // ===== DATA / MODES =====
   let items = [];
   let currentMode = 'date';
@@ -243,9 +176,7 @@ function setupAmbientObserver(){
     Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
       const tx  = (Math.random() * 2 - 1) * 14;
       const ty  = (Math.random() * 2 - 1) * 22;
-      let r = (Math.random() * 2 - 1);
-      r = Math.sign(r) * Math.pow(Math.abs(r), 2.2);
-      const rot = r * 0.55;
+      const rot = (Math.random() * 2 - 1) * 0.25;
       const scl = 0.99 + Math.random() * 0.05;
       const z   = 1 + Math.round(Math.random() * 3);
 
@@ -299,10 +230,6 @@ function setupAmbientObserver(){
       scrollToFirstPoster();
     }
   }
-
-    // keep ambient tracking stable after DOM churn
-    setupAmbientObserver();
-
 
   // ===== HERO overlay (centered + recenter on rotate) + ROLL BACK INTO TILE =====
   let heroOpen = false;
@@ -507,7 +434,7 @@ function setupAmbientObserver(){
     a.appendChild(img);
 
     // ambient updates on hover/focus
-    const prime = () => { _ambHoverLockUntil = _now() + 650; if (img.src) setAmbientFromImg(img.src); };
+    const prime = () => { if (img.src) setAmbientFromImg(img.src); };
     a.addEventListener('mouseenter', prime);
     a.addEventListener('focus', prime);
 
@@ -526,9 +453,6 @@ function setupAmbientObserver(){
 
     grid.innerHTML = '';
     items.forEach((it, idx) => grid.appendChild(makePoster(it, idx)));
-
-    // ambient: auto-update while scrolling
-    setupAmbientObserver();
 
     modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
 
