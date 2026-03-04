@@ -15,7 +15,7 @@
   width:100%;
   break-inside:avoid;
   -webkit-column-break-inside:avoid;
-  margin:0 0 -12px 0; /* allow gentle overlap */
+  margin:0 0 -22px 0; /* allow gentle overlap */
   overflow: visible; /* prevent rotated look from being clipped */
   position: relative;
   z-index: var(--z,1);
