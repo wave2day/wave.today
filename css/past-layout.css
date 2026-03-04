@@ -136,18 +136,18 @@
   }
 
   /* non-symmetric rotation pattern */
-  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-6.5deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate( 4.2deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-2.8deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate( 6.9deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate( 1.6deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-5.1deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate( 5.6deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-1.2deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate( 3.1deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-7.2deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate( 2.4deg); }
-  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-3.7deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(-2.0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate(1.3deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(-0.9deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate(2.1deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate(0.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(-1.6deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate(1.7deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(-0.4deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate(1.0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(-2.2deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate(0.8deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(-1.1deg); }
 
   #eventsGrid.randomMode .wtIcon{
     width: 64px !important;
@@ -288,13 +288,5 @@
 }
 
 
-/* === PATCH: allow tilt vars to take effect in random mode (no layout changes) === */
-#eventsGrid.randomMode .poster{
-  transform:
-    translate(var(--flipX,0px))
-    translate(var(--tx,0px), var(--ty,0px))
-    rotate(var(--rot,0deg))
-    scale(var(--scl,1)) !important;
-  transform-origin: center center !important;
-}
-
+/* mild tilt origin */
+#eventsGrid.randomMode .poster img{ transform-origin: center center; }
