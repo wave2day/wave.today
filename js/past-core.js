@@ -175,8 +175,8 @@
   function randomizeVars() {
     Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
       const tx  = (Math.random() * 2 - 1) * 14;
-      const ty  = (Math.random() * 2 - 1) * 22;
-      const rot = (Math.random() * 2 - 1) * 0.35;
+      const ty  = (Math.random() * 2 - 1) * 6;
+      const rot = (Math.random() * 2 - 1) * 0.5;
       const scl = 0.99 + Math.random() * 0.05;
       const z   = 1 + Math.round(Math.random() * 3);
 
