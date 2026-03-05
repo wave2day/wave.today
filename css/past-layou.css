@@ -1,0 +1,91 @@
+/* past-layout.css — cleaned v2
+   Goal: RANDOM = 2 columns on mobile (portrait+landscape), without "wide middle" look.
+   This file uses !important where needed to override older rules that may still exist elsewhere.
+*/
+
+/* --- RANDOM MODE BASE --- */
+#eventsGrid.randomMode .poster{
+  display:inline-block !important;
+  width:100% !important;
+  break-inside:avoid !important;
+  -webkit-column-break-inside:avoid !important;
+  overflow:visible !important;
+  position:relative !important;
+  z-index:var(--z,1);
+}
+
+#eventsGrid.randomMode .poster img{
+  display:block !important;
+  width:100% !important;
+  height:auto !important;
+  object-fit:contain !important;
+  transform:
+    translate(var(--tx,0px), var(--ty,0px))
+    rotate(var(--rot,0deg))
+    scale(var(--scl,1)) !important;
+  transform-origin:center center !important;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+
+/* --- PORTRAIT RANDOM LAYOUT --- */
+@media (max-width:768px) and (orientation:portrait){
+  #eventsGrid.randomMode{
+    /* force columns even if some other stylesheet tries grid/flex */
+    display:block !important;
+
+    -webkit-column-count:2 !important;
+    column-count:2 !important;
+
+    -webkit-column-gap:6px !important;
+    column-gap:6px !important;
+
+    /* compact width (avoid 100vw optical widening) */
+    width:auto !important;
+    max-width:100% !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+    padding:0 10px !important;
+
+    /* neutralize any grid gaps if they exist somewhere */
+    grid-template-columns:unset !important;
+    gap:unset !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    margin:0 0 6px 0 !important;
+  }
+}
+
+/* --- VERY SMALL PHONES --- */
+@media (max-width:420px) and (orientation:portrait){
+  #eventsGrid.randomMode{
+    -webkit-column-gap:4px !important;
+    column-gap:4px !important;
+    padding:0 8px !important;
+  }
+}
+
+/* --- LANDSCAPE RANDOM LAYOUT --- */
+@media (max-width:768px) and (orientation:landscape){
+  #eventsGrid.randomMode{
+    display:block !important;
+    -webkit-column-count:2 !important;
+    column-count:2 !important;
+    -webkit-column-gap:10px !important;
+    column-gap:10px !important;
+    padding:0 12px !important;
+
+    width:auto !important;
+    max-width:100% !important;
+    margin-left:0 !important;
+    margin-right:0 !important;
+
+    grid-template-columns:unset !important;
+    gap:unset !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    margin:0 0 8px 0 !important;
+  }
+}
