@@ -80,6 +80,7 @@
 
   /* During scroll: temporarily remove rotations to avoid partial paint tiles */
   body.v21Scrolling #eventsGrid.randomMode .poster img{
+    transform: none !important;
   }
 }
 
@@ -103,6 +104,7 @@
     margin-left: calc(50% - 50vw) !important;
     margin-right: calc(50% - 50vw) !important;
 
+    transform: none !important;
     will-change: auto !important;
     filter: none !important;
     isolation: isolate;
@@ -115,6 +117,7 @@
     -webkit-column-break-inside: avoid !important;
     margin: 0 0 1px !important;
 
+    transform: none !important;
     transition: none !important;
     will-change: auto !important;
 
@@ -134,6 +137,7 @@
     height: auto !important;
     object-fit: contain !important;
 
+    transform: rotate(0deg);
     will-change: auto !important;
 
     mix-blend-mode: normal !important;
@@ -142,12 +146,28 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
-#eventsGrid.randomMode .wtIcon{
+
+  /* non-symmetric rotation pattern */
+  #eventsGrid.randomMode .poster:nth-child(12n+1)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+2)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+3)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+4)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+5)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+6)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+7)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+8)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+9)  img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+10) img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+11) img{ transform: rotate(0deg); }
+  #eventsGrid.randomMode .poster:nth-child(12n+12) img{ transform: rotate(0deg); }
+
+  #eventsGrid.randomMode .wtIcon{
     width: 64px !important;
     height: 64px !important;
   }
 
   #eventsGrid.randomMode.isScrolling .poster img{
+    transform: none !important;
   }
 }
 
@@ -259,6 +279,7 @@
   #eventsGrid.randomMode.isScrolling .poster,
   #eventsGrid.randomMode.isScrolling .poster img{
     -webkit-transform: none !important;
+    transform: none !important;
     filter: none !important;
     transition: none !important;
     animation: none !important;
@@ -279,4 +300,4 @@
 }
 /* ---- overrides: random mode should not clip rotated posters ---- */
 #eventsGrid.randomMode .poster{ overflow: visible !important; }
-#eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; }
+#eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; transform: none !important; }
