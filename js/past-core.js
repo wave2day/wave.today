@@ -1,4 +1,3 @@
-
 (() => {
   // ===== CONFIG =====
   const DATA_URL = 'data/events.json';
@@ -35,8 +34,6 @@
     return new Date(y || 1970, (m || 1) - 1, d || 1, 12, 0, 0);
   }
 
-  // IMPORTANT: rect MUST be taken from the same element that has transforms applied.
-  // In this solution transforms are applied to IMG (not .poster, not #eventsGrid).
   function getPosterImgRect(posterEl) {
     if (!posterEl) return null;
     const img = posterEl.querySelector('img');
@@ -164,7 +161,7 @@
     });
   }
 
-  // === RANDOM ORDER ===
+  // === RANDOM ORDER (keep like past-core.js) ===
   function shufflePosters() {
     const posters = Array.from(grid.querySelectorAll('.poster'));
     for (let i = posters.length - 1; i > 0; i--) {
@@ -174,60 +171,36 @@
     }
   }
 
-  // Small seeded noise (stable-ish per poster) to avoid "all bulge the same side"
-  function seeded01(seed) {
-    const r = Math.sin(seed * 12.9898) * 43758.5453;
-    return r - Math.floor(r);
-  }
-
-  // === RANDOM LAYOUT (alive but NOT stupid) ===
-  // Key goals:
-  // - no 15° nonsense
-  // - avoid monotone same-direction bulge
-  // - allow overlap (via z + negative margins in CSS)
+  // === RANDOM LAYOUT (gentle, like past-core.js) ===
   function randomizeVars() {
-    const posters = Array.from(grid.querySelectorAll('.poster'));
-    posters.forEach((el, i) => {
-      const key = Number(el.dataset.key) || (i + 1);
-
-      // base alternating sign but with extra wobble to break symmetry
-      const sA = (i % 2 === 0) ? 1 : -1;
-      const sB = (Math.floor(i / 2) % 2 === 0) ? 1 : -1;
-
-      const u1 = seeded01(key * 3.1 + 17);
-      const u2 = seeded01(key * 7.7 + 41);
-      const u3 = seeded01(key * 11.9 + 9);
-
-      // translate (px): enough to create life + occasional overlap, not chaos
-      const tx = (u1 * 2 - 1) * 18 + sB * 4;          // ~ -22..+22
-      const ty = (u2 * 2 - 1) * 26 + sA * 6;          // ~ -32..+32
-
-      // rotation (deg): typically around 0.6..1.7 with alternating sign + jitter
-      const rotMag = 0.55 + u3 * 1.15;                // 0.55..1.70
-      const rotJit = (seeded01(key * 5.3 + 101) * 2 - 1) * 0.35; // -0.35..+0.35
-      const rot = (sA * rotMag) + rotJit;             // ~ -2.05..+2.05
-
-      // scale: tiny, not "zoom party"
-      const scl = 0.992 + seeded01(key * 2.9 + 33) * 0.05; // 0.992..1.042
-
-      // z: correlate with ty a bit so overlaps look intentional
-      const z = 1 + clamp(Math.round((ty + 40) / 20), 0, 5); // 1..6
+    Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
+      const tx  = (Math.random() * 2 - 1) * 14;
+      const ty  = (Math.random() * 2 - 1) * 22;
+      const rot = (Math.random() * 2 - 1) * 0.35;
+      const scl = 0.99 + Math.random() * 0.05;
+      const z   = 1 + Math.round(Math.random() * 3);
 
       el.style.setProperty('--tx', tx.toFixed(1) + 'px');
       el.style.setProperty('--ty', ty.toFixed(1) + 'px');
       el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
       el.style.setProperty('--scl', scl.toFixed(3));
-      el.style.setProperty('--z', String(z));
+      el.style.setProperty('--z', z);
     });
   }
 
-  // DATE: subtle deterministic tilt (very small)
+
+  // DATE (and any non-random mode): keep a subtle, deterministic tilt everywhere
+  // Uses dataset.key (stable) so posters don't "jump" between reloads.
   function applyTiltVarsDateMode() {
     const posters = Array.from(grid.querySelectorAll('.poster'));
     posters.forEach((el, i) => {
       const seed = Number(el.dataset.key) || (i + 1);
-      const u = seeded01(seed * 9.17 + 13);
-      const rot = (u * 2 - 1) * 0.28; // about -0.28..+0.28
+      // deterministic pseudo-random in [0,1)
+      const r = (Math.sin(seed * 12.9898) * 43758.5453);
+      const u = r - Math.floor(r);
+      // degrees: about -0.28..+0.28 (subtle)
+      const rot = (u * 2 - 1) * 0.28;
+
       el.style.setProperty('--tx', '0px');
       el.style.setProperty('--ty', '0px');
       el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
@@ -236,7 +209,7 @@
     });
   }
 
-  function clearVars() {
+  function clearRandomVars() {
     Array.from(grid.querySelectorAll('.poster')).forEach(el => {
       el.style.removeProperty('--tx');
       el.style.removeProperty('--ty');
@@ -273,7 +246,7 @@
       shufflePosters();
       randomizeVars();
     } else {
-      clearVars();
+      clearRandomVars();
       restoreOrder();
       applyTiltVarsDateMode();
       scrollToFirstPoster();
@@ -295,8 +268,6 @@
     const from = getPosterImgRect(posterEl);
     if (!from) return;
 
-    document.body.classList.add('heroOpen');
-
     heroOverlay.classList.add('isOpen');
     heroOverlay.setAttribute('aria-hidden', 'false');
     heroOpen = true;
@@ -311,7 +282,7 @@
     wrap.appendChild(hi);
     heroCard.appendChild(wrap);
 
-    // start EXACTLY at the clicked tile img rect
+    // start EXACTLY at the clicked tile rect
     heroCard.style.inset = 'auto';
     heroCard.style.right = 'auto';
     heroCard.style.bottom = 'auto';
@@ -327,13 +298,14 @@
     heroCard.classList.add('unrolling');
     setTimeout(() => heroCard.classList.remove('unrolling'), 560);
 
+    // then animate to center
     requestAnimationFrame(() => recenterHeroCard(false));
   }
 
   function closeHero() {
     if (!heroOpen) return;
 
-    // animate back INTO the clicked poster img rect
+    // animate back INTO the clicked poster rect
     const to = getPosterImgRect(heroPosterEl);
     if (!to) {
       heroOpen = false;
@@ -342,7 +314,6 @@
       heroCard.innerHTML = '';
       heroPosterEl = null;
       heroJustOpenedAt = 0;
-      document.body.classList.remove('heroOpen');
       return;
     }
 
@@ -364,7 +335,6 @@
       heroCard.style.transition = '';
       heroPosterEl = null;
       heroJustOpenedAt = 0;
-      document.body.classList.remove('heroOpen');
     }, 300);
   }
 
@@ -429,6 +399,7 @@
     window.visualViewport.addEventListener('scroll', scheduleHeroRecenter, { passive: true });
   }
 
+  // close by clicking anywhere in overlay (but ignore first touch-click burst)
   heroOverlay.addEventListener('click', () => {
     const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     if (heroJustOpenedAt && (now - heroJustOpenedAt) < 380) return;
@@ -456,7 +427,7 @@
     handlePosterActivate(ev);
   }, { passive: false });
 
-  // click must always prevent default in random mode
+  // click must always prevent default in random mode (avoid # jump)
   grid.addEventListener('click', (ev) => {
     if (grid.classList.contains('randomMode')) {
       const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
@@ -469,20 +440,6 @@
     if (now - lastPointerUpAt < 450) return;
     handlePosterActivate(ev);
   }, { passive: false });
-
-  // ===== SCROLL STABILITY CLASS (only random mode) =====
-  let _scrollTO = 0;
-  function setScrolling(on) {
-    if (on) grid.classList.add('isScrolling');
-    else grid.classList.remove('isScrolling');
-  }
-  window.addEventListener('scroll', () => {
-    if (!grid.classList.contains('randomMode')) return;
-    if (document.body.classList.contains('heroOpen')) return; // do not mess with transforms while hero is open
-    setScrolling(true);
-    clearTimeout(_scrollTO);
-    _scrollTO = setTimeout(() => setScrolling(false), 140);
-  }, { passive: true });
 
   // ===== RENDER =====
   function makePoster(item, idx) {
@@ -524,8 +481,7 @@
     // default: date
     updateActiveMode('date');
     setPosterLinksEnabled(true);
-    clearVars();
-    applyTiltVarsDateMode();
+    clearRandomVars();
     applyAmbient();
 
     // initial ambient to first poster
