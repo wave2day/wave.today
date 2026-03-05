@@ -311,3 +311,29 @@
     -webkit-column-break-inside: avoid !important;
   }
 }
+/* ===== FIX: random portrait – užší prostředek, pořád 2 sloupce ===== */
+@media (max-width: 768px) and (orientation: portrait){
+  #eventsGrid.randomMode{
+    -webkit-column-count: 2 !important;
+    column-count: 2 !important;
+
+    -webkit-column-gap: 6px !important;
+    column-gap: 6px !important;
+
+    width: auto !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 10px !important;
+
+    grid-template-columns: unset !important;
+    gap: unset !important;
+  }
+}
+@media (max-width: 420px) and (orientation: portrait){
+  #eventsGrid.randomMode{
+    -webkit-column-gap: 4px !important;
+    column-gap: 4px !important;
+    padding: 0 8px !important;
+  }
+}
