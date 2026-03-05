@@ -176,7 +176,7 @@
     Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
       const tx  = (Math.random() * 2 - 1) * 1;
       const ty  = (Math.random() * 2 - 1) * 1;
-      const rot = (Math.random() * 2 - 1) * 1;
+      const rot = (Math.random() * 2 - 1) * 2;
       const scl = 0.99 + Math.random() * 0.05;
       const z   = 1 + Math.round(Math.random() * 1);
 
