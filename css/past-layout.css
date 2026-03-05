@@ -1,98 +1,129 @@
-
-/* past-layout.css — cleaned version
-   Purpose: keep RANDOM portrait layout stable (2 columns, small middle gap)
-   JS remains unchanged.
+/* past-layout.css — CLEAN (based on your last working file past-layout-1.css)
+   Scope: responsive patches only. Desktop stays in core CSS.
+   Goals:
+   - RANDOM on mobile: ALWAYS 2 columns (portrait + landscape)
+   - No transform on #eventsGrid (keeps hero/rect math sane)
+   - No conflicting grid-template-columns rules for random mode
+   - Posters can rotate/shift without being clipped
 */
 
-/* --- RANDOM MODE BASE --- */
-#eventsGrid.randomMode .poster{
-  display:inline-block;
-  width:100%;
-  break-inside:avoid;
-  -webkit-column-break-inside:avoid;
-  overflow:visible;
-  position:relative;
-  z-index:var(--z,1);
+/* ---------- RANDOM: do not clip rotated posters ---------- */
+#eventsGrid.randomMode .poster,
+#eventsGrid.randomMode .poster *{
+  overflow: visible !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  mask: none !important;
+  -webkit-mask: none !important;
 }
 
+/* Poster tile: keep as inline-block for columns */
+#eventsGrid.randomMode .poster{
+  display: inline-block !important;
+  width: 100% !important;
+  break-inside: avoid !important;
+  -webkit-column-break-inside: avoid !important;
+  position: relative;
+  z-index: var(--z,1);
+  margin: 0 0 6px !important; /* no negative overlap on phone by default */
+  contain: none !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Image: stable sizing */
 #eventsGrid.randomMode .poster img{
-  display:block;
-  width:100%;
-  height:auto;
-  object-fit:contain;
-  transform:
-    translate(var(--tx,0px), var(--ty,0px))
-    rotate(var(--rot,0deg))
-    scale(var(--scl,1));
-  transform-origin:center center;
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  transform-origin: 50% 50% !important;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
+/* ---------- MOBILE RANDOM = 2 COLUMNS (hard force) ---------- */
+@media (max-width: 768px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    /* columns need non-grid layout */
+    display: block !important;
+    -webkit-column-count: 2 !important;
+    column-count: 2 !important;
+    -webkit-column-width: auto !important;
+    column-width: auto !important;
 
-/* --- PORTRAIT RANDOM LAYOUT (phones/tablets) --- */
-@media (max-width:768px) and (orientation:portrait){
+    /* gap + compact width (avoid 100vw optical "wide middle") */
+    -webkit-column-gap: 6px !important;
+    column-gap: 6px !important;
+    width: auto !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
 
-  #eventsGrid.randomMode{
-    display:block;
+    /* neutralize any grid rules from elsewhere */
+    grid-template-columns: unset !important;
+    gap: unset !important;
 
-    /* keep exactly two columns */
-    -webkit-column-count:2;
-    column-count:2;
+    /* IMPORTANT: no transform on container */
+    transform: none !important;
+    will-change: auto !important;
+    filter: none !important;
+    isolation: isolate;
+  }
+}
 
-    /* narrow middle gap */
-    -webkit-column-gap:6px;
-    column-gap:6px;
-
-    /* normal width (remove 100vw stretch that made center look huge) */
-    width:auto;
-    max-width:100%;
-    margin-left:0;
-    margin-right:0;
-
-    padding:0 10px;
+/* slightly tighter on very small phones */
+@media (max-width: 420px){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    -webkit-column-gap: 4px !important;
+    column-gap: 4px !important;
+    padding: 0 8px !important;
   }
 
   #eventsGrid.randomMode .poster{
-    margin:0 0 6px 0;
+    margin-bottom: 6px !important;
   }
-
 }
 
-
-/* --- VERY SMALL PHONES --- */
-@media (max-width:420px) and (orientation:portrait){
-
-  #eventsGrid.randomMode{
-    -webkit-column-gap:4px;
-    column-gap:4px;
-    padding:0 8px;
+/* ---------- SCROLL stability patch (keeps paints sane) ---------- */
+@media (max-width: 768px) and (orientation: portrait){
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode .poster img{
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
+  /* During scroll: keep things simple, but DO NOT remove transforms completely */
+  #eventsGrid.randomMode.isScrolling .poster,
+  #eventsGrid.randomMode.isScrolling .poster img{
+    filter: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* never keep posters invisible */
+  #eventsGrid.randomMode .poster img{
+    opacity: 1 !important;
+  }
 }
 
-
-/* --- LANDSCAPE --- */
-/* keep same behaviour but slightly bigger gap */
-@media (max-width:768px) and (orientation:landscape){
-
-  #eventsGrid.randomMode{
-    display:block;
-    -webkit-column-count:2;
-    column-count:2;
-    -webkit-column-gap:10px;
-    column-gap:10px;
-    padding:0 12px;
+/* ---------- AMBIENT: mobile Chrome safe portrait ---------- */
+@media (max-width: 560px) and (orientation: portrait){
+  #ambientPoster{
+    mix-blend-mode: normal !important;
+    opacity: .35 !important;
+    filter: blur(44px) saturate(1.12) !important;
+    animation: none !important;
   }
-
-  #eventsGrid.randomMode .poster{
-    margin:0 0 8px 0;
+  #ambientGlow{
+    opacity: .85 !important;
+    animation: none !important;
   }
-
-}
-
-
-/* --- SAFETY: never clip rotated posters --- */
-#eventsGrid.randomMode .poster{
-  overflow:visible !important;
 }
