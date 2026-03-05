@@ -1,24 +1,17 @@
-/* fog4-addon.js
-   4-color ambient fog background
-   – scroll mění jen barvy
-   – klik nastaví texturu plakátu
-*/
-
 (() => {
 
-const grid = document.getElementById('eventsGrid');
-const ambient = document.getElementById('ambientBg');
-const ambientGlow = document.getElementById('ambientGlow');
-const ambientPoster = document.getElementById('ambientPoster');
+const grid = document.getElementById("eventsGrid");
+const ambient = document.getElementById("ambientBg");
+const ambientPoster = document.getElementById("ambientPoster");
 
-if(!grid || !ambient || !ambientGlow || !ambientPoster) return;
+if(!grid || !ambient) return;
 
-const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
-const FOG_N = 4;
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const FOG_N=4;
 
-let fogCurrent = Array.from({length:FOG_N},()=>({r:145,g:85,b:255}));
-let fogTarget  = Array.from({length:FOG_N},()=>({r:145,g:85,b:255}));
-let raf = 0;
+let fogCurrent=Array.from({length:FOG_N},()=>({r:145,g:85,b:255}));
+let fogTarget=Array.from({length:FOG_N},()=>({r:145,g:85,b:255}));
+let raf=0;
 
 function setFogVars(){
  for(let i=0;i<FOG_N;i++){
@@ -30,26 +23,24 @@ function setFogVars(){
 }
 
 function applyFog(){
-
  setFogVars();
 
- ambientGlow.style.background =
+ ambient.style.backgroundImage=
  `
  radial-gradient(circle at 30% 35%, rgba(var(--fog1),.34), transparent 58%),
  radial-gradient(circle at 70% 32%, rgba(var(--fog2),.30), transparent 60%),
  radial-gradient(circle at 42% 72%, rgba(var(--fog3),.26), transparent 62%),
  radial-gradient(circle at 78% 76%, rgba(var(--fog4),.22), transparent 64%)
  `;
-
 }
 
 function tick(){
 
  for(let i=0;i<FOG_N;i++){
 
-  fogCurrent[i].r += (fogTarget[i].r-fogCurrent[i].r)*0.10;
-  fogCurrent[i].g += (fogTarget[i].g-fogCurrent[i].g)*0.10;
-  fogCurrent[i].b += (fogTarget[i].b-fogCurrent[i].b)*0.10;
+  fogCurrent[i].r+=(fogTarget[i].r-fogCurrent[i].r)*0.10;
+  fogCurrent[i].g+=(fogTarget[i].g-fogCurrent[i].g)*0.10;
+  fogCurrent[i].b+=(fogTarget[i].b-fogCurrent[i].b)*0.10;
 
  }
 
@@ -105,6 +96,7 @@ function getAvgRGB(imgUrl){
    const ctx=c.getContext("2d");
 
    const w=32,h=32;
+
    c.width=w;
    c.height=h;
 
@@ -144,14 +136,13 @@ function getAvgRGB(imgUrl){
 
 }
 
-
 let obs=null;
 let lastEntries=new Map();
-let t=0;
+let timer=0;
 
 function schedulePick(){
- clearTimeout(t);
- t=setTimeout(pick,220);
+ clearTimeout(timer);
+ timer=setTimeout(pick,200);
 }
 
 async function pick(){
@@ -181,7 +172,11 @@ async function pick(){
 
 function setup(){
 
+ if(obs){ try{obs.disconnect()}catch(e){} }
+
  const imgs=[...grid.querySelectorAll(".poster img")];
+
+ if(!imgs.length) return false;
 
  obs=new IntersectionObserver(entries=>{
 
@@ -191,8 +186,8 @@ function setup(){
 
  },{
   root:null,
-  rootMargin:"220px 0px 220px 0px",
-  threshold:[0.18,0.28,0.4,0.55,0.72]
+  rootMargin:"200px 0px",
+  threshold:[0.2,0.4,0.6,0.8]
  });
 
  imgs.forEach(img=>{
@@ -202,28 +197,31 @@ function setup(){
 
  });
 
+ return true;
+
 }
 
-window.addEventListener("scroll",schedulePick,{passive:true});
+function boot(){
 
-grid.addEventListener("click",ev=>{
+ if(setup()){
+  schedulePick();
+  return true;
+ }
 
- const poster=ev.target.closest(".poster");
- if(!poster) return;
+ return false;
 
- if(!grid.classList.contains("randomMode")) return;
-
- const img=poster.querySelector("img");
-
- const src=img.currentSrc||img.src;
-
- ambientPoster.style.backgroundImage=`url('${src}')`;
-
- getAvgRGB(src).then(rgb=>setTargets([rgb,rgb,rgb,rgb]));
-
-});
+}
 
 applyFog();
-setup();
+
+if(!boot()){
+
+ setTimeout(boot,300);
+ setTimeout(boot,800);
+ setTimeout(boot,1500);
+
+}
+
+new MutationObserver(()=>boot()).observe(grid,{childList:true,subtree:true});
 
 })();
