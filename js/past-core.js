@@ -174,11 +174,11 @@
   // === RANDOM LAYOUT (gentle, like past-core.js) ===
   function randomizeVars() {
     Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
-      const tx  = (Math.random() * 2 - 1) * 14;
-      const ty  = (Math.random() * 2 - 1) * 6;
-      const rot = (Math.random() * 2 - 1) * 0.5;
+      const tx  = (Math.random() * 2 - 1) * 1;
+      const ty  = (Math.random() * 2 - 1) * 1;
+      const rot = (Math.random() * 2 - 1) * 1;
       const scl = 0.99 + Math.random() * 0.05;
-      const z   = 1 + Math.round(Math.random() * 3);
+      const z   = 1 + Math.round(Math.random() * 1);
 
       el.style.setProperty('--tx', tx.toFixed(1) + 'px');
       el.style.setProperty('--ty', ty.toFixed(1) + 'px');
