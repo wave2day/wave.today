@@ -1,7 +1,7 @@
 /* past-layout.css — RANDOM mobile (2 columns) + alive tilt from JS vars
-   - NEROZBIJÍ hero/centraci: žádný transform na #eventsGrid
-   - NAKLONĚNÍ FUNGUJE: transform je jen na .poster přes --tx/--ty/--rot/--scl
-   - ŽÁDNÉ “vynulování” transformů (žádné transform:none pro random)
+   - nerozbíjí hero/centraci: žádný transform na #eventsGrid
+   - naklonění funguje: transform je jen na .poster přes --tx/--ty/--rot/--scl
+   - žádné “vynulování” transformů (žádné transform:none pro random)
 */
 
 /* ===== RANDOM: neklipovat rotace/přesahy ===== */
@@ -81,7 +81,7 @@
 
     margin: 0 0 1px !important;
 
-    /* TADY JE TEN “ŽIVOT”: používají se proměnné z JS */
+    /* “život”: proměnné z JS */
     transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
     transform-origin: 50% 50% !important;
 
@@ -176,57 +176,68 @@
   }
 }
 
-/* ===== AMBIENT mobile Chrome safe portrait ===== */
+/* ===== finální pojistka proti klipu ===== */
+#eventsGrid.randomMode .poster{ overflow: visible !important; }
+#eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; }
+
+/* mini overlap – jemný nástěnkový efekt */
+#eventsGrid.randomMode .poster:nth-child(3n){ margin-bottom: -2px !important; }
+#eventsGrid.randomMode .poster:nth-child(5n){ margin-bottom: -3px !important; }
+#eventsGrid.randomMode .poster:nth-child(7n){ margin-bottom: -1px !important; }
+
+/* ===================================================================== */
+/* AMBIENT LAYERS (FOG4 + Chrome-safe)                                     */
+/* - fog (více barev) kreslí addon na #ambientBg                            */
+/* - glow (jedna barva) kreslí past-core.js na #ambientGlow                 */
+/* - rozmazaný plakát je #ambientPoster (volitelná stopa)                   */
+/* ===================================================================== */
+
+#ambientBg{
+  --fog1:145,85,255;
+  --fog2:145,85,255;
+  --fog3:145,85,255;
+  --fog4:145,85,255;
+
+  filter: blur(54px) saturate(1.10);
+  transform: translateZ(0);
+  will-change: background-image;
+
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#ambientGlow{
+  filter: blur(54px) saturate(1.10);
+  will-change: opacity, background-image;
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+#ambientPoster{
+  opacity: .28; /* čistý fog: dej 0 */
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* mobile Chrome safe portrait */
 @media (max-width: 560px) and (orientation: portrait){
+  #ambientBg{ filter: blur(44px) saturate(1.06); }
+
   #ambientPoster{
     mix-blend-mode: normal !important;
     opacity: .35 !important;
     filter: blur(44px) saturate(1.12) !important;
     animation: none !important;
   }
+
   #ambientGlow{
     opacity: .85 !important;
     animation: none !important;
   }
-}
-
-/* ===== finální pojistka proti klipu ===== */
-#eventsGrid.randomMode .poster{ overflow: visible !important; }
-#eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; }
-/* mini overlap – jemný nástěnkový efekt */
-#eventsGrid.randomMode .poster:nth-child(3n){
-  margin-bottom: -2px !important;
-}
-
-#eventsGrid.randomMode .poster:nth-child(5n){
-  margin-bottom: -3px !important;
-}
-
-#eventsGrid.randomMode .poster:nth-child(7n){
-  margin-bottom: -1px !important;
-}
-#ambientBg{
- --fog1:145,85,255;
- --fog2:145,85,255;
- --fog3:145,85,255;
- --fog4:145,85,255;
-}
-
-#ambientGlow{
- filter:blur(54px) saturate(1.1);
-}
-
-#ambientPoster{
- opacity:.28;
-}
-#ambientBg{
-  /* ať je fog měkký */
-  filter: blur(54px) saturate(1.10);
-  transform: translateZ(0);
-  will-change: background-image;
-}
-
-/* pokud by ti to bylo moc, sniž blur */
-@media (max-width: 560px) and (orientation: portrait){
-  #ambientBg{ filter: blur(44px) saturate(1.06); }
 }
