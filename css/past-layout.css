@@ -193,3 +193,15 @@
 /* ===== finální pojistka proti klipu ===== */
 #eventsGrid.randomMode .poster{ overflow: visible !important; }
 #eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; }
+/* mini overlap – jemný nástěnkový efekt */
+#eventsGrid.randomMode .poster:nth-child(3n){
+  margin-bottom: -2px !important;
+}
+
+#eventsGrid.randomMode .poster:nth-child(5n){
+  margin-bottom: -3px !important;
+}
+
+#eventsGrid.randomMode .poster:nth-child(7n){
+  margin-bottom: -1px !important;
+}
