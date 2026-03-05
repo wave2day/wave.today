@@ -80,7 +80,6 @@
 
   /* During scroll: temporarily remove rotations to avoid partial paint tiles */
   body.v21Scrolling #eventsGrid.randomMode .poster img{
-    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
   }
 }
 
@@ -104,7 +103,6 @@
     margin-left: calc(50% - 50vw) !important;
     margin-right: calc(50% - 50vw) !important;
 
-    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
     will-change: auto !important;
     filter: none !important;
     isolation: isolate;
@@ -117,7 +115,6 @@
     -webkit-column-break-inside: avoid !important;
     margin: 0 0 1px !important;
 
-    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
     transition: none !important;
     will-change: auto !important;
 
@@ -137,7 +134,6 @@
     height: auto !important;
     object-fit: contain !important;
 
-    transform: none;
     will-change: auto !important;
 
     mix-blend-mode: normal !important;
@@ -152,7 +148,6 @@
   }
 
   #eventsGrid.randomMode.isScrolling .poster img{
-    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
   }
 }
 
@@ -264,7 +259,6 @@
   #eventsGrid.randomMode.isScrolling .poster,
   #eventsGrid.randomMode.isScrolling .poster img{
     -webkit-transform: none !important;
-    transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
     filter: none !important;
     transition: none !important;
     animation: none !important;
