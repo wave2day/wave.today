@@ -205,3 +205,17 @@
 #eventsGrid.randomMode .poster:nth-child(7n){
   margin-bottom: -1px !important;
 }
+#ambientBg{
+ --fog1:145,85,255;
+ --fog2:145,85,255;
+ --fog3:145,85,255;
+ --fog4:145,85,255;
+}
+
+#ambientGlow{
+ filter:blur(54px) saturate(1.1);
+}
+
+#ambientPoster{
+ opacity:.28;
+}
