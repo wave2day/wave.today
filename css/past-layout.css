@@ -219,3 +219,14 @@
 #ambientPoster{
  opacity:.28;
 }
+#ambientBg{
+  /* ať je fog měkký */
+  filter: blur(54px) saturate(1.10);
+  transform: translateZ(0);
+  will-change: background-image;
+}
+
+/* pokud by ti to bylo moc, sniž blur */
+@media (max-width: 560px) and (orientation: portrait){
+  #ambientBg{ filter: blur(44px) saturate(1.06); }
+}
