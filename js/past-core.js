@@ -60,6 +60,15 @@
   let ambTarget = { r: 145, g: 85, b: 255 };
   let ambRAF = 0;
 
+  const mqMobileStrong = window.matchMedia
+    ? window.matchMedia('(max-width: 560px) and (orientation: portrait)')
+    : { matches: false };
+
+  function getGlowAlpha() {
+    // agresivnější na telefonu
+    return mqMobileStrong.matches ? 0.56 : 0.38;
+  }
+
   function applyAmbient() {
     const r = Math.round(ambCurrent.r);
     const g = Math.round(ambCurrent.g);
@@ -69,14 +78,17 @@
     ambient.style.setProperty('--ambG', g);
     ambient.style.setProperty('--ambB', b);
 
+    const a = getGlowAlpha();
+
+    // Glow layer (single color)
     ambientGlow.style.background =
-      `radial-gradient(circle at 50% 42%, rgba(${r},${g},${b},.38), transparent 58%)`;
+      `radial-gradient(circle at 50% 42%, rgba(${r},${g},${b},${a}), transparent 58%)`;
   }
 
   function tickAmbient() {
-    ambCurrent.r += (ambTarget.r - ambCurrent.r) * 0.10;
-    ambCurrent.g += (ambTarget.g - ambCurrent.g) * 0.10;
-    ambCurrent.b += (ambTarget.b - ambCurrent.b) * 0.10;
+    ambCurrent.r += (ambTarget.r - ambCurrent.r) * 0.12;
+    ambCurrent.g += (ambTarget.g - ambCurrent.g) * 0.12;
+    ambCurrent.b += (ambTarget.b - ambCurrent.b) * 0.12;
 
     applyAmbient();
 
@@ -99,8 +111,12 @@
     if (!ambRAF) ambRAF = requestAnimationFrame(tickAmbient);
   }
 
+  // small cache: url -> avg rgb
+  const _rgbCache = new Map();
   async function getAvgRGB(imgUrl) {
-    return new Promise((resolve) => {
+    if (_rgbCache.has(imgUrl)) return _rgbCache.get(imgUrl);
+
+    const rgb = await new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
@@ -127,11 +143,18 @@
       img.onerror = () => resolve({ r: 145, g: 85, b: 255 });
       img.src = imgUrl;
     });
+
+    _rgbCache.set(imgUrl, rgb);
+    return rgb;
   }
 
-  async function setAmbientFromImg(src) {
+  // opts.texture:
+  // - true: set blurred poster texture (sticky)
+  // - false: only change color (safe on mobile scroll)
+  async function setAmbientFromImg(src, opts) {
     if (!src) return;
-    ambientPoster.style.backgroundImage = `url('${src}')`;
+    const o = opts || {};
+    if (o.texture) ambientPoster.style.backgroundImage = `url('${src}')`;
     const rgb = await getAvgRGB(src);
     setAmbientTarget(rgb);
   }
@@ -161,7 +184,7 @@
     });
   }
 
-  // === RANDOM ORDER (keep like past-core.js) ===
+  // === RANDOM ORDER ===
   function shufflePosters() {
     const posters = Array.from(grid.querySelectorAll('.poster'));
     for (let i = posters.length - 1; i > 0; i--) {
@@ -171,7 +194,7 @@
     }
   }
 
-  // === RANDOM LAYOUT (gentle, like past-core.js) ===
+  // === RANDOM LAYOUT ===
   function randomizeVars() {
     Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
       const tx  = (Math.random() * 2 - 1) * 1;
@@ -188,17 +211,13 @@
     });
   }
 
-
-  // DATE (and any non-random mode): keep a subtle, deterministic tilt everywhere
-  // Uses dataset.key (stable) so posters don't "jump" between reloads.
+  // DATE: subtle deterministic tilt
   function applyTiltVarsDateMode() {
     const posters = Array.from(grid.querySelectorAll('.poster'));
     posters.forEach((el, i) => {
       const seed = Number(el.dataset.key) || (i + 1);
-      // deterministic pseudo-random in [0,1)
       const r = (Math.sin(seed * 12.9898) * 43758.5453);
       const u = r - Math.floor(r);
-      // degrees: about -0.28..+0.28 (subtle)
       const rot = (u * 2 - 1) * 0.28;
 
       el.style.setProperty('--tx', '0px');
@@ -251,9 +270,13 @@
       applyTiltVarsDateMode();
       scrollToFirstPoster();
     }
+
+    // re-arm viewport picking on mode switch
+    setupViewportObserver();
+    scheduleViewportPick();
   }
 
-  // ===== HERO overlay (centered + recenter on rotate) + ROLL BACK INTO TILE =====
+  // ===== HERO overlay =====
   let heroOpen = false;
   let heroPosterEl = null;
   let heroJustOpenedAt = 0;
@@ -282,7 +305,6 @@
     wrap.appendChild(hi);
     heroCard.appendChild(wrap);
 
-    // start EXACTLY at the clicked tile rect
     heroCard.style.inset = 'auto';
     heroCard.style.right = 'auto';
     heroCard.style.bottom = 'auto';
@@ -293,19 +315,20 @@
     heroCard.style.width = from.width + 'px';
     heroCard.style.height = from.height + 'px';
 
-    // CSS "unroll"
     heroCard.classList.remove('rollingUp');
     heroCard.classList.add('unrolling');
     setTimeout(() => heroCard.classList.remove('unrolling'), 560);
 
-    // then animate to center
     requestAnimationFrame(() => recenterHeroCard(false));
+
+    // sticky poster texture + color on open (mobile-friendly)
+    const src = hi.src;
+    if (src) setAmbientFromImg(src, { texture: true });
   }
 
   function closeHero() {
     if (!heroOpen) return;
 
-    // animate back INTO the clicked poster rect
     const to = getPosterImgRect(heroPosterEl);
     if (!to) {
       heroOpen = false;
@@ -399,7 +422,6 @@
     window.visualViewport.addEventListener('scroll', scheduleHeroRecenter, { passive: true });
   }
 
-  // close by clicking anywhere in overlay (but ignore first touch-click burst)
   heroOverlay.addEventListener('click', () => {
     const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     if (heroJustOpenedAt && (now - heroJustOpenedAt) < 380) return;
@@ -407,27 +429,22 @@
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHero(); });
 
-  // Posters in random mode open hero (href removed)
   function handlePosterActivate(ev) {
     const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
     if (!a) return;
-
     if (!grid.classList.contains('randomMode')) return;
 
     if (ev.cancelable) ev.preventDefault();
     ev.stopPropagation();
-
     openHero(a);
   }
 
-  // pointerup is more reliable on mobile
   let lastPointerUpAt = 0;
   grid.addEventListener('pointerup', (ev) => {
     lastPointerUpAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     handlePosterActivate(ev);
   }, { passive: false });
 
-  // click must always prevent default in random mode (avoid # jump)
   grid.addEventListener('click', (ev) => {
     if (grid.classList.contains('randomMode')) {
       const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
@@ -440,6 +457,71 @@
     if (now - lastPointerUpAt < 450) return;
     handlePosterActivate(ev);
   }, { passive: false });
+
+  // ===== VIEWPORT-DRIVEN COLOR (makes mobile random "alive") =====
+  let _vpObs = null;
+  let _vpMap = new Map();
+  let _vpTimer = 0;
+  let _vpActive = false;
+
+  function isTouchLike() {
+    return (
+      mqMobileStrong.matches ||
+      (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)
+    );
+  }
+
+  function setupViewportObserver() {
+    if (_vpObs) { try { _vpObs.disconnect(); } catch {} }
+    _vpObs = null;
+    _vpMap = new Map();
+
+    const imgs = Array.from(grid.querySelectorAll('.poster img'));
+    if (!imgs.length) return;
+
+    _vpObs = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e && e.target) _vpMap.set(e.target, e);
+      }
+      scheduleViewportPick();
+    }, {
+      root: null,
+      rootMargin: '240px 0px 240px 0px',
+      threshold: [0.18, 0.28, 0.40, 0.55, 0.72]
+    });
+
+    imgs.forEach(img => {
+      if (img.complete) _vpObs.observe(img);
+      else img.addEventListener('load', () => { try { _vpObs && _vpObs.observe(img); } catch {} }, { once: true });
+    });
+  }
+
+  function scheduleViewportPick() {
+    clearTimeout(_vpTimer);
+    _vpTimer = setTimeout(pickColorFromViewport, 160); // agresivnější cadence
+  }
+
+  async function pickColorFromViewport() {
+    // pouze pro mobil/touch a hlavně randomMode (tam není hover)
+    if (!_vpActive) return;
+    if (!grid.classList.contains('randomMode')) return;
+
+    const best = Array.from(_vpMap.values())
+      .filter(e => e && e.isIntersecting && e.target)
+      .sort((a, b) => (b.intersectionRatio || 0) - (a.intersectionRatio || 0))
+      .slice(0, 1);
+
+    const img = best[0]?.target;
+    const src = img ? (img.currentSrc || img.src) : null;
+    if (!src) return;
+
+    // barva ano, textura ne (při scrollu nechceme přepínat plakát)
+    await setAmbientFromImg(src, { texture: false });
+  }
+
+  window.addEventListener('scroll', () => {
+    if (_vpActive) scheduleViewportPick();
+  }, { passive: true });
 
   // ===== RENDER =====
   function makePoster(item, idx) {
@@ -455,8 +537,8 @@
     img.alt = item.title || '';
     a.appendChild(img);
 
-    // ambient updates on hover/focus
-    const prime = () => { if (img.src) setAmbientFromImg(img.src); };
+    // Desktop: hover/focus updates (texture + color)
+    const prime = () => { if (img.src) setAmbientFromImg(img.src, { texture: true }); };
     a.addEventListener('mouseenter', prime);
     a.addEventListener('focus', prime);
 
@@ -478,23 +560,33 @@
 
     modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
 
-    // default: date
     updateActiveMode('date');
     setPosterLinksEnabled(true);
     clearRandomVars();
     applyAmbient();
 
-    // initial ambient to first poster
+    // initial ambient to first poster (texture ok)
     const firstImg = grid.querySelector('.poster img');
     if (firstImg && firstImg.getAttribute('src')) {
-      setAmbientFromImg(firstImg.getAttribute('src'));
+      setAmbientFromImg(firstImg.getAttribute('src'), { texture: true });
     }
 
-    // date: jump to newest on load
     scrollToFirstPoster();
 
-    // soften when leaving the grid
     grid.addEventListener('mouseleave', () => setAmbientTarget({ r: 145, g: 85, b: 255 }));
+
+    setupViewportObserver();
+
+    // activate viewport-driven color on touch devices (stronger on phone)
+    _vpActive = isTouchLike();
+
+    if (_vpActive) scheduleViewportPick();
+
+    // if DOM changes (mode switch / reshuffle), re-arm observer
+    new MutationObserver(() => {
+      setupViewportObserver();
+      if (_vpActive) scheduleViewportPick();
+    }).observe(grid, { childList: true, subtree: true });
   }
 
   init().catch(err => {
