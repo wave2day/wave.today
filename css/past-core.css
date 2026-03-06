@@ -332,7 +332,7 @@
 
   
     /* ===== DESKTOP: ambient + grid + hero ===== */
-    #pageBase{ position:fixed; inset:0; z-index:0; background:#0b0b10; pointer-events:none; }
+    #pageBase{ position:fixed; inset:0; z-index:0; background:linear-gradient(180deg, #f3f0f8 0%, #e8e3f3 40%, #ddd6ec 100%); pointer-events:none; }
     #ambientBg{
       position:fixed; inset:0; z-index:1; pointer-events:none;
       --ambR:145; --ambG:85; --ambB:255;
@@ -340,7 +340,7 @@
         radial-gradient(1100px 720px at 52% 16%, rgba(var(--ambR),var(--ambG),var(--ambB),.30), transparent 62%),
         radial-gradient(820px 520px at 18% 62%, rgba(80,150,255,.18), transparent 60%),
         radial-gradient(820px 520px at 86% 70%, rgba(255,70,205,.14), transparent 60%),
-        linear-gradient(180deg, #0b0b10, #0b0b10);
+        linear-gradient(180deg, rgba(242,236,248,.82), rgba(231,224,241,.72));
       transition: filter .35s ease, background .45s ease;
       will-change: transform, opacity, filter;
     }
