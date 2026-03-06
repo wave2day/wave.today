@@ -2,8 +2,8 @@
   // ===== CONFIG =====
   const DATA_URL = 'data/events.json';
 
-  // ===== DOM (base) =====
-  const gridA = document.getElementById('eventsGrid'); // existující grid v HTML (hlavní)
+  // ===== DOM =====
+  const grid = document.getElementById('eventsGrid');
   const ambient = document.getElementById('ambientBg');
   const ambientGlow = document.getElementById('ambientGlow');
   const ambientPoster = document.getElementById('ambientPoster');
@@ -13,29 +13,10 @@
   const heroOverlay = document.getElementById('heroOverlay');
   const heroCard = heroOverlay ? heroOverlay.querySelector('.heroCard') : null;
 
-  if (!gridA || !ambient || !ambientGlow || !ambientPoster || !heroOverlay || !heroCard) {
-    console.error('[past] missing required DOM nodes', { gridA, ambient, ambientGlow, ambientPoster, heroOverlay, heroCard });
+  if (!grid || !ambient || !ambientGlow || !ambientPoster || !heroOverlay || !heroCard) {
+    console.error('[past] missing required DOM nodes', { grid, ambient, ambientGlow, ambientPoster, heroOverlay, heroCard });
     return;
   }
-
-  // Create second grid automatically (random grid), if missing
-  let gridB = document.getElementById('eventsGrid2');
-  if (!gridB) {
-    gridB = document.createElement('div');
-    gridB.id = 'eventsGrid2';
-    gridB.className = gridA.className || '';
-    gridA.insertAdjacentElement('afterend', gridB);
-  }
-
-  // We will use:
-  // - gridDate = gridA (eventsGrid)
-  // - gridRandom = gridB (eventsGrid2)
-  const gridDate = gridA;
-  const gridRandom = gridB;
-
-  // Make sure only one is visible on load
-  gridDate.classList.remove('gridHidden');
-  gridRandom.classList.add('gridHidden');
 
   // Block long-press menu only on topBar
   const topBar = document.querySelector('.topBar');
@@ -61,13 +42,9 @@
     return { left: r.left, top: r.top, width: r.width, height: r.height };
   }
 
-  function isVisible(el) {
-    return el && !el.classList.contains('gridHidden');
-  }
-
   // DATE: jump to newest (first poster)
   function scrollToFirstPoster() {
-    const first = gridDate.querySelector('.poster');
+    const first = grid.querySelector('.poster');
     if (!first) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
@@ -122,11 +99,8 @@
     if (!ambRAF) ambRAF = requestAnimationFrame(tickAmbient);
   }
 
-  const _rgbCache = new Map();
   async function getAvgRGB(imgUrl) {
-    if (_rgbCache.has(imgUrl)) return _rgbCache.get(imgUrl);
-
-    const rgb = await new Promise((resolve) => {
+    return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.onload = () => {
@@ -153,9 +127,6 @@
       img.onerror = () => resolve({ r: 145, g: 85, b: 255 });
       img.src = imgUrl;
     });
-
-    _rgbCache.set(imgUrl, rgb);
-    return rgb;
   }
 
   async function setAmbientFromImg(src) {
@@ -173,14 +144,41 @@
     modeButtons.forEach(btn => btn.classList.toggle('isActive', btn.dataset.mode === mode));
   }
 
-  // === RANDOM LAYOUT (gentle) ===
-  function randomizeVars(container) {
-    Array.from(container.querySelectorAll('.poster')).forEach((el) => {
-      const tx  = (Math.random() * 2 - 1) * 1;
-      const ty  = (Math.random() * 2 - 1) * 1;
-      const rot = (Math.random() * 2 - 1) * 2;
+  function setPosterLinksEnabled(enabled) {
+    const posters = Array.from(grid.querySelectorAll('.poster'));
+    posters.forEach(p => {
+      if (p.tagName !== 'A') return;
+      if (enabled) {
+        if (p.dataset.realHref) {
+          p.setAttribute('href', p.dataset.realHref);
+          delete p.dataset.realHref;
+        }
+      } else {
+        const h = p.getAttribute('href');
+        if (h) p.dataset.realHref = h;
+        p.removeAttribute('href');
+      }
+    });
+  }
+
+  // === RANDOM ORDER (keep like past-core.js) ===
+  function shufflePosters() {
+    const posters = Array.from(grid.querySelectorAll('.poster'));
+    for (let i = posters.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      grid.insertBefore(posters[j], posters[i]);
+      [posters[i], posters[j]] = [posters[j], posters[i]];
+    }
+  }
+
+  // === RANDOM LAYOUT (gentle, like past-core.js) ===
+  function randomizeVars() {
+    Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
+      const tx  = (Math.random() * 2 - 1) * 14;
+      const ty  = (Math.random() * 2 - 1) * 22;
+      const rot = (Math.random() * 2 - 1) * 0.25;
       const scl = 0.99 + Math.random() * 0.05;
-      const z   = 1 + Math.round(Math.random() * 1);
+      const z   = 1 + Math.round(Math.random() * 3);
 
       el.style.setProperty('--tx', tx.toFixed(1) + 'px');
       el.style.setProperty('--ty', ty.toFixed(1) + 'px');
@@ -190,33 +188,50 @@
     });
   }
 
-  // DATE: subtle deterministic tilt
-  function applyTiltVarsDateMode(container) {
-    const posters = Array.from(container.querySelectorAll('.poster'));
-    posters.forEach((el, i) => {
-      const seed = Number(el.dataset.key) || (i + 1);
-      const r = (Math.sin(seed * 12.9898) * 43758.5453);
-      const u = r - Math.floor(r);
-      const rot = (u * 2 - 1) * 0.28;
-
-      el.style.setProperty('--tx', '0px');
-      el.style.setProperty('--ty', '0px');
-      el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
-      el.style.setProperty('--scl', '1');
-      el.style.setProperty('--z', '1');
+  function clearRandomVars() {
+    Array.from(grid.querySelectorAll('.poster')).forEach(el => {
+      el.style.removeProperty('--tx');
+      el.style.removeProperty('--ty');
+      el.style.removeProperty('--rot');
+      el.style.removeProperty('--scl');
+      el.style.removeProperty('--z');
     });
   }
 
-  function shuffleInPlace(container) {
-    const posters = Array.from(container.querySelectorAll('.poster'));
-    for (let i = posters.length - 1; i > 0; i--) {
-      const j = (Math.random() * (i + 1)) | 0;
-      container.insertBefore(posters[j], posters[i]);
-      [posters[i], posters[j]] = [posters[j], posters[i]];
+  function restoreOrder() {
+    const posters = Array.from(grid.querySelectorAll('.poster'));
+    const map = new Map();
+    posters.forEach(p => map.set(Number(p.dataset.key), p));
+    grid.innerHTML = '';
+    items.forEach((_, idx) => {
+      const el = map.get(idx);
+      if (el) grid.appendChild(el);
+    });
+  }
+
+  function setMode(mode) {
+    if (mode === currentMode) {
+      if (mode === 'random') { shufflePosters(); randomizeVars(); }
+      if (mode === 'date') { restoreOrder(); scrollToFirstPoster(); }
+      return;
+    }
+
+    currentMode = mode;
+    grid.classList.toggle('randomMode', mode === 'random');
+    updateActiveMode(mode);
+    setPosterLinksEnabled(mode !== 'random');
+
+    if (mode === 'random') {
+      shufflePosters();
+      randomizeVars();
+    } else {
+      clearRandomVars();
+      restoreOrder();
+      scrollToFirstPoster();
     }
   }
 
-  // ===== HERO overlay =====
+  // ===== HERO overlay (centered + recenter on rotate) + ROLL BACK INTO TILE =====
   let heroOpen = false;
   let heroPosterEl = null;
   let heroJustOpenedAt = 0;
@@ -245,6 +260,7 @@
     wrap.appendChild(hi);
     heroCard.appendChild(wrap);
 
+    // start EXACTLY at the clicked tile rect
     heroCard.style.inset = 'auto';
     heroCard.style.right = 'auto';
     heroCard.style.bottom = 'auto';
@@ -255,16 +271,19 @@
     heroCard.style.width = from.width + 'px';
     heroCard.style.height = from.height + 'px';
 
+    // CSS "unroll"
     heroCard.classList.remove('rollingUp');
     heroCard.classList.add('unrolling');
     setTimeout(() => heroCard.classList.remove('unrolling'), 560);
 
+    // then animate to center
     requestAnimationFrame(() => recenterHeroCard(false));
   }
 
   function closeHero() {
     if (!heroOpen) return;
 
+    // animate back INTO the clicked poster rect
     const to = getPosterImgRect(heroPosterEl);
     if (!to) {
       heroOpen = false;
@@ -358,6 +377,7 @@
     window.visualViewport.addEventListener('scroll', scheduleHeroRecenter, { passive: true });
   }
 
+  // close by clicking anywhere in overlay (but ignore first touch-click burst)
   heroOverlay.addEventListener('click', () => {
     const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     if (heroJustOpenedAt && (now - heroJustOpenedAt) < 380) return;
@@ -365,28 +385,34 @@
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHero(); });
 
-  // Random grid: open hero (links disabled by design)
+  // Posters in random mode open hero (href removed)
   function handlePosterActivate(ev) {
     const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
     if (!a) return;
-    if (!isVisible(gridRandom)) return;
+
+    if (!grid.classList.contains('randomMode')) return;
 
     if (ev.cancelable) ev.preventDefault();
     ev.stopPropagation();
+
     openHero(a);
   }
 
+  // pointerup is more reliable on mobile
   let lastPointerUpAt = 0;
-  gridRandom.addEventListener('pointerup', (ev) => {
+  grid.addEventListener('pointerup', (ev) => {
     lastPointerUpAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     handlePosterActivate(ev);
   }, { passive: false });
 
-  gridRandom.addEventListener('click', (ev) => {
-    const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
-    if (a) {
-      if (ev.cancelable) ev.preventDefault();
-      ev.stopPropagation();
+  // click must always prevent default in random mode (avoid # jump)
+  grid.addEventListener('click', (ev) => {
+    if (grid.classList.contains('randomMode')) {
+      const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
+      if (a) {
+        if (ev.cancelable) ev.preventDefault();
+        ev.stopPropagation();
+      }
     }
     const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     if (now - lastPointerUpAt < 450) return;
@@ -394,11 +420,11 @@
   }, { passive: false });
 
   // ===== RENDER =====
-  function makePoster(item, idx, enableLink) {
+  function makePoster(item, idx) {
     const a = document.createElement('a');
     a.className = 'poster';
     a.dataset.key = String(idx);
-    a.href = enableLink ? (item.link || item.href || '#') : '#';
+    a.href = item.link || item.href || '#';
 
     const img = document.createElement('img');
     img.loading = 'lazy';
@@ -407,47 +433,12 @@
     img.alt = item.title || '';
     a.appendChild(img);
 
+    // ambient updates on hover/focus
     const prime = () => { if (img.src) setAmbientFromImg(img.src); };
     a.addEventListener('mouseenter', prime);
     a.addEventListener('focus', prime);
 
     return a;
-  }
-
-  function setMode(mode) {
-    if (mode === currentMode) {
-      if (mode === 'random') {
-        shuffleInPlace(gridRandom);
-        randomizeVars(gridRandom);
-      }
-      if (mode === 'date') {
-        scrollToFirstPoster();
-      }
-      return;
-    }
-
-    currentMode = mode;
-    updateActiveMode(mode);
-
-    if (mode === 'random') {
-      gridDate.classList.add('gridHidden');
-      gridRandom.classList.remove('gridHidden');
-
-      gridRandom.classList.add('randomMode');
-      gridDate.classList.remove('randomMode');
-
-      shuffleInPlace(gridRandom);
-      randomizeVars(gridRandom);
-    } else {
-      gridRandom.classList.add('gridHidden');
-      gridDate.classList.remove('gridHidden');
-
-      gridRandom.classList.remove('randomMode');
-      gridDate.classList.remove('randomMode');
-
-      applyTiltVarsDateMode(gridDate);
-      scrollToFirstPoster();
-    }
   }
 
   async function init() {
@@ -460,39 +451,32 @@
       .map(it => ({ ...it, _date: parseDate(it.date || it.when || it.day) }))
       .sort((a, b) => b._date - a._date);
 
-    gridDate.innerHTML = '';
-    gridRandom.innerHTML = '';
-
-    // Date grid: links enabled
-    items.forEach((it, idx) => gridDate.appendChild(makePoster(it, idx, true)));
-
-    // Random grid: links disabled (hero)
-    items.forEach((it, idx) => gridRandom.appendChild(makePoster(it, idx, false)));
+    grid.innerHTML = '';
+    items.forEach((it, idx) => grid.appendChild(makePoster(it, idx)));
 
     modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
 
-    // Default: date
-    applyTiltVarsDateMode(gridDate);
+    // default: date
+    updateActiveMode('date');
+    setPosterLinksEnabled(true);
+    clearRandomVars();
     applyAmbient();
 
-    const firstImg = gridDate.querySelector('.poster img');
+    // initial ambient to first poster
+    const firstImg = grid.querySelector('.poster img');
     if (firstImg && firstImg.getAttribute('src')) {
       setAmbientFromImg(firstImg.getAttribute('src'));
     }
 
+    // date: jump to newest on load
     scrollToFirstPoster();
 
-    // soften when leaving visible grid
-    const leave = () => setAmbientTarget({ r: 145, g: 85, b: 255 });
-    gridDate.addEventListener('mouseleave', leave);
-    gridRandom.addEventListener('mouseleave', leave);
-
-    setMode('date');
+    // soften when leaving the grid
+    grid.addEventListener('mouseleave', () => setAmbientTarget({ r: 145, g: 85, b: 255 }));
   }
 
   init().catch(err => {
     console.error(err);
-    gridDate.innerHTML = '<div class="err">' + String(err.message || err) + '</div>';
-    gridRandom.innerHTML = '';
+    grid.innerHTML = '<div class="err">' + String(err.message || err) + '</div>';
   });
 })();
