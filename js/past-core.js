@@ -176,7 +176,7 @@
     Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
       const tx  = (Math.random() * 2 - 1) * 14;
       const ty  = (Math.random() * 2 - 1) * 22;
-      const rot = (Math.random() * 2 - 1) * 0.25;
+      const rot = (Math.random() * 2 - 1) * 0.35;
       const scl = 0.99 + Math.random() * 0.05;
       const z   = 1 + Math.round(Math.random() * 3);
 
@@ -185,6 +185,27 @@
       el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
       el.style.setProperty('--scl', scl.toFixed(3));
       el.style.setProperty('--z', z);
+    });
+  }
+
+
+  // DATE (and any non-random mode): keep a subtle, deterministic tilt everywhere
+  // Uses dataset.key (stable) so posters don't "jump" between reloads.
+  function applyTiltVarsDateMode() {
+    const posters = Array.from(grid.querySelectorAll('.poster'));
+    posters.forEach((el, i) => {
+      const seed = Number(el.dataset.key) || (i + 1);
+      // deterministic pseudo-random in [0,1)
+      const r = (Math.sin(seed * 12.9898) * 43758.5453);
+      const u = r - Math.floor(r);
+      // degrees: about -0.28..+0.28 (subtle)
+      const rot = (u * 2 - 1) * 0.28;
+
+      el.style.setProperty('--tx', '0px');
+      el.style.setProperty('--ty', '0px');
+      el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
+      el.style.setProperty('--scl', '1');
+      el.style.setProperty('--z', '1');
     });
   }
 
@@ -227,6 +248,7 @@
     } else {
       clearRandomVars();
       restoreOrder();
+      applyTiltVarsDateMode();
       scrollToFirstPoster();
     }
   }
