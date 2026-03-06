@@ -502,3 +502,6 @@
     grid.innerHTML = '<div class="err">' + String(err.message || err) + '</div>';
   });
 })();
+/* druhý grid – stejný kontejner, jen se schovává */
+#eventsGrid2 { position: relative; z-index: 2; }
+.gridHidden { display: none !important; }
