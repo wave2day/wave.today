@@ -333,8 +333,12 @@
   
 
     /* ===== DESKTOP: page + grid + hero ===== */
-    #pageBase{ position:fixed; inset:0; z-index:0; background:#0b0b10; pointer-events:none; }
-
+    #pageBase{ position:fixed; inset:0; z-index:0; background: linear-gradient(
+  180deg,
+  #f2eef8 0%,
+  #e6e0f1 35%,
+  #d7d0e8 100%
+);
     .glassPage{
       position: relative;
       z-index: 10;
