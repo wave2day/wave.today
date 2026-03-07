@@ -1,12 +1,20 @@
 (() => {
+  // ===== CONFIG =====
   const DATA_URL = 'data/events.json';
+
+  // ===== DOM =====
   const grid = document.getElementById('eventsGrid');
   const modeButtons = Array.from(document.querySelectorAll('#wtModes .wtModeBtn'));
+
   const heroOverlay = document.getElementById('heroOverlay');
   const heroCard = heroOverlay ? heroOverlay.querySelector('.heroCard') : null;
 
-  if (!grid || !heroOverlay || !heroCard) return;
+  if (!grid || !heroOverlay || !heroCard) {
+    console.error('[past] missing required DOM nodes', { grid, heroOverlay, heroCard });
+    return;
+  }
 
+  // Block long-press menu only on topBar
   const topBar = document.querySelector('.topBar');
   if (topBar) {
     topBar.addEventListener('contextmenu', (e) => e.preventDefault(), { capture: true });
@@ -14,13 +22,15 @@
     topBar.addEventListener('dragstart', (e) => e.preventDefault(), { capture: true });
   }
 
+  // ===== HELPERS =====
   function parseDate(s) {
     const [y, m, d] = String(s || '').split('-').map(Number);
     return new Date(y || 1970, (m || 1) - 1, d || 1, 12, 0, 0);
   }
 
   function getPosterImgRect(posterEl) {
-    const img = posterEl?.querySelector('img');
+    if (!posterEl) return null;
+    const img = posterEl.querySelector('img');
     if (!img) return null;
     const r = img.getBoundingClientRect();
     return { left: r.left, top: r.top, width: r.width, height: r.height };
@@ -28,13 +38,17 @@
 
   function scrollToFirstPoster() {
     const first = grid.querySelector('.poster');
-    if (!first) return;
+    if (!first) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     const bar = document.querySelector('.topBar');
     const barH = bar ? bar.getBoundingClientRect().height : 0;
     const y = window.scrollY + first.getBoundingClientRect().top - (barH + 12);
     window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
   }
 
+  // ===== DATA / MODES =====
   let items = [];
   let currentMode = 'date';
 
@@ -43,7 +57,8 @@
   }
 
   function setPosterLinksEnabled(enabled) {
-    grid.querySelectorAll('.poster').forEach(p => {
+    const posters = Array.from(grid.querySelectorAll('.poster'));
+    posters.forEach(p => {
       if (p.tagName !== 'A') return;
       if (enabled) {
         if (p.dataset.realHref) {
@@ -63,29 +78,48 @@
     return x - Math.floor(x);
   }
 
-  function applyDateVars() {
-    grid.querySelectorAll('.poster').forEach(el => {
-      el.style.setProperty('--tx', '0px');
-      el.style.setProperty('--ty', '0px');
-      el.style.setProperty('--rot', '0deg');
-      el.style.setProperty('--scl', '1');
-      el.style.setProperty('--z', '1');
-    });
-  }
-
-  function applyRandomVars() {
-    grid.querySelectorAll('.poster').forEach((el, i) => {
+  // Stronger, but still stable "wall" feeling.
+  function randomizeVars() {
+    Array.from(grid.querySelectorAll('.poster')).forEach((el, i) => {
       const seed = Number(el.dataset.key) || (i + 1);
-      const tx  = ((hash01(seed * 1.17) * 2) - 1) * 2.4;
-      const ty  = ((hash01(seed * 1.71) * 2) - 1) * 3.0;
-      const rot = ((hash01(seed * 2.23) * 2) - 1) * 0.45;
-      const scl = 0.995 + hash01(seed * 2.89) * 0.015;
-      const z   = 1 + Math.round(hash01(seed * 3.47));
+
+      const tx  = ((hash01(seed * 1.11) * 2) - 1) * 7.0;   // ~ -7..+7 px
+      const ty  = ((hash01(seed * 1.73) * 2) - 1) * 12.0;  // ~ -12..+12 px
+      const rot = ((hash01(seed * 2.31) * 2) - 1) * 1.35;  // ~ -1.35..+1.35 deg
+      const scl = 0.985 + hash01(seed * 2.97) * 0.040;     // 0.985..1.025
+      const z   = 1 + Math.round(hash01(seed * 3.41) * 2); // 1..3
+
       el.style.setProperty('--tx', tx.toFixed(1) + 'px');
       el.style.setProperty('--ty', ty.toFixed(1) + 'px');
       el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
       el.style.setProperty('--scl', scl.toFixed(3));
       el.style.setProperty('--z', z);
+    });
+  }
+
+  function applyTiltVarsDateMode() {
+    const posters = Array.from(grid.querySelectorAll('.poster'));
+    posters.forEach((el, i) => {
+      const seed = Number(el.dataset.key) || (i + 1);
+      const tx  = ((hash01(seed * 0.91) * 2) - 1) * 2.8;
+      const ty  = ((hash01(seed * 1.27) * 2) - 1) * 4.0;
+      const rot = ((hash01(seed * 1.61) * 2) - 1) * 0.65;
+
+      el.style.setProperty('--tx', tx.toFixed(1) + 'px');
+      el.style.setProperty('--ty', ty.toFixed(1) + 'px');
+      el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
+      el.style.setProperty('--scl', '1');
+      el.style.setProperty('--z', '1');
+    });
+  }
+
+  function clearRandomVars() {
+    Array.from(grid.querySelectorAll('.poster')).forEach(el => {
+      el.style.removeProperty('--tx');
+      el.style.removeProperty('--ty');
+      el.style.removeProperty('--rot');
+      el.style.removeProperty('--scl');
+      el.style.removeProperty('--z');
     });
   }
 
@@ -101,18 +135,28 @@
   }
 
   function setMode(mode) {
+    if (mode === currentMode) {
+      if (mode === 'random') { restoreOrder(); randomizeVars(); }
+      if (mode === 'date') { restoreOrder(); applyTiltVarsDateMode(); scrollToFirstPoster(); }
+      return;
+    }
+
     currentMode = mode;
     grid.classList.toggle('randomMode', mode === 'random');
     updateActiveMode(mode);
     setPosterLinksEnabled(mode !== 'random');
+
     restoreOrder();
-    if (mode === 'random') applyRandomVars();
-    else {
-      applyDateVars();
+
+    if (mode === 'random') {
+      randomizeVars();
+    } else {
+      applyTiltVarsDateMode();
       scrollToFirstPoster();
     }
   }
 
+  // ===== HERO overlay =====
   let heroOpen = false;
   let heroPosterEl = null;
   let heroJustOpenedAt = 0;
@@ -121,13 +165,16 @@
     if (heroOpen) return;
     const img = posterEl.querySelector('img');
     if (!img) return;
+
     heroPosterEl = posterEl;
     const from = getPosterImgRect(posterEl);
     if (!from) return;
+
     heroOverlay.classList.add('isOpen');
     heroOverlay.setAttribute('aria-hidden', 'false');
     heroOpen = true;
     heroJustOpenedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+
     heroCard.innerHTML = '';
     const wrap = document.createElement('div');
     wrap.className = 'rollWrap';
@@ -136,6 +183,7 @@
     hi.src = img.currentSrc || img.src;
     wrap.appendChild(hi);
     heroCard.appendChild(wrap);
+
     heroCard.style.inset = 'auto';
     heroCard.style.right = 'auto';
     heroCard.style.bottom = 'auto';
@@ -144,14 +192,17 @@
     heroCard.style.top = from.top + 'px';
     heroCard.style.width = from.width + 'px';
     heroCard.style.height = from.height + 'px';
+
     heroCard.classList.remove('rollingUp');
     heroCard.classList.add('unrolling');
     setTimeout(() => heroCard.classList.remove('unrolling'), 560);
+
     requestAnimationFrame(() => recenterHeroCard(false));
   }
 
   function closeHero() {
     if (!heroOpen) return;
+
     const to = getPosterImgRect(heroPosterEl);
     if (!to) {
       heroOpen = false;
@@ -162,6 +213,7 @@
       heroJustOpenedAt = 0;
       return;
     }
+
     heroCard.classList.remove('unrolling');
     heroCard.classList.add('rollingUp');
     heroCard.style.transition = 'all 280ms cubic-bezier(.2,.8,.2,1)';
@@ -169,6 +221,7 @@
     heroCard.style.top = to.top + 'px';
     heroCard.style.width = to.width + 'px';
     heroCard.style.height = to.height + 'px';
+
     setTimeout(() => {
       heroOpen = false;
       heroOverlay.classList.remove('isOpen');
@@ -186,11 +239,13 @@
       if (!heroOpen || !heroCard) return;
       const hi = heroCard.querySelector('img');
       if (!hi) return;
+
       const vv = window.visualViewport;
       const vw = vv ? vv.width : window.innerWidth;
       const vh = vv ? vv.height : window.innerHeight;
       const offL = vv ? vv.offsetLeft : 0;
       const offT = vv ? vv.offsetTop : 0;
+
       const maxW = Math.min(vw - 32, 980);
       const maxH = Math.min(vh - 96, 900);
       const natW = hi.naturalWidth || 1200;
@@ -200,6 +255,7 @@
       const tH = Math.max(240, Math.round(natH * scale));
       const tL = Math.round(offL + (vw - tW) / 2);
       const tT = Math.round(offT + (vh - tH) / 2);
+
       heroCard.style.inset = 'auto';
       heroCard.style.right = 'auto';
       heroCard.style.bottom = 'auto';
@@ -208,6 +264,7 @@
       heroCard.style.top = tT + 'px';
       heroCard.style.width = tW + 'px';
       heroCard.style.height = tH + 'px';
+
       if (noTransition) requestAnimationFrame(() => { heroCard.style.transition = ''; });
     } catch (_e) {}
   }
@@ -221,16 +278,18 @@
       });
     }
   }
+
   window.addEventListener('resize', scheduleHeroRecenter, { passive: true });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', scheduleHeroRecenter, { passive: true });
-    window.visualViewport.addEventListener('scroll', scheduleHeroRecenter, { passive: true });
-  }
   window.addEventListener('orientationchange', () => {
     scheduleHeroRecenter();
     setTimeout(scheduleHeroRecenter, 60);
     setTimeout(scheduleHeroRecenter, 180);
   }, { passive: true });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', scheduleHeroRecenter, { passive: true });
+    window.visualViewport.addEventListener('scroll', scheduleHeroRecenter, { passive: true });
+  }
 
   heroOverlay.addEventListener('click', () => {
     const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
@@ -241,7 +300,8 @@
 
   function handlePosterActivate(ev) {
     const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
-    if (!a || !grid.classList.contains('randomMode')) return;
+    if (!a) return;
+    if (!grid.classList.contains('randomMode')) return;
     if (ev.cancelable) ev.preventDefault();
     ev.stopPropagation();
     openHero(a);
@@ -287,12 +347,15 @@
     const arr = Array.isArray(raw) ? raw : (raw.events || raw.items || []);
     items = arr.map(it => ({ ...it, _date: parseDate(it.date || it.when || it.day) }))
       .sort((a, b) => b._date - a._date);
+
     grid.innerHTML = '';
     items.forEach((it, idx) => grid.appendChild(makePoster(it, idx)));
     modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+
     updateActiveMode('date');
     setPosterLinksEnabled(true);
-    applyDateVars();
+    clearRandomVars();
+    applyTiltVarsDateMode();
     scrollToFirstPoster();
   }
 
