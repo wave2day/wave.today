@@ -298,17 +298,30 @@
   }
 }
 
-/* === FINAL OVERRIDE: only fog === */
+/* ===================================================================== */
+/* FOG-ONLY OVERRIDE                                                     */
+/* ===================================================================== */
+
 #ambientBg{
+  --fog1:145,85,255;
+  --fog2:145,85,255;
+  --fog3:145,85,255;
+  --fog4:145,85,255;
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  filter: blur(58px) saturate(1.18);
+  filter: blur(64px) saturate(1.18);
   transform: translateZ(0);
   will-change: background-image, filter;
   opacity: 1;
 }
-@media (max-width:560px) and (orientation:portrait){
-  #ambientBg{ filter: blur(48px) saturate(1.12); }
+
+#ambientGlow{ display:none !important; }
+#ambientPoster{ display:none !important; }
+
+@media (max-width: 560px) and (orientation: portrait){
+  #ambientBg{
+    filter: blur(50px) saturate(1.12);
+  }
 }
