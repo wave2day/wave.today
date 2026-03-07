@@ -299,7 +299,7 @@
 }
 
 /* ===================================================================== */
-/* AMBIENT LAYERS — ONLY FOG                                              */
+/* FOG-ONLY OVERRIDE                                                     */
 /* ===================================================================== */
 
 #ambientBg{
@@ -311,7 +311,7 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  filter: blur(72px) saturate(1.22);
+  filter: blur(64px) saturate(1.18);
   transform: translateZ(0);
   will-change: background-image, filter;
   opacity: 1;
@@ -319,8 +319,9 @@
 
 #ambientGlow{ display:none !important; }
 #ambientPoster{ display:none !important; }
-#eventsGrid{ position: relative; z-index: 2; }
 
 @media (max-width: 560px) and (orientation: portrait){
-  #ambientBg{ filter: blur(56px) saturate(1.14); }
+  #ambientBg{
+    filter: blur(50px) saturate(1.12);
+  }
 }
