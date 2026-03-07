@@ -1,105 +1,93 @@
-/* fog4-addon.js
-   ONLY FOG — stronger chroma / ink-in-water + plasma-lamp feel
-*/
+/* 3-color fog: stronger dissolve / ink-in-water */
 (() => {
   const grid = document.getElementById("eventsGrid");
   const ambient = document.getElementById("ambientBg");
   if (!grid || !ambient) return;
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const FOG_N = 4;
-  let fogCurrent = Array.from({ length: FOG_N }, () => ({ r: 170, g: 120, b: 230 }));
-  let fogTarget  = Array.from({ length: FOG_N }, () => ({ r: 170, g: 120, b: 230 }));
-
-  let posCurrent = [
-    { x: 22, y: 26, s: 58, a: 0.62 },
-    { x: 78, y: 28, s: 56, a: 0.52 },
-    { x: 34, y: 76, s: 64, a: 0.40 },
-    { x: 84, y: 72, s: 60, a: 0.34 }
+  const N = 3;
+  const base = { r: 164, g: 128, b: 228 };
+  let cur = Array.from({ length: N }, () => ({ ...base }));
+  let tgt = Array.from({ length: N }, () => ({ ...base }));
+  let posCur = [
+    { x: 24, y: 30, s: 66, a: 0.60 },
+    { x: 76, y: 34, s: 62, a: 0.52 },
+    { x: 48, y: 74, s: 72, a: 0.42 },
   ];
-  let posTarget = JSON.parse(JSON.stringify(posCurrent));
-
+  let posTgt = JSON.parse(JSON.stringify(posCur));
   let nextDriftAt = 0;
   let raf = 0;
   let obs = null;
   let lastEntries = new Map();
   let timer = 0;
-  const rgbCache = new Map();
-
+  const cache = new Map();
   const rand = (min, max) => min + Math.random() * (max - min);
 
   function stylize(rgb) {
     const avg = (rgb.r + rgb.g + rgb.b) / 3;
     return {
-      r: clamp(avg + (rgb.r - avg) * 2.15 + 10, 0, 255),
-      g: clamp(avg + (rgb.g - avg) * 2.15 + 8, 0, 255),
-      b: clamp(avg + (rgb.b - avg) * 2.25 + 14, 0, 255),
+      r: clamp(avg + (rgb.r - avg) * 2.1 + 14, 0, 255),
+      g: clamp(avg + (rgb.g - avg) * 2.0 + 10, 0, 255),
+      b: clamp(avg + (rgb.b - avg) * 2.2 + 16, 0, 255),
     };
   }
 
-  function setFogVars() {
-    for (let i = 0; i < FOG_N; i++) {
-      const r = Math.round(fogCurrent[i].r);
-      const g = Math.round(fogCurrent[i].g);
-      const b = Math.round(fogCurrent[i].b);
-      ambient.style.setProperty(`--fog${i + 1}`, `${r},${g},${b}`);
+  function setVars() {
+    for (let i = 0; i < N; i++) {
+      ambient.style.setProperty(`--fog${i+1}`, `${Math.round(cur[i].r)},${Math.round(cur[i].g)},${Math.round(cur[i].b)}`);
     }
   }
 
-  function pickNewDriftTargets() {
-    posTarget = [
-      { x: rand(12, 34), y: rand(16, 36), s: rand(54, 70), a: 0.64 },
-      { x: rand(66, 88), y: rand(16, 38), s: rand(52, 68), a: 0.54 },
-      { x: rand(18, 44), y: rand(60, 86), s: rand(58, 76), a: 0.42 },
-      { x: rand(68, 90), y: rand(60, 86), s: rand(56, 74), a: 0.36 }
-    ];
+  function applyFog() {
+    setVars();
+    ambient.style.backgroundImage =
+      `radial-gradient(circle at ${posCur[0].x}% ${posCur[0].y}%, rgba(var(--fog1), ${posCur[0].a}), transparent ${posCur[0].s}%),
+       radial-gradient(circle at ${posCur[1].x}% ${posCur[1].y}%, rgba(var(--fog2), ${posCur[1].a}), transparent ${posCur[1].s}%),
+       radial-gradient(circle at ${posCur[2].x}% ${posCur[2].y}%, rgba(var(--fog3), ${posCur[2].a}), transparent ${posCur[2].s}%),
+       linear-gradient(180deg, rgba(248,244,255,.16), rgba(236,229,247,.10));`;
   }
 
-  function applyFog() {
-    setFogVars();
-    ambient.style.backgroundImage =
-      `radial-gradient(circle at ${posCurrent[0].x}% ${posCurrent[0].y}%, rgba(var(--fog1), ${posCurrent[0].a}), transparent ${posCurrent[0].s}%),
-       radial-gradient(circle at ${posCurrent[1].x}% ${posCurrent[1].y}%, rgba(var(--fog2), ${posCurrent[1].a}), transparent ${posCurrent[1].s}%),
-       radial-gradient(circle at ${posCurrent[2].x}% ${posCurrent[2].y}%, rgba(var(--fog3), ${posCurrent[2].a}), transparent ${posCurrent[2].s}%),
-       radial-gradient(circle at ${posCurrent[3].x}% ${posCurrent[3].y}%, rgba(var(--fog4), ${posCurrent[3].a}), transparent ${posCurrent[3].s}%),
-       radial-gradient(circle at 50% 50%, rgba(248,243,255,0.18), transparent 72%)`;
+  function pickDrift() {
+    posTgt = [
+      { x: rand(14, 34), y: rand(20, 38), s: rand(60, 74), a: rand(0.56, 0.66) },
+      { x: rand(66, 86), y: rand(20, 40), s: rand(58, 72), a: rand(0.48, 0.58) },
+      { x: rand(30, 70), y: rand(62, 82), s: rand(66, 82), a: rand(0.38, 0.48) },
+    ];
   }
 
   function tick(now) {
     if (!nextDriftAt) nextDriftAt = now + 6200;
     if (now >= nextDriftAt) {
-      pickNewDriftTargets();
-      nextDriftAt = now + rand(5200, 8600);
+      pickDrift();
+      nextDriftAt = now + rand(5200, 8400);
     }
-    for (let i = 0; i < FOG_N; i++) {
-      fogCurrent[i].r += (fogTarget[i].r - fogCurrent[i].r) * 0.030;
-      fogCurrent[i].g += (fogTarget[i].g - fogCurrent[i].g) * 0.030;
-      fogCurrent[i].b += (fogTarget[i].b - fogCurrent[i].b) * 0.030;
-
-      posCurrent[i].x += (posTarget[i].x - posCurrent[i].x) * 0.014;
-      posCurrent[i].y += (posTarget[i].y - posCurrent[i].y) * 0.014;
-      posCurrent[i].s += (posTarget[i].s - posCurrent[i].s) * 0.014;
-      posCurrent[i].a += (posTarget[i].a - posCurrent[i].a) * 0.014;
+    for (let i = 0; i < N; i++) {
+      cur[i].r += (tgt[i].r - cur[i].r) * 0.028;
+      cur[i].g += (tgt[i].g - cur[i].g) * 0.028;
+      cur[i].b += (tgt[i].b - cur[i].b) * 0.028;
+      posCur[i].x += (posTgt[i].x - posCur[i].x) * 0.014;
+      posCur[i].y += (posTgt[i].y - posCur[i].y) * 0.014;
+      posCur[i].s += (posTgt[i].s - posCur[i].s) * 0.014;
+      posCur[i].a += (posTgt[i].a - posCur[i].a) * 0.014;
     }
     applyFog();
     raf = requestAnimationFrame(tick);
   }
 
-  function setTargets(list) {
-    const base = { r: 170, g: 120, b: 230 };
+  function mixTargets(list) {
     const L = (list && list.length) ? list : [base];
-    for (let i = 0; i < FOG_N; i++) {
-      const c = stylize(L[i] || L[L.length - 1] || base);
-      fogTarget[i] = {
-        r: clamp(c.r, 0, 255),
-        g: clamp(c.g, 0, 255),
-        b: clamp(c.b, 0, 255),
+    for (let i = 0; i < N; i++) {
+      const incoming = stylize(L[i] || L[L.length - 1] || base);
+      tgt[i] = {
+        r: tgt[i].r * 0.68 + incoming.r * 0.32,
+        g: tgt[i].g * 0.68 + incoming.g * 0.32,
+        b: tgt[i].b * 0.68 + incoming.b * 0.32,
       };
     }
   }
 
-  function getAvgRGB(imgUrl) {
-    if (rgbCache.has(imgUrl)) return Promise.resolve(rgbCache.get(imgUrl));
+  function getAvgRGB(src) {
+    if (cache.has(src)) return Promise.resolve(cache.get(src));
     return new Promise((resolve) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -107,26 +95,23 @@
         try {
           const c = document.createElement("canvas");
           const ctx = c.getContext("2d", { willReadFrequently: true });
-          const w = 32, h = 32;
-          c.width = w; c.height = h;
-          ctx.drawImage(img, 0, 0, w, h);
-          const data = ctx.getImageData(0, 0, w, h).data;
+          c.width = 32; c.height = 32;
+          ctx.drawImage(img, 0, 0, 32, 32);
+          const data = ctx.getImageData(0, 0, 32, 32).data;
           let r = 0, g = 0, b = 0, n = 0;
           for (let i = 0; i < data.length; i += 4) {
-            const a = data[i + 3];
-            if (a < 32) continue;
-            r += data[i]; g += data[i + 1]; b += data[i + 2];
-            n++;
+            if (data[i+3] < 32) continue;
+            r += data[i]; g += data[i+1]; b += data[i+2]; n++;
           }
-          const rgb = n ? { r: r / n, g: g / n, b: b / n } : { r: 170, g: 120, b: 230 };
-          rgbCache.set(imgUrl, rgb);
+          const rgb = n ? { r:r/n, g:g/n, b:b/n } : base;
+          cache.set(src, rgb);
           resolve(rgb);
-        } catch (_e) {
-          resolve({ r: 170, g: 120, b: 230 });
+        } catch {
+          resolve(base);
         }
       };
-      img.onerror = () => resolve({ r: 170, g: 120, b: 230 });
-      img.src = imgUrl;
+      img.onerror = () => resolve(base);
+      img.src = src;
     });
   }
 
@@ -138,62 +123,52 @@
   async function pick() {
     const entries = Array.from(lastEntries.values())
       .filter(e => e && e.isIntersecting && e.target)
-      .sort((a, b) => (b.intersectionRatio || 0) - (a.intersectionRatio || 0))
-      .slice(0, FOG_N);
-
-    const srcs = entries.map(e => {
-      const img = e.target;
-      return img ? (img.currentSrc || img.src) : null;
-    }).filter(Boolean);
-
+      .sort((a,b) => (b.intersectionRatio || 0) - (a.intersectionRatio || 0))
+      .slice(0, N);
+    const srcs = entries.map(e => e.target ? (e.target.currentSrc || e.target.src) : null).filter(Boolean);
     if (!srcs.length) return;
     const rgbs = [];
     for (const s of srcs) {
       try { rgbs.push(await getAvgRGB(s)); } catch {}
     }
-    if (rgbs.length) setTargets(rgbs);
+    if (rgbs.length) mixTargets(rgbs);
   }
 
   function setupObserver() {
     if (obs) { try { obs.disconnect(); } catch {} }
     lastEntries = new Map();
-    const imgs = Array.from(grid.querySelectorAll(".poster img"));
+    const imgs = Array.from(grid.querySelectorAll('.poster img'));
     if (!imgs.length) return false;
-
     obs = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e && e.target) lastEntries.set(e.target, e); });
       schedulePick();
     }, {
       root: null,
-      rootMargin: "220px 0px 220px 0px",
-      threshold: [0.18, 0.28, 0.40, 0.55, 0.72]
+      rootMargin: '220px 0px 220px 0px',
+      threshold: [0.18, 0.30, 0.45, 0.60, 0.75]
     });
-
     imgs.forEach(img => {
       if (img.complete) obs.observe(img);
-      else img.addEventListener("load", () => { try { obs.observe(img); } catch {} }, { once: true });
+      else img.addEventListener('load', () => { try { obs.observe(img); } catch {} }, { once: true });
     });
     return true;
   }
 
   function boot() {
-    const hasPosters = grid.querySelector(".poster img");
-    if (!hasPosters) return false;
+    const has = grid.querySelector('.poster img');
+    if (!has) return false;
     if (setupObserver()) schedulePick();
     return true;
   }
 
   applyFog();
-  pickNewDriftTargets();
-
+  pickDrift();
   if (!boot()) {
     setTimeout(boot, 250);
     setTimeout(boot, 700);
     setTimeout(boot, 1400);
   }
-
   new MutationObserver(() => boot()).observe(grid, { childList: true, subtree: true });
-  window.addEventListener("scroll", schedulePick, { passive: true });
-
+  window.addEventListener('scroll', schedulePick, { passive: true });
   if (!raf) raf = requestAnimationFrame(tick);
 })();
