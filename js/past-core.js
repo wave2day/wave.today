@@ -1,7 +1,11 @@
 (() => {
+  // ===== CONFIG =====
   const DATA_URL = 'data/events.json';
+
+  // ===== DOM =====
   const grid = document.getElementById('eventsGrid');
   const modeButtons = Array.from(document.querySelectorAll('#wtModes .wtModeBtn'));
+
   const heroOverlay = document.getElementById('heroOverlay');
   const heroCard = heroOverlay ? heroOverlay.querySelector('.heroCard') : null;
 
@@ -10,6 +14,7 @@
     return;
   }
 
+  // Block long-press menu only on topBar
   const topBar = document.querySelector('.topBar');
   if (topBar) {
     topBar.addEventListener('contextmenu', (e) => e.preventDefault(), { capture: true });
@@ -17,6 +22,7 @@
     topBar.addEventListener('dragstart', (e) => e.preventDefault(), { capture: true });
   }
 
+  // ===== HELPERS =====
   function parseDate(s) {
     const [y, m, d] = String(s || '').split('-').map(Number);
     return new Date(y || 1970, (m || 1) - 1, d || 1, 12, 0, 0);
@@ -42,6 +48,7 @@
     window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
   }
 
+  // ===== DATA / MODES =====
   let items = [];
   let currentMode = 'date';
 
@@ -66,22 +73,22 @@
     });
   }
 
-  function shufflePosters() {
-    const posters = Array.from(grid.querySelectorAll('.poster'));
-    for (let i = posters.length - 1; i > 0; i--) {
-      const j = (Math.random() * (i + 1)) | 0;
-      grid.insertBefore(posters[j], posters[i]);
-      [posters[i], posters[j]] = [posters[j], posters[i]];
-    }
+  function hash01(n) {
+    const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+    return x - Math.floor(x);
   }
 
+  // Stronger, but still stable "wall" feeling.
   function randomizeVars() {
-    Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
-      const tx  = (Math.random() * 2 - 1) * 1;
-      const ty  = (Math.random() * 2 - 1) * 1;
-      const rot = (Math.random() * 2 - 1) * 2;
-      const scl = 0.99 + Math.random() * 0.05;
-      const z   = 1 + Math.round(Math.random() * 1);
+    Array.from(grid.querySelectorAll('.poster')).forEach((el, i) => {
+      const seed = Number(el.dataset.key) || (i + 1);
+
+      const tx  = ((hash01(seed * 1.11) * 2) - 1) * 7.0;   // ~ -7..+7 px
+      const ty  = ((hash01(seed * 1.73) * 2) - 1) * 12.0;  // ~ -12..+12 px
+      const rot = ((hash01(seed * 2.31) * 2) - 1) * 1.35;  // ~ -1.35..+1.35 deg
+      const scl = 0.985 + hash01(seed * 2.97) * 0.040;     // 0.985..1.025
+      const z   = 1 + Math.round(hash01(seed * 3.41) * 2); // 1..3
+
       el.style.setProperty('--tx', tx.toFixed(1) + 'px');
       el.style.setProperty('--ty', ty.toFixed(1) + 'px');
       el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
@@ -94,11 +101,12 @@
     const posters = Array.from(grid.querySelectorAll('.poster'));
     posters.forEach((el, i) => {
       const seed = Number(el.dataset.key) || (i + 1);
-      const r = (Math.sin(seed * 12.9898) * 43758.5453);
-      const u = r - Math.floor(r);
-      const rot = (u * 2 - 1) * 0.28;
-      el.style.setProperty('--tx', '0px');
-      el.style.setProperty('--ty', '0px');
+      const tx  = ((hash01(seed * 0.91) * 2) - 1) * 2.8;
+      const ty  = ((hash01(seed * 1.27) * 2) - 1) * 4.0;
+      const rot = ((hash01(seed * 1.61) * 2) - 1) * 0.65;
+
+      el.style.setProperty('--tx', tx.toFixed(1) + 'px');
+      el.style.setProperty('--ty', ty.toFixed(1) + 'px');
       el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
       el.style.setProperty('--scl', '1');
       el.style.setProperty('--z', '1');
@@ -128,25 +136,27 @@
 
   function setMode(mode) {
     if (mode === currentMode) {
-      if (mode === 'random') { shufflePosters(); randomizeVars(); }
+      if (mode === 'random') { restoreOrder(); randomizeVars(); }
       if (mode === 'date') { restoreOrder(); applyTiltVarsDateMode(); scrollToFirstPoster(); }
       return;
     }
+
     currentMode = mode;
     grid.classList.toggle('randomMode', mode === 'random');
     updateActiveMode(mode);
     setPosterLinksEnabled(mode !== 'random');
+
+    restoreOrder();
+
     if (mode === 'random') {
-      shufflePosters();
       randomizeVars();
     } else {
-      clearRandomVars();
-      restoreOrder();
       applyTiltVarsDateMode();
       scrollToFirstPoster();
     }
   }
 
+  // ===== HERO overlay =====
   let heroOpen = false;
   let heroPosterEl = null;
   let heroJustOpenedAt = 0;
@@ -155,6 +165,7 @@
     if (heroOpen) return;
     const img = posterEl.querySelector('img');
     if (!img) return;
+
     heroPosterEl = posterEl;
     const from = getPosterImgRect(posterEl);
     if (!from) return;
@@ -185,11 +196,13 @@
     heroCard.classList.remove('rollingUp');
     heroCard.classList.add('unrolling');
     setTimeout(() => heroCard.classList.remove('unrolling'), 560);
+
     requestAnimationFrame(() => recenterHeroCard(false));
   }
 
   function closeHero() {
     if (!heroOpen) return;
+
     const to = getPosterImgRect(heroPosterEl);
     if (!to) {
       heroOpen = false;
@@ -200,6 +213,7 @@
       heroJustOpenedAt = 0;
       return;
     }
+
     heroCard.classList.remove('unrolling');
     heroCard.classList.add('rollingUp');
     heroCard.style.transition = 'all 280ms cubic-bezier(.2,.8,.2,1)';
@@ -207,6 +221,7 @@
     heroCard.style.top = to.top + 'px';
     heroCard.style.width = to.width + 'px';
     heroCard.style.height = to.height + 'px';
+
     setTimeout(() => {
       heroOpen = false;
       heroOverlay.classList.remove('isOpen');
@@ -230,6 +245,7 @@
       const vh = vv ? vv.height : window.innerHeight;
       const offL = vv ? vv.offsetLeft : 0;
       const offT = vv ? vv.offsetTop : 0;
+
       const maxW = Math.min(vw - 32, 980);
       const maxH = Math.min(vh - 96, 900);
       const natW = hi.naturalWidth || 1200;
@@ -248,6 +264,7 @@
       heroCard.style.top = tT + 'px';
       heroCard.style.width = tW + 'px';
       heroCard.style.height = tH + 'px';
+
       if (noTransition) requestAnimationFrame(() => { heroCard.style.transition = ''; });
     } catch (_e) {}
   }
