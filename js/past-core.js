@@ -4,13 +4,17 @@
 
   // ===== DOM =====
   const grid = document.getElementById('eventsGrid');
+  const ambient = document.getElementById('ambientBg');
+  const ambientGlow = document.getElementById('ambientGlow');
+  const ambientPoster = document.getElementById('ambientPoster');
+
   const modeButtons = Array.from(document.querySelectorAll('#wtModes .wtModeBtn'));
 
   const heroOverlay = document.getElementById('heroOverlay');
   const heroCard = heroOverlay ? heroOverlay.querySelector('.heroCard') : null;
 
-  if (!grid || !heroOverlay || !heroCard) {
-    console.error('[past] missing required DOM nodes', { grid, heroOverlay, heroCard });
+  if (!grid || !ambient || !ambientGlow || !ambientPoster || !heroOverlay || !heroCard) {
+    console.error('[past] missing required DOM nodes', { grid, ambient, ambientGlow, ambientPoster, heroOverlay, heroCard });
     return;
   }
 
@@ -23,6 +27,8 @@
   }
 
   // ===== HELPERS =====
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
   function parseDate(s) {
     const [y, m, d] = String(s || '').split('-').map(Number);
     return new Date(y || 1970, (m || 1) - 1, d || 1, 12, 0, 0);
@@ -36,6 +42,7 @@
     return { left: r.left, top: r.top, width: r.width, height: r.height };
   }
 
+  // DATE: jump to newest (first poster)
   function scrollToFirstPoster() {
     const first = grid.querySelector('.poster');
     if (!first) {
@@ -46,6 +53,87 @@
     const barH = bar ? bar.getBoundingClientRect().height : 0;
     const y = window.scrollY + first.getBoundingClientRect().top - (barH + 12);
     window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+  }
+
+  // ===== AMBIENT (smooth tween) =====
+  let ambCurrent = { r: 145, g: 85, b: 255 };
+  let ambTarget = { r: 145, g: 85, b: 255 };
+  let ambRAF = 0;
+
+  function applyAmbient() {
+    const r = Math.round(ambCurrent.r);
+    const g = Math.round(ambCurrent.g);
+    const b = Math.round(ambCurrent.b);
+
+    ambient.style.setProperty('--ambR', r);
+    ambient.style.setProperty('--ambG', g);
+    ambient.style.setProperty('--ambB', b);
+
+    ambientGlow.style.background =
+      `radial-gradient(circle at 50% 42%, rgba(${r},${g},${b},.38), transparent 58%)`;
+  }
+
+  function tickAmbient() {
+    ambCurrent.r += (ambTarget.r - ambCurrent.r) * 0.10;
+    ambCurrent.g += (ambTarget.g - ambCurrent.g) * 0.10;
+    ambCurrent.b += (ambTarget.b - ambCurrent.b) * 0.10;
+
+    applyAmbient();
+
+    const dr = Math.abs(ambTarget.r - ambCurrent.r);
+    const dg = Math.abs(ambTarget.g - ambCurrent.g);
+    const db = Math.abs(ambTarget.b - ambCurrent.b);
+    if (dr + dg + db > 0.8) {
+      ambRAF = requestAnimationFrame(tickAmbient);
+    } else {
+      ambRAF = 0;
+    }
+  }
+
+  function setAmbientTarget(rgb) {
+    ambTarget = {
+      r: clamp(rgb.r, 0, 255),
+      g: clamp(rgb.g, 0, 255),
+      b: clamp(rgb.b, 0, 255),
+    };
+    if (!ambRAF) ambRAF = requestAnimationFrame(tickAmbient);
+  }
+
+  async function getAvgRGB(imgUrl) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          const ctx = c.getContext('2d', { willReadFrequently: true });
+          const w = 32, h = 32;
+          c.width = w; c.height = h;
+          ctx.drawImage(img, 0, 0, w, h);
+          const data = ctx.getImageData(0, 0, w, h).data;
+          let r = 0, g = 0, b = 0, n = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const a = data[i + 3];
+            if (a < 32) continue;
+            r += data[i]; g += data[i + 1]; b += data[i + 2];
+            n++;
+          }
+          if (!n) return resolve({ r: 145, g: 85, b: 255 });
+          resolve({ r: r / n, g: g / n, b: b / n });
+        } catch (_e) {
+          resolve({ r: 145, g: 85, b: 255 });
+        }
+      };
+      img.onerror = () => resolve({ r: 145, g: 85, b: 255 });
+      img.src = imgUrl;
+    });
+  }
+
+  async function setAmbientFromImg(src) {
+    if (!src) return;
+    ambientPoster.style.backgroundImage = `url('${src}')`;
+    const rgb = await getAvgRGB(src);
+    setAmbientTarget(rgb);
   }
 
   // ===== DATA / MODES =====
@@ -73,21 +161,24 @@
     });
   }
 
-  function hash01(n) {
-    const x = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
-    return x - Math.floor(x);
+  // === RANDOM ORDER (keep like past-core.js) ===
+  function shufflePosters() {
+    const posters = Array.from(grid.querySelectorAll('.poster'));
+    for (let i = posters.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      grid.insertBefore(posters[j], posters[i]);
+      [posters[i], posters[j]] = [posters[j], posters[i]];
+    }
   }
 
-  // Stronger, but still stable "wall" feeling.
+  // === RANDOM LAYOUT (gentle, like past-core.js) ===
   function randomizeVars() {
-    Array.from(grid.querySelectorAll('.poster')).forEach((el, i) => {
-      const seed = Number(el.dataset.key) || (i + 1);
-
-      const tx  = ((hash01(seed * 1.11) * 2) - 1) * 7.0;   // ~ -7..+7 px
-      const ty  = ((hash01(seed * 1.73) * 2) - 1) * 12.0;  // ~ -12..+12 px
-      const rot = ((hash01(seed * 2.31) * 2) - 1) * 1.35;  // ~ -1.35..+1.35 deg
-      const scl = 0.985 + hash01(seed * 2.97) * 0.040;     // 0.985..1.025
-      const z   = 1 + Math.round(hash01(seed * 3.41) * 2); // 1..3
+    Array.from(grid.querySelectorAll('.poster')).forEach((el) => {
+      const tx  = (Math.random() * 2 - 1) * 1;
+      const ty  = (Math.random() * 2 - 1) * 1;
+      const rot = (Math.random() * 2 - 1) * 2;
+      const scl = 0.99 + Math.random() * 0.05;
+      const z   = 1 + Math.round(Math.random() * 1);
 
       el.style.setProperty('--tx', tx.toFixed(1) + 'px');
       el.style.setProperty('--ty', ty.toFixed(1) + 'px');
@@ -97,16 +188,21 @@
     });
   }
 
+
+  // DATE (and any non-random mode): keep a subtle, deterministic tilt everywhere
+  // Uses dataset.key (stable) so posters don't "jump" between reloads.
   function applyTiltVarsDateMode() {
     const posters = Array.from(grid.querySelectorAll('.poster'));
     posters.forEach((el, i) => {
       const seed = Number(el.dataset.key) || (i + 1);
-      const tx  = ((hash01(seed * 0.91) * 2) - 1) * 2.8;
-      const ty  = ((hash01(seed * 1.27) * 2) - 1) * 4.0;
-      const rot = ((hash01(seed * 1.61) * 2) - 1) * 0.65;
+      // deterministic pseudo-random in [0,1)
+      const r = (Math.sin(seed * 12.9898) * 43758.5453);
+      const u = r - Math.floor(r);
+      // degrees: about -0.28..+0.28 (subtle)
+      const rot = (u * 2 - 1) * 0.28;
 
-      el.style.setProperty('--tx', tx.toFixed(1) + 'px');
-      el.style.setProperty('--ty', ty.toFixed(1) + 'px');
+      el.style.setProperty('--tx', '0px');
+      el.style.setProperty('--ty', '0px');
       el.style.setProperty('--rot', rot.toFixed(2) + 'deg');
       el.style.setProperty('--scl', '1');
       el.style.setProperty('--z', '1');
@@ -136,8 +232,8 @@
 
   function setMode(mode) {
     if (mode === currentMode) {
-      if (mode === 'random') { restoreOrder(); randomizeVars(); }
-      if (mode === 'date') { restoreOrder(); applyTiltVarsDateMode(); scrollToFirstPoster(); }
+      if (mode === 'random') { shufflePosters(); randomizeVars(); }
+      if (mode === 'date') { restoreOrder(); scrollToFirstPoster(); }
       return;
     }
 
@@ -146,17 +242,18 @@
     updateActiveMode(mode);
     setPosterLinksEnabled(mode !== 'random');
 
-    restoreOrder();
-
     if (mode === 'random') {
+      shufflePosters();
       randomizeVars();
     } else {
+      clearRandomVars();
+      restoreOrder();
       applyTiltVarsDateMode();
       scrollToFirstPoster();
     }
   }
 
-  // ===== HERO overlay =====
+  // ===== HERO overlay (centered + recenter on rotate) + ROLL BACK INTO TILE =====
   let heroOpen = false;
   let heroPosterEl = null;
   let heroJustOpenedAt = 0;
@@ -167,6 +264,7 @@
     if (!img) return;
 
     heroPosterEl = posterEl;
+
     const from = getPosterImgRect(posterEl);
     if (!from) return;
 
@@ -184,25 +282,30 @@
     wrap.appendChild(hi);
     heroCard.appendChild(wrap);
 
+    // start EXACTLY at the clicked tile rect
     heroCard.style.inset = 'auto';
     heroCard.style.right = 'auto';
     heroCard.style.bottom = 'auto';
+
     heroCard.style.transition = 'none';
     heroCard.style.left = from.left + 'px';
     heroCard.style.top = from.top + 'px';
     heroCard.style.width = from.width + 'px';
     heroCard.style.height = from.height + 'px';
 
+    // CSS "unroll"
     heroCard.classList.remove('rollingUp');
     heroCard.classList.add('unrolling');
     setTimeout(() => heroCard.classList.remove('unrolling'), 560);
 
+    // then animate to center
     requestAnimationFrame(() => recenterHeroCard(false));
   }
 
   function closeHero() {
     if (!heroOpen) return;
 
+    // animate back INTO the clicked poster rect
     const to = getPosterImgRect(heroPosterEl);
     if (!to) {
       heroOpen = false;
@@ -216,6 +319,7 @@
 
     heroCard.classList.remove('unrolling');
     heroCard.classList.add('rollingUp');
+
     heroCard.style.transition = 'all 280ms cubic-bezier(.2,.8,.2,1)';
     heroCard.style.left = to.left + 'px';
     heroCard.style.top = to.top + 'px';
@@ -248,17 +352,21 @@
 
       const maxW = Math.min(vw - 32, 980);
       const maxH = Math.min(vh - 96, 900);
+
       const natW = hi.naturalWidth || 1200;
       const natH = hi.naturalHeight || 1600;
+
       const scale = Math.min(maxW / natW, maxH / natH, 1.0);
       const tW = Math.max(240, Math.round(natW * scale));
       const tH = Math.max(240, Math.round(natH * scale));
+
       const tL = Math.round(offL + (vw - tW) / 2);
       const tT = Math.round(offT + (vh - tH) / 2);
 
       heroCard.style.inset = 'auto';
       heroCard.style.right = 'auto';
       heroCard.style.bottom = 'auto';
+
       heroCard.style.transition = noTransition ? 'none' : 'all 360ms cubic-bezier(.2,.85,.2,1)';
       heroCard.style.left = tL + 'px';
       heroCard.style.top = tT + 'px';
@@ -266,7 +374,7 @@
       heroCard.style.height = tH + 'px';
 
       if (noTransition) requestAnimationFrame(() => { heroCard.style.transition = ''; });
-    } catch (_e) {}
+    } catch (_e) { /* ignore */ }
   }
 
   let _heroResizeRaf = 0;
@@ -291,6 +399,7 @@
     window.visualViewport.addEventListener('scroll', scheduleHeroRecenter, { passive: true });
   }
 
+  // close by clicking anywhere in overlay (but ignore first touch-click burst)
   heroOverlay.addEventListener('click', () => {
     const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     if (heroJustOpenedAt && (now - heroJustOpenedAt) < 380) return;
@@ -298,21 +407,27 @@
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHero(); });
 
+  // Posters in random mode open hero (href removed)
   function handlePosterActivate(ev) {
     const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
     if (!a) return;
+
     if (!grid.classList.contains('randomMode')) return;
+
     if (ev.cancelable) ev.preventDefault();
     ev.stopPropagation();
+
     openHero(a);
   }
 
+  // pointerup is more reliable on mobile
   let lastPointerUpAt = 0;
   grid.addEventListener('pointerup', (ev) => {
     lastPointerUpAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     handlePosterActivate(ev);
   }, { passive: false });
 
+  // click must always prevent default in random mode (avoid # jump)
   grid.addEventListener('click', (ev) => {
     if (grid.classList.contains('randomMode')) {
       const a = ev.target && ev.target.closest ? ev.target.closest('.poster') : null;
@@ -326,37 +441,60 @@
     handlePosterActivate(ev);
   }, { passive: false });
 
+  // ===== RENDER =====
   function makePoster(item, idx) {
     const a = document.createElement('a');
     a.className = 'poster';
     a.dataset.key = String(idx);
     a.href = item.link || item.href || '#';
+
     const img = document.createElement('img');
     img.loading = 'lazy';
     img.decoding = 'async';
     img.src = item.image || item.img || item.poster || '';
     img.alt = item.title || '';
     a.appendChild(img);
+
+    // ambient updates on hover/focus
+    const prime = () => { if (img.src) setAmbientFromImg(img.src); };
+    a.addEventListener('mouseenter', prime);
+    a.addEventListener('focus', prime);
+
     return a;
   }
 
   async function init() {
     const res = await fetch(DATA_URL, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to load ' + DATA_URL);
+
     const raw = await res.json();
     const arr = Array.isArray(raw) ? raw : (raw.events || raw.items || []);
-    items = arr.map(it => ({ ...it, _date: parseDate(it.date || it.when || it.day) }))
+    items = arr
+      .map(it => ({ ...it, _date: parseDate(it.date || it.when || it.day) }))
       .sort((a, b) => b._date - a._date);
 
     grid.innerHTML = '';
     items.forEach((it, idx) => grid.appendChild(makePoster(it, idx)));
+
     modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
 
+    // default: date
     updateActiveMode('date');
     setPosterLinksEnabled(true);
     clearRandomVars();
-    applyTiltVarsDateMode();
+    applyAmbient();
+
+    // initial ambient to first poster
+    const firstImg = grid.querySelector('.poster img');
+    if (firstImg && firstImg.getAttribute('src')) {
+      setAmbientFromImg(firstImg.getAttribute('src'));
+    }
+
+    // date: jump to newest on load
     scrollToFirstPoster();
+
+    // soften when leaving the grid
+    grid.addEventListener('mouseleave', () => setAmbientTarget({ r: 145, g: 85, b: 255 }));
   }
 
   init().catch(err => {
