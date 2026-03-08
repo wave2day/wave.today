@@ -1,19 +1,18 @@
-/* fog4-addon.js — stronger 4-color cumulative fog */
+/* fog4-addon.js — 3-color stronger fog, ink-in-water */
 (() => {
   const grid = document.getElementById("eventsGrid");
   const ambient = document.getElementById("ambientBg");
   if (!grid || !ambient) return;
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-  const N = 4;
-  const base = { r: 188, g: 144, b: 236 };
+  const N = 3;
+  const base = { r: 186, g: 142, b: 236 };
   let cur = Array.from({ length: N }, () => ({ ...base }));
   let tgt = Array.from({ length: N }, () => ({ ...base }));
   let posCur = [
-    { x: 18, y: 26, s: 78, a: 0.86 },
-    { x: 78, y: 28, s: 72, a: 0.76 },
-    { x: 34, y: 76, s: 88, a: 0.62 },
-    { x: 82, y: 72, s: 82, a: 0.56 },
+    { x: 22, y: 28, s: 74, a: 0.78 },
+    { x: 78, y: 30, s: 70, a: 0.70 },
+    { x: 48, y: 74, s: 84, a: 0.58 },
   ];
   let posTgt = JSON.parse(JSON.stringify(posCur));
   let obs = null, timer = 0, raf = 0, nextDrift = 0;
@@ -24,9 +23,9 @@
   function stylize(rgb) {
     const avg = (rgb.r + rgb.g + rgb.b) / 3;
     return {
-      r: clamp(avg + (rgb.r - avg) * 2.55 + 22, 0, 255),
-      g: clamp(avg + (rgb.g - avg) * 2.20 + 16, 0, 255),
-      b: clamp(avg + (rgb.b - avg) * 2.65 + 24, 0, 255),
+      r: clamp(avg + (rgb.r - avg) * 2.35 + 18, 0, 255),
+      g: clamp(avg + (rgb.g - avg) * 2.10 + 14, 0, 255),
+      b: clamp(avg + (rgb.b - avg) * 2.45 + 20, 0, 255),
     };
   }
 
@@ -35,33 +34,31 @@
       `radial-gradient(circle at ${posCur[0].x}% ${posCur[0].y}%, rgba(${Math.round(cur[0].r)},${Math.round(cur[0].g)},${Math.round(cur[0].b)},${posCur[0].a}), transparent ${posCur[0].s}%),
        radial-gradient(circle at ${posCur[1].x}% ${posCur[1].y}%, rgba(${Math.round(cur[1].r)},${Math.round(cur[1].g)},${Math.round(cur[1].b)},${posCur[1].a}), transparent ${posCur[1].s}%),
        radial-gradient(circle at ${posCur[2].x}% ${posCur[2].y}%, rgba(${Math.round(cur[2].r)},${Math.round(cur[2].g)},${Math.round(cur[2].b)},${posCur[2].a}), transparent ${posCur[2].s}%),
-       radial-gradient(circle at ${posCur[3].x}% ${posCur[3].y}%, rgba(${Math.round(cur[3].r)},${Math.round(cur[3].g)},${Math.round(cur[3].b)},${posCur[3].a}), transparent ${posCur[3].s}%),
-       linear-gradient(180deg, rgba(250,246,255,.08), rgba(238,232,247,.04))`;
+       linear-gradient(180deg, rgba(248,244,255,.10), rgba(236,229,247,.06))`;
   }
 
   function pickDrift() {
     posTgt = [
-      { x: rand(12, 30), y: rand(16, 34), s: rand(74, 90), a: rand(0.82, 0.90) },
-      { x: rand(70, 88), y: rand(18, 36), s: rand(68, 84), a: rand(0.72, 0.80) },
-      { x: rand(20, 42), y: rand(62, 86), s: rand(84, 98), a: rand(0.58, 0.66) },
-      { x: rand(68, 90), y: rand(58, 84), s: rand(78, 94), a: rand(0.52, 0.60) },
+      { x: rand(14, 34), y: rand(18, 38), s: rand(70, 84), a: rand(0.74, 0.82) },
+      { x: rand(66, 86), y: rand(20, 40), s: rand(66, 80), a: rand(0.66, 0.74) },
+      { x: rand(28, 72), y: rand(62, 84), s: rand(80, 94), a: rand(0.54, 0.62) },
     ];
   }
 
   function tick(now) {
-    if (!nextDrift) nextDrift = now + 5600;
+    if (!nextDrift) nextDrift = now + 6200;
     if (now >= nextDrift) {
       pickDrift();
-      nextDrift = now + rand(4800, 7600);
+      nextDrift = now + rand(5200, 8600);
     }
     for (let i = 0; i < N; i++) {
-      cur[i].r += (tgt[i].r - cur[i].r) * 0.024;
-      cur[i].g += (tgt[i].g - cur[i].g) * 0.024;
-      cur[i].b += (tgt[i].b - cur[i].b) * 0.024;
-      posCur[i].x += (posTgt[i].x - posCur[i].x) * 0.013;
-      posCur[i].y += (posTgt[i].y - posCur[i].y) * 0.013;
-      posCur[i].s += (posTgt[i].s - posCur[i].s) * 0.013;
-      posCur[i].a += (posTgt[i].a - posCur[i].a) * 0.013;
+      cur[i].r += (tgt[i].r - cur[i].r) * 0.026;
+      cur[i].g += (tgt[i].g - cur[i].g) * 0.026;
+      cur[i].b += (tgt[i].b - cur[i].b) * 0.026;
+      posCur[i].x += (posTgt[i].x - posCur[i].x) * 0.014;
+      posCur[i].y += (posTgt[i].y - posCur[i].y) * 0.014;
+      posCur[i].s += (posTgt[i].s - posCur[i].s) * 0.014;
+      posCur[i].a += (posTgt[i].a - posCur[i].a) * 0.014;
     }
     applyFog();
     raf = requestAnimationFrame(tick);
@@ -72,9 +69,9 @@
     for (let i = 0; i < N; i++) {
       const incoming = stylize(L[i] || L[L.length - 1] || base);
       tgt[i] = {
-        r: tgt[i].r * 0.56 + incoming.r * 0.44,
-        g: tgt[i].g * 0.56 + incoming.g * 0.44,
-        b: tgt[i].b * 0.56 + incoming.b * 0.44,
+        r: tgt[i].r * 0.62 + incoming.r * 0.38,
+        g: tgt[i].g * 0.62 + incoming.g * 0.38,
+        b: tgt[i].b * 0.62 + incoming.b * 0.38,
       };
     }
   }
@@ -110,7 +107,7 @@
 
   function schedulePick() {
     clearTimeout(timer);
-    timer = setTimeout(pick, 150);
+    timer = setTimeout(pick, 180);
   }
 
   async function pick() {
@@ -118,6 +115,7 @@
       .filter(e => e && e.isIntersecting && e.target)
       .sort((a, b) => (b.intersectionRatio || 0) - (a.intersectionRatio || 0))
       .slice(0, N);
+
     const srcs = entries.map(e => e.target ? (e.target.currentSrc || e.target.src) : null).filter(Boolean);
     if (!srcs.length) return;
 
@@ -133,6 +131,7 @@
     lastEntries = new Map();
     const imgs = Array.from(grid.querySelectorAll(".poster img"));
     if (!imgs.length) return false;
+
     obs = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e && e.target) lastEntries.set(e.target, e); });
       schedulePick();
@@ -141,6 +140,7 @@
       rootMargin: "220px 0px 220px 0px",
       threshold: [0.18, 0.30, 0.45, 0.60, 0.75]
     });
+
     imgs.forEach(img => {
       if (img.complete) obs.observe(img);
       else img.addEventListener("load", () => { try { obs.observe(img); } catch {} }, { once: true });
