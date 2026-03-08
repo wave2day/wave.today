@@ -1,7 +1,15 @@
-/* past-layout.css — RANDOM mobile (2 columns) + alive tilt from JS vars
-   - nerozbíjí hero/centraci: žádný transform na #eventsGrid
-   - naklonění funguje: transform je jen na .poster přes --tx/--ty/--rot/--scl
-   - žádné “vynulování” transformů (žádné transform:none pro random)
+/* past-layout.css — CLEAN VERSION
+   Co v souboru zůstává:
+   - RANDOM mobile/tablet masonry layout
+   - minimální naklonění přes JS proměnné / lehké CSS tilt fallbacky
+   - responsive pravidla pro phone/tablet
+   - jen ambientBg (bez ambientGlow / ambientPoster)
+
+   Co bylo vyhozeno:
+   - všechny zbytky glow/poster ambient vrstev
+   - duplicitní portrait grid override
+   - konfliktní grid vs masonry přepisy
+   - staré mobile Chrome safe bloky pro ambientPoster/ambientGlow
 */
 
 /* ===== RANDOM: neklipovat rotace/přesahy ===== */
@@ -35,36 +43,27 @@
   }
 }
 
-/* ===== MOBILE RANDOM = 2 SLOUPCE (hlavní pravidlo) ===== */
-@media (max-width: 768px){
+/* ===== MOBILE + TABLET RANDOM = 2 SLOUPCE MASONRY ===== */
+@media (max-width: 1024px){
   #eventsGrid.randomMode,
   #eventsGrid.randomMode.force2col,
   html.isTouch #eventsGrid.randomMode,
   html.isTouch #eventsGrid.randomMode.force2col{
-    /* columns layout */
     display: block !important;
     -webkit-column-count: 2 !important;
     column-count: 2 !important;
     -webkit-column-width: auto !important;
     column-width: auto !important;
+    -webkit-column-gap: 10px !important;
+    column-gap: 10px !important;
 
-    /* kompaktní “lepší” vzhled */
-    -webkit-column-gap: 1px !important;
-    column-gap: 1px !important;
-
-    padding: 0 !important;
+    padding: 0 8px !important;
     margin: 0 !important;
 
-    /* full-bleed jako dřív */
-    width: 100vw !important;
-    max-width: 100vw !important;
-    margin-left: calc(50% - 50vw) !important;
-    margin-right: calc(50% - 50vw) !important;
+    width: 100% !important;
+    max-width: none !important;
 
-    /* IMPORTANT: žádný transform na kontejner */
     transform: none !important;
-
-    /* neutralizace grid pravidel, kdyby někde byla */
     grid-template-columns: unset !important;
     gap: unset !important;
 
@@ -73,33 +72,42 @@
     will-change: auto !important;
   }
 
-  #eventsGrid.randomMode .poster{
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode.force2col .poster,
+  html.isTouch #eventsGrid.randomMode .poster,
+  html.isTouch #eventsGrid.randomMode.force2col .poster{
     display: inline-block !important;
     width: 100% !important;
+    max-width: none !important;
     break-inside: avoid !important;
     -webkit-column-break-inside: avoid !important;
 
-    margin: 0 0 1px !important;
+    margin: 0 0 10px 0 !important;
+    padding: 0 !important;
 
-    /* “život”: proměnné z JS */
     transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
-    transform-origin: 50% 50% !important;
+    transform-origin: center center !important;
 
     transition: none !important;
     will-change: transform;
     filter: none !important;
     mix-blend-mode: normal !important;
+    box-sizing: border-box !important;
   }
 
-  /* obraz nech neutrální (transform nese .poster) */
-  #eventsGrid.randomMode .poster img{
+  /* obraz nech neutrální */
+  #eventsGrid.randomMode .poster img,
+  #eventsGrid.randomMode.force2col .poster img,
+  html.isTouch #eventsGrid.randomMode .poster img,
+  html.isTouch #eventsGrid.randomMode.force2col .poster img{
     transform: none !important;
     will-change: auto !important;
     filter: none !important;
     mix-blend-mode: normal !important;
   }
 
-  #eventsGrid.randomMode .wtIcon{
+  #eventsGrid.randomMode .wtIcon,
+  #eventsGrid.randomMode.force2col .wtIcon{
     width: 64px !important;
     height: 64px !important;
   }
@@ -115,19 +123,20 @@
     column-gap: 0px !important;
   }
 
-  #eventsGrid.randomMode .poster{
+  #eventsGrid.randomMode .poster,
+  #eventsGrid.randomMode.force2col .poster{
     margin-bottom: 0px !important;
   }
 
-  #eventsGrid.randomMode .wtIcon{
+  #eventsGrid.randomMode .wtIcon,
+  #eventsGrid.randomMode.force2col .wtIcon{
     width: 68px !important;
     height: 68px !important;
   }
 }
 
-/* ===== SCROLL stabilita (bez zabití náklonu) ===== */
+/* ===== SCROLL stabilita ===== */
 @media (max-width: 768px) and (orientation: portrait){
-  /* žádné transform: translateZ(0) — to by přepsalo naklonění */
   #eventsGrid.randomMode .poster,
   #eventsGrid.randomMode .poster img{
     backface-visibility: hidden;
@@ -142,13 +151,12 @@
     animation: none !important;
   }
 
-  /* nikdy nenechat obrázky “neviditelné” */
   #eventsGrid.randomMode .poster img{
     opacity: 1 !important;
   }
 }
 
-/* ===== volitelný reveal (zůstává, ale neblokuje běžný stav) ===== */
+/* ===== volitelný reveal ===== */
 @media (max-width: 560px) and (orientation: portrait){
   #eventsGrid.randomMode .poster.rndmReveal{
     animation: rndmDepthIn 420ms cubic-bezier(.16,.9,.18,1) both;
@@ -186,181 +194,38 @@
 #eventsGrid.randomMode .poster:nth-child(7n){ margin-bottom: -1px !important; }
 
 /* ===================================================================== */
-/* AMBIENT LAYERS (FOG4 + Chrome-safe)                                     */
-/* - fog (více barev) kreslí addon na #ambientBg                            */
-/* - glow (jedna barva) kreslí past-core.js na #ambientGlow                 */
-/* - rozmazaný plakát je #ambientPoster (volitelná stopa)                   */
+/* AMBIENT — pouze ambientBg                                             */
 /* ===================================================================== */
 
 #ambientBg{
   --fog1:145,85,255;
   --fog2:145,85,255;
   --fog3:145,85,255;
-  --fog4:145,85,255;
+
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
 
   filter: blur(54px) saturate(1.10);
   transform: translateZ(0);
   will-change: background-image;
-
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
 }
 
-#ambientGlow{
-  filter: blur(54px) saturate(1.10);
-  will-change: opacity, background-image;
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-}
-
+/* ambientGlow a ambientPoster jsou pryč */
+#ambientGlow,
 #ambientPoster{
-  opacity: .28; /* čistý fog: dej 0 */
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-}
-
-/* mobile Chrome safe portrait */
-@media (max-width: 560px) and (orientation: portrait){
-  #ambientBg{ filter: blur(44px) saturate(1.06); }
-
-  #ambientPoster{
-    mix-blend-mode: normal !important;
-    opacity: .35 !important;
-    filter: blur(44px) saturate(1.12) !important;
-    animation: none !important;
-  }
-
-  #ambientGlow{
-    opacity: .85 !important;
-    animation: none !important;
-  }
-}
-
-/* ===== PORTRAIT FIX — stable 2-column grid, minimal tilt ===== */
-@media (max-width: 1024px) and (orientation: portrait){
-  #eventsGrid.randomMode,
-  #eventsGrid.randomMode.force2col,
-  html.isTouch #eventsGrid.randomMode,
-  html.isTouch #eventsGrid.randomMode.force2col{
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px 10px !important;
-    width: 100% !important;
-    max-width: none !important;
-    padding: 0 8px !important;
-    margin: 0 !important;
-    column-count: unset !important;
-    column-width: unset !important;
-    column-gap: unset !important;
-    transform: none !important;
-    filter: none !important;
-    isolation: isolate;
-  }
-
-  #eventsGrid.randomMode .poster{
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    break-inside: auto !important;
-    -webkit-column-break-inside: auto !important;
-    page-break-inside: auto !important;
-    transform: none !important;
-    transition: none !important;
-    will-change: auto !important;
-    contain: none !important;
-    overflow: visible !important;
-    z-index: 1 !important;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-
-  #eventsGrid.randomMode .poster img{
-    display: block !important;
-    width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-    object-fit: contain !important;
-    transform-origin: 50% 50% !important;
-    will-change: auto !important;
-    filter: none !important;
-    mix-blend-mode: normal !important;
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
-  }
-
-  #eventsGrid.randomMode .poster:nth-child(6n+1) img{ transform: rotate(-0.32deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+2) img{ transform: rotate( 0.24deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+3) img{ transform: rotate(-0.18deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+4) img{ transform: rotate( 0.28deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+5) img{ transform: rotate(-0.26deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+6) img{ transform: rotate( 0.16deg) !important; }
-
-  #eventsGrid.randomMode.isScrolling .poster img{
-    transform: none !important;
-  }
-
-  #ambientBg{
-    filter: blur(112px) saturate(1.42) !important;
-  }
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  background: none !important;
+  filter: none !important;
+  box-shadow: none !important;
 }
 
 @media (max-width: 560px) and (orientation: portrait){
-  #eventsGrid.randomMode,
-  #eventsGrid.randomMode.force2col,
-  html.isTouch #eventsGrid.randomMode,
-  html.isTouch #eventsGrid.randomMode.force2col{
-    gap: 8px 8px !important;
-    padding: 0 6px !important;
-  }
-
   #ambientBg{
-    filter: blur(96px) saturate(1.36) !important;
+    filter: blur(44px) saturate(1.06);
   }
-}
-
-#ambientGlow{ display:none !important; }
-#ambientPoster{ display:none !important; }
-/* ===== MOBILE / TABLET MASONRY FIX ===== */
-
-@media (max-width: 1024px){
-
-  #eventsGrid.randomMode{
-    display:block !important;
-    column-count:2 !important;
-    column-gap:10px !important;
-    grid-template-columns:none !important;
-  }
-
-  #eventsGrid.randomMode .poster{
-    display:inline-block !important;
-    width:100% !important;
-    margin:0 0 10px 0 !important;
-    break-inside:avoid !important;
-    page-break-inside:avoid !important;
-  }
-
-  #eventsGrid.randomMode .poster img{
-    width:100% !important;
-    height:auto !important;
-  }
-
-}
-
-/* PHONE */
-
-@media (max-width:560px){
-
-  #eventsGrid.randomMode{
-    column-count:2 !important;
-    column-gap:8px !important;
-  }
-
 }
