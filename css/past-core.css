@@ -331,25 +331,49 @@
     }
 
   
-
-    /* ===== DESKTOP: page + grid + hero ===== */
-    #pageBase{
-      position:fixed;
-      inset:0;
-      z-index:0;
-      pointer-events:none;
-      background:linear-gradient(
-        180deg,
-        #f3f0f8 0%,
-        #e8e3f3 40%,
-        #ddd6ec 100%
-      );
+    /* ===== DESKTOP: ambient + grid + hero ===== */
+    #pageBase{ position:fixed; inset:0; z-index:0; background:#0b0b10; pointer-events:none; }
+    #ambientBg{
+      position:fixed; inset:0; z-index:1; pointer-events:none;
+      --ambR:145; --ambG:85; --ambB:255;
+      background:
+        radial-gradient(1100px 720px at 52% 16%, rgba(var(--ambR),var(--ambG),var(--ambB),.30), transparent 62%),
+        radial-gradient(820px 520px at 18% 62%, rgba(80,150,255,.18), transparent 60%),
+        radial-gradient(820px 520px at 86% 70%, rgba(255,70,205,.14), transparent 60%),
+        linear-gradient(180deg, #0b0b10, #0b0b10);
+      transition: filter .35s ease, background .45s ease;
+      will-change: transform, opacity, filter;
+    }
+    #ambientPoster{
+      position:fixed; inset:-14vh; z-index:2; pointer-events:none;
+      background:none; background-size:cover; background-position:center;
+      filter: blur(86px) saturate(1.15);
+      opacity:.88; transform: scale(1.06);
+      mix-blend-mode: screen;
+      transition: background-image .55s ease, opacity .55s ease;
+      will-change: transform, opacity, filter;
+      animation: wtAmbientDrift 8.5s ease-in-out infinite;
+    }
+    #ambientGlow{
+      position:fixed; inset:-12vh; z-index:3; pointer-events:none;
+      background: radial-gradient(circle at 50% 45%, rgba(120,150,255,.35), transparent 58%);
+      filter: blur(20px) saturate(1.25);
+      mix-blend-mode: screen;
+      opacity:1;
+      transition: background .55s ease, opacity .55s ease;
+      will-change: transform, opacity, filter;
+      animation: wtAmbientDrift 7.2s ease-in-out infinite reverse;
+    }
+    @keyframes wtAmbientDrift{
+      0%{ transform: translate3d(0,0,0) scale(1.02); filter: blur(18px) saturate(1.25); }
+      50%{ transform: translate3d(1.5vw,-1.2vh,0) scale(1.04); filter: blur(20px) saturate(1.35); }
+      100%{ transform: translate3d(0,0,0) scale(1.02); filter: blur(18px) saturate(1.25); }
     }
 
     .glassPage{
       position: relative;
       z-index: 10;
-      padding: 120px 0 42px;
+      padding: 120px 0 42px; /* space for fixed topBar */
       background: rgba(255,255,255,.026);
       backdrop-filter: blur(8px) saturate(1.05);
       -webkit-backdrop-filter: blur(8px) saturate(1.05);
@@ -383,6 +407,7 @@
     }
 
     #eventsGrid.randomMode{
+      /* masonry-like layout (3 columns on desktop) */
       max-width: 1180px;
       margin: 0 auto;
       padding: 0 18px;
@@ -390,6 +415,7 @@
       column-gap: 14px;
     }
     #eventsGrid.randomMode .poster{
+      /* column item */
       display: inline-block;
       width: 100%;
       margin: 0 0 14px 0;
@@ -406,8 +432,10 @@
       page-break-inside: avoid;
     }
 
+    /* hero overlay */
     #heroOverlay{
       cursor: zoom-out;
+
       position: fixed;
       inset: 0;
       z-index: 9999;
@@ -418,8 +446,7 @@
     }
     #heroOverlay.isOpen{ display:flex; }
     #heroOverlay .heroBack{ z-index: 1; position:absolute; inset:0; background: rgba(0,0,0,.22); }
-    #heroOverlay .heroCard{
-      z-index: 2;
+    #heroOverlay .heroCard{ z-index: 2;
       position: fixed;
       inset:0;
       width:100vw;
