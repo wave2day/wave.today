@@ -325,3 +325,93 @@
     filter: blur(50px) saturate(1.12);
   }
 }
+
+
+/* ===================================================================== */
+/* FINAL PORTRAIT FIX — stable 2-column grid, minimal tilt               */
+/* ===================================================================== */
+@media (max-width: 1024px) and (orientation: portrait){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px 10px !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    column-count: unset !important;
+    column-width: unset !important;
+    column-gap: unset !important;
+    transform: none !important;
+    filter: none !important;
+    isolation: isolate;
+  }
+
+  #eventsGrid.randomMode .poster{
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    break-inside: auto !important;
+    -webkit-column-break-inside: auto !important;
+    page-break-inside: auto !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+    contain: none !important;
+    overflow: visible !important;
+    z-index: 1 !important;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    transform-origin: 50% 50% !important;
+    will-change: auto !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+  }
+
+  #eventsGrid.randomMode .poster:nth-child(6n+1) img{ transform: rotate(-0.35deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+2) img{ transform: rotate( 0.25deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+3) img{ transform: rotate(-0.20deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+4) img{ transform: rotate( 0.30deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+5) img{ transform: rotate(-0.28deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+6) img{ transform: rotate( 0.18deg) !important; }
+
+  #eventsGrid.randomMode.isScrolling .poster img{
+    transform: none !important;
+  }
+
+  #ambientBg{
+    filter: blur(96px) saturate(1.34) !important;
+  }
+}
+
+@media (max-width: 560px) and (orientation: portrait){
+  #eventsGrid.randomMode,
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
+    gap: 8px 8px !important;
+    padding: 0 6px !important;
+  }
+
+  #ambientBg{
+    filter: blur(86px) saturate(1.28) !important;
+  }
+}
+
+#ambientGlow{ display:none !important; }
+#ambientPoster{ display:none !important; }
