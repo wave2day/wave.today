@@ -328,3 +328,39 @@
 
 #ambientGlow{ display:none !important; }
 #ambientPoster{ display:none !important; }
+/* ===== MOBILE / TABLET MASONRY FIX ===== */
+
+@media (max-width: 1024px){
+
+  #eventsGrid.randomMode{
+    display:block !important;
+    column-count:2 !important;
+    column-gap:10px !important;
+    grid-template-columns:none !important;
+  }
+
+  #eventsGrid.randomMode .poster{
+    display:inline-block !important;
+    width:100% !important;
+    margin:0 0 10px 0 !important;
+    break-inside:avoid !important;
+    page-break-inside:avoid !important;
+  }
+
+  #eventsGrid.randomMode .poster img{
+    width:100% !important;
+    height:auto !important;
+  }
+
+}
+
+/* PHONE */
+
+@media (max-width:560px){
+
+  #eventsGrid.randomMode{
+    column-count:2 !important;
+    column-gap:8px !important;
+  }
+
+}
