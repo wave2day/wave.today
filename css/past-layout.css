@@ -1,7 +1,7 @@
 /* past-layout.css — RANDOM mobile (2 columns) + alive tilt from JS vars
-   - NEROZBIJÍ hero/centraci: žádný transform na #eventsGrid
-   - NAKLONĚNÍ FUNGUJE: transform je jen na .poster přes --tx/--ty/--rot/--scl
-   - ŽÁDNÉ “vynulování” transformů (žádné transform:none pro random)
+   - nerozbíjí hero/centraci: žádný transform na #eventsGrid
+   - naklonění funguje: transform je jen na .poster přes --tx/--ty/--rot/--scl
+   - žádné “vynulování” transformů (žádné transform:none pro random)
 */
 
 /* ===== RANDOM: neklipovat rotace/přesahy ===== */
@@ -81,7 +81,7 @@
 
     margin: 0 0 1px !important;
 
-    /* TADY JE TEN “ŽIVOT”: používají se proměnné z JS */
+    /* “život”: proměnné z JS */
     transform: translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--scl,1)) !important;
     transform-origin: 50% 50% !important;
 
@@ -176,42 +176,78 @@
   }
 }
 
-/* ===== AMBIENT mobile Chrome safe portrait ===== */
+/* ===== finální pojistka proti klipu ===== */
+#eventsGrid.randomMode .poster{ overflow: visible !important; }
+#eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; }
+
+/* mini overlap – jemný nástěnkový efekt */
+#eventsGrid.randomMode .poster:nth-child(3n){ margin-bottom: -2px !important; }
+#eventsGrid.randomMode .poster:nth-child(5n){ margin-bottom: -3px !important; }
+#eventsGrid.randomMode .poster:nth-child(7n){ margin-bottom: -1px !important; }
+
+/* ===================================================================== */
+/* AMBIENT LAYERS (FOG4 + Chrome-safe)                                     */
+/* - fog (více barev) kreslí addon na #ambientBg                            */
+/* - glow (jedna barva) kreslí past-core.js na #ambientGlow                 */
+/* - rozmazaný plakát je #ambientPoster (volitelná stopa)                   */
+/* ===================================================================== */
+
+#ambientBg{
+  --fog1:145,85,255;
+  --fog2:145,85,255;
+  --fog3:145,85,255;
+  --fog4:145,85,255;
+
+  filter: blur(54px) saturate(1.10);
+  transform: translateZ(0);
+  will-change: background-image;
+
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#ambientGlow{
+  filter: blur(54px) saturate(1.10);
+  will-change: opacity, background-image;
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+#ambientPoster{
+  opacity: .28; /* čistý fog: dej 0 */
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* mobile Chrome safe portrait */
 @media (max-width: 560px) and (orientation: portrait){
+  #ambientBg{ filter: blur(44px) saturate(1.06); }
+
   #ambientPoster{
     mix-blend-mode: normal !important;
     opacity: .35 !important;
     filter: blur(44px) saturate(1.12) !important;
     animation: none !important;
   }
+
   #ambientGlow{
     opacity: .85 !important;
     animation: none !important;
   }
 }
 
-/* ===== finální pojistka proti klipu ===== */
-#eventsGrid.randomMode .poster{ overflow: visible !important; }
-#eventsGrid.randomMode .poster img{ display:block; width:100%; height:auto; }
-/* mini overlap – jemný nástěnkový efekt */
-#eventsGrid.randomMode .poster:nth-child(3n){
-  margin-bottom: -2px !important;
-}
-
-#eventsGrid.randomMode .poster:nth-child(5n){
-  margin-bottom: -3px !important;
-}
-
-#eventsGrid.randomMode .poster:nth-child(7n){
-  margin-bottom: -1px !important;
-}
-
-/* ===== MOBILE/TABLET FIX — landscape + portrait, random stays working ===== */
-
-/* portrait */
+/* ===== PORTRAIT FIX — stable 2-column grid, minimal tilt ===== */
 @media (max-width: 1024px) and (orientation: portrait){
   #eventsGrid.randomMode,
-  html.isTouch #eventsGrid.randomMode{
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 10px 10px !important;
@@ -224,29 +260,9 @@
     column-gap: unset !important;
     transform: none !important;
     filter: none !important;
+    isolation: isolate;
   }
-}
 
-/* landscape phone/tablet */
-@media (max-width: 1024px) and (orientation: landscape){
-  #eventsGrid.randomMode,
-  html.isTouch #eventsGrid.randomMode{
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 10px 10px !important;
-    width: 100% !important;
-    max-width: none !important;
-    padding: 0 8px !important;
-    margin: 0 !important;
-    column-count: unset !important;
-    column-width: unset !important;
-    column-gap: unset !important;
-    transform: none !important;
-    filter: none !important;
-  }
-}
-
-@media (max-width: 1024px){
   #eventsGrid.randomMode .poster{
     display: block !important;
     width: 100% !important;
@@ -262,8 +278,8 @@
     contain: none !important;
     overflow: visible !important;
     z-index: 1 !important;
-    backface-visibility: hidden !important;
-    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
   #eventsGrid.randomMode .poster img{
@@ -280,31 +296,33 @@
     -webkit-backface-visibility: hidden !important;
   }
 
-  /* minimal tilt only */
-  #eventsGrid.randomMode .poster:nth-child(6n+1) img{ transform: rotate(-0.28deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+2) img{ transform: rotate( 0.22deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+3) img{ transform: rotate(-0.16deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+4) img{ transform: rotate( 0.24deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+5) img{ transform: rotate(-0.20deg) !important; }
-  #eventsGrid.randomMode .poster:nth-child(6n+6) img{ transform: rotate( 0.14deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+1) img{ transform: rotate(-0.32deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+2) img{ transform: rotate( 0.24deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+3) img{ transform: rotate(-0.18deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+4) img{ transform: rotate( 0.28deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+5) img{ transform: rotate(-0.26deg) !important; }
+  #eventsGrid.randomMode .poster:nth-child(6n+6) img{ transform: rotate( 0.16deg) !important; }
 
   #eventsGrid.randomMode.isScrolling .poster img{
     transform: none !important;
   }
 
   #ambientBg{
-    filter: blur(118px) saturate(1.48) !important;
+    filter: blur(112px) saturate(1.42) !important;
   }
 }
 
 @media (max-width: 560px) and (orientation: portrait){
   #eventsGrid.randomMode,
-  html.isTouch #eventsGrid.randomMode{
+  #eventsGrid.randomMode.force2col,
+  html.isTouch #eventsGrid.randomMode,
+  html.isTouch #eventsGrid.randomMode.force2col{
     gap: 8px 8px !important;
     padding: 0 6px !important;
   }
+
   #ambientBg{
-    filter: blur(102px) saturate(1.40) !important;
+    filter: blur(96px) saturate(1.36) !important;
   }
 }
 
