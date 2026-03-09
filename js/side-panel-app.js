@@ -40,13 +40,38 @@
         </div>
         <div class="sp-infoBody">
           <div class="sp-infoContent">
-            <p>Toto je základ INFO okna.</p>
-            <p>Design a finální obsah doplníš později.</p>
-            <p>Okno už teď umí:</p>
-            <p>– otevřít / zavřít přes INFO button<br>– scroll uvnitř obsahu<br>– přetáhnout myší nebo prstem</p>
-            <p>Tenhle text je jen dočasný placeholder.</p>
-            <p>Můžeš ho kdykoliv nahradit vlastním obsahem.</p>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a dui ut justo laoreet fermentum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>
+            <h1>Wave.Today — wave events in one place</h1>
+
+            <p>
+            Wave.Today brings an overview of concerts, parties and <strong>online events</strong> from the <strong>wave, darkwave, witch house etc.</strong> scene.<br>
+            Since <strong>2020</strong>, it publishes <strong>posters and links to events</strong> — a simpler way to see <strong>what is happening right now</strong> hardly exists.
+            </p>
+
+            <p>
+            <strong>You can find posters of current events</strong> with links to official event pages or ticket purchase.
+            </p>
+
+            <p>
+            The <strong>Past Events</strong> section presents an <strong>archive gallery</strong> of past events and shows how active the scene really is.
+            </p>
+
+            <h2>Tips</h2>
+
+            <p>
+            • <strong>Just click the poster</strong> to be redirected to the event page, official event website or ticket purchase<br>
+            • Click the <strong>date label</strong> to add the event to your calendar
+            </p>
+
+            <h2 class="sp-noticeTitle">Did you notice?</h2>
+            <p class="sp-noticeBlock">
+            <img src="assets/gif/wave.gif" width="18" style="vertical-align:middle;margin-right:6px;" alt="wave orb">
+            <em>Click the rotating pink orb</em> and a panel with a <strong>QR code</strong> opens.<br>
+            The QR code leads directly to <strong>Wave.Today</strong>.
+            </p>
+
+            <p>
+            There is also an <strong>Instagram</strong> that may interest you — moments from shows and performances by artists of this scene appear there.
+            </p>
           </div>
         </div>
       </div>
@@ -89,7 +114,11 @@
       .sp-infoClose{border:0;background:rgba(255,255,255,.42);color:#111;width:28px;height:28px;border-radius:999px;cursor:pointer;font-size:18px;line-height:1;}
       .sp-infoBody{max-height:min(calc(72vh - 58px), 620px);overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
       .sp-infoContent{padding:16px 18px 18px;color:#11131a;font:500 14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+      .sp-infoContent h1{margin:0 0 14px;font-size:20px;line-height:1.15;font-weight:750;}
+      .sp-infoContent h2{margin:18px 0 8px;font-size:15px;line-height:1.2;font-weight:700;}
       .sp-infoContent p{margin:0 0 12px;}
+      .sp-noticeTitle{font-size:13px !important;opacity:.74;margin:16px 0 4px !important;}
+      .sp-noticeBlock{margin:0 0 12px !important;}
       @media (max-width:640px){.sp-infoWindow{left:12px;width:calc(100vw - 24px);max-height:68vh}.sp-infoBody{max-height:calc(68vh - 58px)}}
     </style>
   `;
