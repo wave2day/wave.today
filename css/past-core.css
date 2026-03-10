@@ -230,7 +230,7 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   letter-spacing: .40px;
   line-height: 1;
   text-transform: lowercase;
-  transform:translateZ(0) scaleX(var(--textScaleX));
+  transform: scaleX(var(--textScaleX));
   transform-origin: center;
   text-shadow:
     -0.75px 0 0 var(--stroke),
@@ -260,14 +260,11 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   border-radius: 999px;
 }
 
-.scalePill{
-  transform: scale(.253);
-  transform-origin:left center;
-}
-
-.scaleRound{
-  transform: scale(.235);
-  transform-origin:center;
+.scalePill{ zoom: .253; }
+.scaleRound{ zoom: .235; }
+@supports not (zoom: 1){
+  .scalePill{ zoom:1; transform: scale(.253); transform-origin:left center; }
+  .scaleRound{ zoom:1; transform: scale(.235); transform-origin:center; }
 }
 
 .wtModeBtn{ display:flex; align-items:center; }
