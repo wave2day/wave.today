@@ -1,4 +1,4 @@
-/* fog4-addon.js — living pour + stable 3 colors + faster 4th accent */
+/* fog4-addon.js — living pour + stable 3 colors + screen-wide 4th accent */
 
 (() => {
   const grid = document.getElementById("eventsGrid");
@@ -28,11 +28,15 @@
 
   let posTgt = JSON.parse(JSON.stringify(posCur));
 
-  /* 4. akcentová vrstva */
+  /* 4. akcentová vrstva — oddělená od mlhy */
   let accentCur = { r: 255, g: 255, b: 255 };
   let accentTgt = { r: 255, g: 255, b: 255 };
-  let accentPosCur = { x: 50, y: 50, s: 34, a: 0.00 };
-  let accentPosTgt = { x: 50, y: 50, s: 34, a: 0.22 };
+
+  let accentPosCur = { x: 50, y: 50, s: 20, a: 0.00 };
+  let accentPosTgt = { x: 50, y: 50, s: 20, a: 0.34 };
+
+  let streakCur = { x: 52, y: 48, s: 14, a: 0.00 };
+  let streakTgt = { x: 52, y: 48, s: 14, a: 0.22 };
 
   let obs = null;
   let timer = 0;
@@ -67,13 +71,14 @@
     const avg = (rgb.r + rgb.g + rgb.b) / 3;
     const sat = saturation(rgb);
     const lum = luminance(rgb);
-    const boost = sat < 28 ? 1.9 : 2.2;
-    const lift = lum > 180 ? 10 : lum < 70 ? 0 : 4;
+
+    const boost = sat < 28 ? 2.05 : 2.35;
+    const lift = lum > 185 ? 8 : lum < 70 ? 0 : 3;
 
     return {
       r: clamp(avg + (rgb.r - avg) * boost + lift, 0, 255),
-      g: clamp(avg + (rgb.g - avg) * (boost - 0.08) + lift, 0, 255),
-      b: clamp(avg + (rgb.b - avg) * (boost + 0.06) + lift + 2, 0, 255)
+      g: clamp(avg + (rgb.g - avg) * (boost - 0.10) + lift, 0, 255),
+      b: clamp(avg + (rgb.b - avg) * (boost + 0.08) + lift + 2, 0, 255)
     };
   }
 
@@ -164,9 +169,14 @@ radial-gradient(circle at ${posCur[2].x}% ${posCur[2].y}%,
 
 radial-gradient(circle at ${accentPosCur.x}% ${accentPosCur.y}%,
   rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${accentPosCur.a}) 0%,
-  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${accentPosCur.a * 0.72}) 16%,
-  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${accentPosCur.a * 0.34}) 30%,
+  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${accentPosCur.a * 0.82}) 10%,
+  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${accentPosCur.a * 0.42}) 22%,
   transparent ${accentPosCur.s}%),
+
+radial-gradient(ellipse at ${streakCur.x}% ${streakCur.y}%,
+  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${streakCur.a}) 0%,
+  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${streakCur.a * 0.55}) 14%,
+  transparent ${streakCur.s}%),
 
 linear-gradient(180deg,
   rgba(${field.r|0},${field.g|0},${field.b|0},0.28),
@@ -184,6 +194,8 @@ linear-gradient(180deg,
 
     accentPosTgt.x = clamp(accentPosTgt.x + rand(-2, 2), 10, 90);
     accentPosTgt.y = clamp(accentPosTgt.y + rand(-2, 2), 12, 88);
+    streakTgt.x = clamp(streakTgt.x + rand(-3, 3), 8, 92);
+    streakTgt.y = clamp(streakTgt.y + rand(-3, 3), 10, 90);
   }
 
   function tick(now) {
@@ -211,16 +223,22 @@ linear-gradient(180deg,
       coreTgt[i]  = clamp(coreTgt[i]  - 0.0000030, 0.40, 2.30);
     }
 
-    accentCur.r += (accentTgt.r - accentCur.r) * 0.040;
-    accentCur.g += (accentTgt.g - accentCur.g) * 0.040;
-    accentCur.b += (accentTgt.b - accentCur.b) * 0.040;
+    accentCur.r += (accentTgt.r - accentCur.r) * 0.090;
+    accentCur.g += (accentTgt.g - accentCur.g) * 0.090;
+    accentCur.b += (accentTgt.b - accentCur.b) * 0.090;
 
-    accentPosCur.x += (accentPosTgt.x - accentPosCur.x) * 0.020;
-    accentPosCur.y += (accentPosTgt.y - accentPosCur.y) * 0.020;
-    accentPosCur.s += (accentPosTgt.s - accentPosCur.s) * 0.018;
-    accentPosCur.a += (accentPosTgt.a - accentPosCur.a) * 0.040;
+    accentPosCur.x += (accentPosTgt.x - accentPosCur.x) * 0.040;
+    accentPosCur.y += (accentPosTgt.y - accentPosCur.y) * 0.040;
+    accentPosCur.s += (accentPosTgt.s - accentPosCur.s) * 0.034;
+    accentPosCur.a += (accentPosTgt.a - accentPosCur.a) * 0.085;
 
-    accentPosTgt.a = clamp(accentPosTgt.a - 0.0000010, 0.28, 0.46);
+    streakCur.x += (streakTgt.x - streakCur.x) * 0.050;
+    streakCur.y += (streakTgt.y - streakCur.y) * 0.050;
+    streakCur.s += (streakTgt.s - streakCur.s) * 0.034;
+    streakCur.a += (streakTgt.a - streakCur.a) * 0.080;
+
+    accentPosTgt.a = clamp(accentPosTgt.a - 0.0000004, 0.38, 0.62);
+    streakTgt.a = clamp(streakTgt.a - 0.0000008, 0.24, 0.42);
 
     applyFog();
     raf = requestAnimationFrame(tick);
@@ -302,8 +320,7 @@ linear-gradient(180deg,
           while (accents.length < 3) accents.push(accents[accents.length - 1] || dominant);
 
           let accent = dominant;
-          let maxSat = -1;
-          let maxAccentScore = -1;
+          let bestAccentScore = -1;
 
           for (const item of palette) {
             const rgb = item.rgb;
@@ -312,12 +329,11 @@ linear-gradient(180deg,
 
             const accentScore =
               sat * 1.0 +
-              (lum > 180 ? 12 : 0) +
-              (item.n < 40 ? 8 : 0);
+              (lum > 185 ? 10 : 0) +
+              (item.n < 42 ? 10 : 0);
 
-            if (accentScore > maxAccentScore && sat > maxSat) {
-              maxSat = sat;
-              maxAccentScore = accentScore;
+            if (accentScore > bestAccentScore) {
+              bestAccentScore = accentScore;
               accent = rgb;
             }
           }
@@ -359,6 +375,54 @@ linear-gradient(180deg,
 
       img.src = src;
     });
+  }
+
+  async function extractAccentFromVisible(visible) {
+    const candidates = [];
+
+    for (const entry of visible.slice(0, 8)) {
+      const img = entry.target;
+      const src = img ? (img.currentSrc || img.src) : null;
+      if (!src) continue;
+
+      try {
+        const pal = await extractDominantPalette(src);
+
+        const local = [
+          pal.accent,
+          pal.alt1,
+          pal.alt2,
+          pal.alt3,
+          pal.dominant
+        ].filter(Boolean);
+
+        for (const rgb of local) {
+          const sat = Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b);
+          const lum = 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
+
+          const vividScore =
+            sat * 1.35 +
+            (lum > 170 ? 14 : 0) +
+            (entry.intersectionRatio || 0) * 18;
+
+          candidates.push({
+            rgb,
+            score: vividScore,
+            rect: img.getBoundingClientRect()
+          });
+        }
+      } catch {}
+    }
+
+    if (!candidates.length) {
+      return {
+        rgb: stylizeAccent({ r: 255, g: 255, b: 255 }),
+        rect: null
+      };
+    }
+
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates[0];
   }
 
   function schedulePick() {
@@ -429,11 +493,25 @@ linear-gradient(180deg,
     powerTgt[2] = clamp(powerTgt[2] + 0.44 + (main.intersectionRatio || 0) * 0.18, 0.56, 1.80);
     coreTgt[2]  = clamp(coreTgt[2]  + 0.60 + (main.intersectionRatio || 0) * 0.24, 0.40, 2.30);
 
-    accentTgt = palette.accent || stylizeAccent({ r: 255, g: 255, b: 255 });
-    accentPosTgt.x = clamp(center.x + 12, 10, 90);
-    accentPosTgt.y = clamp(center.y - 10, 12, 88);
-    accentPosTgt.s = 30 + rand(-4, 6);
-    accentPosTgt.a = 0.24;
+    const accentPick = await extractAccentFromVisible(visible);
+    const accentRgb = accentPick.rgb || stylizeAccent({ r: 255, g: 255, b: 255 });
+
+    accentTgt = accentRgb;
+
+    let accentCenter = center;
+    if (accentPick.rect) {
+      accentCenter = viewportPercentFromRect(accentPick.rect);
+    }
+
+    accentPosTgt.x = clamp(accentCenter.x + rand(-6, 6), 10, 90);
+    accentPosTgt.y = clamp(accentCenter.y + rand(-6, 6), 12, 88);
+    accentPosTgt.s = 13 + rand(-2, 3);
+    accentPosTgt.a = 0.54;
+
+    streakTgt.x = clamp(accentCenter.x + rand(-10, 10), 8, 92);
+    streakTgt.y = clamp(accentCenter.y + rand(-8, 8), 10, 90);
+    streakTgt.s = 8 + rand(-1, 2);
+    streakTgt.a = 0.34;
   }
 
   function setupObserver() {
