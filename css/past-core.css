@@ -230,7 +230,7 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   letter-spacing: .40px;
   line-height: 1;
   text-transform: lowercase;
-  transform:translateZ(0) scaleX(var(--textScaleX));
+  transform: scaleX(var(--textScaleX));
   transform-origin: center;
   text-shadow:
     -0.75px 0 0 var(--stroke),
