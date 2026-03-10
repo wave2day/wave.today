@@ -1,4 +1,4 @@
-/* fog4-addon.js — dominant palette + stronger pour + slower fade */
+/* fog4-addon.js — living pour + stable 3 colors + faster 4th accent */
 
 (() => {
   const grid = document.getElementById("eventsGrid");
@@ -14,11 +14,9 @@
   let cur = Array.from({ length: N }, () => ({ ...BASE }));
   let tgt = Array.from({ length: N }, () => ({ ...BASE }));
 
-  /* 1. vrstva – širší mléčné pole */
   let powerCur = [0.34, 0.30, 0.26];
   let powerTgt = [0.34, 0.30, 0.26];
 
-  /* 2. vrstva – hutnější barevné jádro */
   let coreCur = [0.26, 0.22, 0.20];
   let coreTgt = [0.26, 0.22, 0.20];
 
@@ -29,6 +27,12 @@
   ];
 
   let posTgt = JSON.parse(JSON.stringify(posCur));
+
+  /* 4. akcentová vrstva */
+  let accentCur = { r: 255, g: 255, b: 255 };
+  let accentTgt = { r: 255, g: 255, b: 255 };
+  let accentPosCur = { x: 50, y: 50, s: 34, a: 0.00 };
+  let accentPosTgt = { x: 50, y: 50, s: 34, a: 0.22 };
 
   let obs = null;
   let timer = 0;
@@ -49,17 +53,27 @@
 
   function stylize(rgb) {
     const avg = (rgb.r + rgb.g + rgb.b) / 3;
-    const lum = luminance(rgb);
     const sat = saturation(rgb);
+    const boost = sat < 20 ? 1.55 : sat < 45 ? 1.75 : 1.92;
 
-    /* tmavé barvy nenech úplně zesvětlit */
-    const lift = lum < 60 ? 0 : lum < 120 ? 3 : 8;
-    const boost = sat < 22 ? 1.85 : 2.15;
+    return {
+      r: clamp(avg + (rgb.r - avg) * boost + 6, 0, 255),
+      g: clamp(avg + (rgb.g - avg) * (boost - 0.05) + 5, 0, 255),
+      b: clamp(avg + (rgb.b - avg) * (boost + 0.04) + 7, 0, 255)
+    };
+  }
+
+  function stylizeAccent(rgb) {
+    const avg = (rgb.r + rgb.g + rgb.b) / 3;
+    const sat = saturation(rgb);
+    const lum = luminance(rgb);
+    const boost = sat < 28 ? 1.9 : 2.2;
+    const lift = lum > 180 ? 10 : lum < 70 ? 0 : 4;
 
     return {
       r: clamp(avg + (rgb.r - avg) * boost + lift, 0, 255),
-      g: clamp(avg + (rgb.g - avg) * (boost - 0.10) + lift, 0, 255),
-      b: clamp(avg + (rgb.b - avg) * (boost + 0.08) + lift + 2, 0, 255)
+      g: clamp(avg + (rgb.g - avg) * (boost - 0.08) + lift, 0, 255),
+      b: clamp(avg + (rgb.b - avg) * (boost + 0.06) + lift + 2, 0, 255)
     };
   }
 
@@ -101,48 +115,10 @@
     return { x: cx, y: cy };
   }
 
-  function pickDistinctColors(samples, count = 3) {
-    if (!samples.length) {
-      return Array.from({ length: count }, () => ({
-        rgb: { ...BASE },
-        rect: null,
-        ratio: 0
-      }));
-    }
-
-    const chosen = [samples[0]];
-
-    while (chosen.length < count && chosen.length < samples.length) {
-      let best = null;
-      let bestScore = -1;
-
-      for (const s of samples) {
-        if (chosen.includes(s)) continue;
-
-        const minDist = Math.min(...chosen.map(c => colorDist(c.rgb, s.rgb)));
-        const score = minDist + (s.ratio || 0) * 24 + saturation(s.rgb) * 0.15;
-
-        if (score > bestScore) {
-          bestScore = score;
-          best = s;
-        }
-      }
-
-      if (!best) break;
-      chosen.push(best);
-    }
-
-    while (chosen.length < count) {
-      chosen.push(chosen[chosen.length - 1] || samples[0]);
-    }
-
-    return chosen;
-  }
-
   function applyFog() {
-    const c1 = mixWithMilk(cur[0], clamp(powerCur[0], 0, 1.4));
-    const c2 = mixWithMilk(cur[1], clamp(powerCur[1], 0, 1.4));
-    const c3 = mixWithMilk(cur[2], clamp(powerCur[2], 0, 1.4));
+    const c1 = mixWithMilk(cur[0], clamp(powerCur[0], 0, 1.45));
+    const c2 = mixWithMilk(cur[1], clamp(powerCur[1], 0, 1.45));
+    const c3 = mixWithMilk(cur[2], clamp(powerCur[2], 0, 1.45));
 
     const field = mixWithMilk(avgRGB([c1, c2, c3]), 0.18);
 
@@ -151,21 +127,21 @@ radial-gradient(circle at ${posCur[0].x}% ${posCur[0].y}%,
   rgba(${c1.r|0},${c1.g|0},${c1.b|0},${posCur[0].a}) 0%,
   rgba(${c1.r|0},${c1.g|0},${c1.b|0},${posCur[0].a * 0.78}) 20%,
   rgba(${c1.r|0},${c1.g|0},${c1.b|0},${posCur[0].a * 0.42}) 46%,
-  rgba(${c1.r|0},${c1.g|0},${c1.b|0},${posCur[0].a * 0.18}) 76%,
+  rgba(${c1.r|0},${c1.g|0},${c1.b|0},${posCur[0].a * 0.18}) 78%,
   transparent ${posCur[0].s}%),
 
 radial-gradient(circle at ${posCur[1].x}% ${posCur[1].y}%,
   rgba(${c2.r|0},${c2.g|0},${c2.b|0},${posCur[1].a}) 0%,
   rgba(${c2.r|0},${c2.g|0},${c2.b|0},${posCur[1].a * 0.78}) 20%,
   rgba(${c2.r|0},${c2.g|0},${c2.b|0},${posCur[1].a * 0.42}) 46%,
-  rgba(${c2.r|0},${c2.g|0},${c2.b|0},${posCur[1].a * 0.18}) 76%,
+  rgba(${c2.r|0},${c2.g|0},${c2.b|0},${posCur[1].a * 0.18}) 78%,
   transparent ${posCur[1].s}%),
 
 radial-gradient(circle at ${posCur[2].x}% ${posCur[2].y}%,
   rgba(${c3.r|0},${c3.g|0},${c3.b|0},${posCur[2].a}) 0%,
   rgba(${c3.r|0},${c3.g|0},${c3.b|0},${posCur[2].a * 0.78}) 20%,
   rgba(${c3.r|0},${c3.g|0},${c3.b|0},${posCur[2].a * 0.42}) 46%,
-  rgba(${c3.r|0},${c3.g|0},${c3.b|0},${posCur[2].a * 0.18}) 76%,
+  rgba(${c3.r|0},${c3.g|0},${c3.b|0},${posCur[2].a * 0.18}) 78%,
   transparent ${posCur[2].s}%),
 
 radial-gradient(circle at ${posCur[0].x}% ${posCur[0].y}%,
@@ -186,6 +162,12 @@ radial-gradient(circle at ${posCur[2].x}% ${posCur[2].y}%,
   rgba(${cur[2].r|0},${cur[2].g|0},${cur[2].b|0},${coreCur[2] * 0.24}) 34%,
   transparent 42%),
 
+radial-gradient(circle at ${accentPosCur.x}% ${accentPosCur.y}%,
+  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${accentPosCur.a}) 0%,
+  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${accentPosCur.a * 0.72}) 16%,
+  rgba(${accentCur.r|0},${accentCur.g|0},${accentCur.b|0},${accentPosCur.a * 0.34}) 30%,
+  transparent ${accentPosCur.s}%),
+
 linear-gradient(180deg,
   rgba(${field.r|0},${field.g|0},${field.b|0},0.28),
   rgba(242,237,249,0.08) 42%,
@@ -199,6 +181,9 @@ linear-gradient(180deg,
       { x: rand(66, 86), y: rand(20, 40), s: rand(92, 110), a: rand(0.62, 0.80) },
       { x: rand(28, 72), y: rand(62, 84), s: rand(100, 120), a: rand(0.54, 0.72) }
     ];
+
+    accentPosTgt.x = clamp(accentPosTgt.x + rand(-2, 2), 10, 90);
+    accentPosTgt.y = clamp(accentPosTgt.y + rand(-2, 2), 12, 88);
   }
 
   function tick(now) {
@@ -210,21 +195,32 @@ linear-gradient(180deg,
     }
 
     for (let i = 0; i < N; i++) {
-      cur[i].r += (tgt[i].r - cur[i].r) * 0.022;
-      cur[i].g += (tgt[i].g - cur[i].g) * 0.022;
-      cur[i].b += (tgt[i].b - cur[i].b) * 0.022;
+      cur[i].r += (tgt[i].r - cur[i].r) * 0.018;
+      cur[i].g += (tgt[i].g - cur[i].g) * 0.018;
+      cur[i].b += (tgt[i].b - cur[i].b) * 0.018;
 
-      powerCur[i] += (powerTgt[i] - powerCur[i]) * 0.024;
-      coreCur[i] += (coreTgt[i] - coreCur[i]) * 0.030;
+      powerCur[i] += (powerTgt[i] - powerCur[i]) * 0.018;
+      coreCur[i] += (coreTgt[i] - coreCur[i]) * 0.022;
 
-      posCur[i].x += (posTgt[i].x - posCur[i].x) * 0.018;
-      posCur[i].y += (posTgt[i].y - posCur[i].y) * 0.018;
-      posCur[i].s += (posTgt[i].s - posCur[i].s) * 0.016;
-      posCur[i].a += (posTgt[i].a - posCur[i].a) * 0.018;
+      posCur[i].x += (posTgt[i].x - posCur[i].x) * 0.014;
+      posCur[i].y += (posTgt[i].y - posCur[i].y) * 0.014;
+      posCur[i].s += (posTgt[i].s - posCur[i].s) * 0.014;
+      posCur[i].a += (posTgt[i].a - posCur[i].a) * 0.016;
 
-      powerTgt[i] = clamp(powerTgt[i] - 0.0000025, 0.52, 1.60);
-      coreTgt[i]  = clamp(coreTgt[i]  - 0.0000040, 0.36, 2.10);
+      powerTgt[i] = clamp(powerTgt[i] - 0.0000018, 0.56, 1.80);
+      coreTgt[i]  = clamp(coreTgt[i]  - 0.0000030, 0.40, 2.30);
     }
+
+    accentCur.r += (accentTgt.r - accentCur.r) * 0.040;
+    accentCur.g += (accentTgt.g - accentCur.g) * 0.040;
+    accentCur.b += (accentTgt.b - accentCur.b) * 0.040;
+
+    accentPosCur.x += (accentPosTgt.x - accentPosCur.x) * 0.020;
+    accentPosCur.y += (accentPosTgt.y - accentPosCur.y) * 0.020;
+    accentPosCur.s += (accentPosTgt.s - accentPosCur.s) * 0.018;
+    accentPosCur.a += (accentPosTgt.a - accentPosCur.a) * 0.040;
+
+    accentPosTgt.a = clamp(accentPosTgt.a - 0.0000010, 0.28, 0.46);
 
     applyFog();
     raf = requestAnimationFrame(tick);
@@ -276,11 +272,11 @@ linear-gradient(180deg,
             const sat = saturation(rgb);
             const lum = luminance(rgb);
 
-            /* černá / tmavá nesmí být ignorovaná */
-            const darkBoost = lum < 95 ? 1.25 : 1;
-            const vividBoost = 1 + sat * 0.02;
+            const darkWeight = lum < 85 ? 1.06 : 1;
+            const vividWeight = 1 + sat * 0.028;
+            const neutralPenalty = sat < 18 ? 0.92 : 1;
 
-            bucket.score += vividBoost * darkBoost;
+            bucket.score += vividWeight * darkWeight * neutralPenalty;
           }
 
           const palette = [...buckets.values()]
@@ -292,28 +288,71 @@ linear-gradient(180deg,
             }))
             .sort((a, b) => (b.n + b.score) - (a.n + a.score));
 
-          const picked = [];
-          for (const item of palette) {
-            if (picked.length >= 4) break;
+          const dominant = palette[0]?.rgb || BASE;
+          const accents = [];
 
-            const ok = picked.every(p => colorDist(p, item.rgb) > 24);
-            if (ok) picked.push(item.rgb);
+          for (const item of palette.slice(1)) {
+            const rgb = item.rgb;
+            if (colorDist(rgb, dominant) < 22) continue;
+            if (accents.length && colorDist(rgb, accents[0]) < 20) continue;
+            accents.push(rgb);
+            if (accents.length >= 3) break;
           }
 
-          while (picked.length < 3) picked.push(picked[picked.length - 1] || BASE);
+          while (accents.length < 3) accents.push(accents[accents.length - 1] || dominant);
 
-          const result = picked.slice(0, 4).map(stylize);
+          let accent = dominant;
+          let maxSat = -1;
+          let maxAccentScore = -1;
+
+          for (const item of palette) {
+            const rgb = item.rgb;
+            const sat = saturation(rgb);
+            const lum = luminance(rgb);
+
+            const accentScore =
+              sat * 1.0 +
+              (lum > 180 ? 12 : 0) +
+              (item.n < 40 ? 8 : 0);
+
+            if (accentScore > maxAccentScore && sat > maxSat) {
+              maxSat = sat;
+              maxAccentScore = accentScore;
+              accent = rgb;
+            }
+          }
+
+          const result = {
+            dominant: stylize(dominant),
+            alt1: stylize(accents[0]),
+            alt2: stylize(accents[1]),
+            alt3: stylize(accents[2]),
+            accent: stylizeAccent(accent)
+          };
+
           cache.set(src, result);
           resolve(result);
         } catch {
-          const fallback = [BASE, BASE, BASE].map(stylize);
+          const fallback = {
+            dominant: stylize(BASE),
+            alt1: stylize(BASE),
+            alt2: stylize(BASE),
+            alt3: stylize(BASE),
+            accent: stylizeAccent({ r: 255, g: 255, b: 255 })
+          };
           cache.set(src, fallback);
           resolve(fallback);
         }
       };
 
       img.onerror = () => {
-        const fallback = [BASE, BASE, BASE].map(stylize);
+        const fallback = {
+          dominant: stylize(BASE),
+          alt1: stylize(BASE),
+          alt2: stylize(BASE),
+          alt3: stylize(BASE),
+          accent: stylizeAccent({ r: 255, g: 255, b: 255 })
+        };
         cache.set(src, fallback);
         resolve(fallback);
       };
@@ -324,14 +363,14 @@ linear-gradient(180deg,
 
   function schedulePick() {
     clearTimeout(timer);
-    timer = setTimeout(pick, 90);
+    timer = setTimeout(pick, 180);
   }
 
   async function pick() {
     const visible = Array.from(lastEntries.values())
       .filter(e => e && e.isIntersecting && e.target)
       .sort((a, b) => (b.intersectionRatio || 0) - (a.intersectionRatio || 0))
-      .slice(0, 10);
+      .slice(0, 8);
 
     if (!visible.length) return;
 
@@ -344,42 +383,57 @@ linear-gradient(180deg,
     const mainRect = mainImg.getBoundingClientRect();
     const center = viewportPercentFromRect(mainRect);
 
-    const baseSamples = palette.slice(0, 4).map((rgb, i) => ({
-      rgb,
-      rect: {
-        left: mainRect.left + (i === 0 ? -20 : i === 1 ? 20 : i === 2 ? -10 : 10),
-        right: mainRect.right,
-        top: mainRect.top + (i === 0 ? -12 : i === 1 ? -6 : i === 2 ? 8 : 14),
-        bottom: mainRect.bottom
-      },
-      ratio: main.intersectionRatio || 0.9
-    }));
+    const dominant = palette.dominant || stylize(BASE);
+    tgt[0] = {
+      r: tgt[0].r * 0.56 + dominant.r * 0.44,
+      g: tgt[0].g * 0.56 + dominant.g * 0.44,
+      b: tgt[0].b * 0.56 + dominant.b * 0.44
+    };
 
-    const chosen = pickDistinctColors(baseSamples, N);
+    posTgt[0].x = clamp(center.x - 8, 8, 92);
+    posTgt[0].y = clamp(center.y - 6, 10, 90);
+    posTgt[0].s = clamp(108 + (main.intersectionRatio || 0) * 14, 100, 126);
+    posTgt[0].a = clamp(0.78 + (main.intersectionRatio || 0) * 0.12, 0.78, 0.94);
 
-    const offsets = [
-      { x: -8, y: -6 },
-      { x: 10, y: -4 },
-      { x: 2, y: 12 }
-    ];
+    powerTgt[0] = clamp(powerTgt[0] + 0.58 + (main.intersectionRatio || 0) * 0.24, 0.56, 1.80);
+    coreTgt[0]  = clamp(coreTgt[0]  + 0.84 + (main.intersectionRatio || 0) * 0.34, 0.40, 2.30);
 
-    for (let i = 0; i < N; i++) {
-      const s = chosen[i];
+    const altA = palette.alt1 || palette.alt3 || dominant;
+    const altB = palette.alt2 || palette.alt3 || dominant;
 
-      tgt[i] = {
-        r: tgt[i].r * 0.46 + s.rgb.r * 0.54,
-        g: tgt[i].g * 0.46 + s.rgb.g * 0.54,
-        b: tgt[i].b * 0.46 + s.rgb.b * 0.54
-      };
+    tgt[1] = {
+      r: tgt[1].r * 0.58 + altA.r * 0.42,
+      g: tgt[1].g * 0.58 + altA.g * 0.42,
+      b: tgt[1].b * 0.58 + altA.b * 0.42
+    };
 
-      posTgt[i].x = clamp(center.x + offsets[i].x, 8, 92);
-      posTgt[i].y = clamp(center.y + offsets[i].y, 10, 90);
-      posTgt[i].s = clamp(102 + (s.ratio || 0) * 16, 96, 124);
-      posTgt[i].a = clamp(0.70 + (s.ratio || 0) * 0.18, 0.70, 0.92);
+    tgt[2] = {
+      r: tgt[2].r * 0.58 + altB.r * 0.42,
+      g: tgt[2].g * 0.58 + altB.g * 0.42,
+      b: tgt[2].b * 0.58 + altB.b * 0.42
+    };
 
-      powerTgt[i] = clamp(powerTgt[i] + 0.82 + (s.ratio || 0) * 0.46, 0.52, 1.60);
-      coreTgt[i]  = clamp(coreTgt[i]  + 1.08 + (s.ratio || 0) * 0.62, 0.36, 2.10);
-    }
+    posTgt[1].x = clamp(center.x + 10, 8, 92);
+    posTgt[1].y = clamp(center.y - 4, 10, 90);
+    posTgt[1].s = clamp(102 + (main.intersectionRatio || 0) * 12, 96, 120);
+    posTgt[1].a = clamp(0.70 + (main.intersectionRatio || 0) * 0.10, 0.70, 0.88);
+
+    posTgt[2].x = clamp(center.x + 2, 8, 92);
+    posTgt[2].y = clamp(center.y + 12, 10, 90);
+    posTgt[2].s = clamp(100 + (main.intersectionRatio || 0) * 12, 94, 118);
+    posTgt[2].a = clamp(0.66 + (main.intersectionRatio || 0) * 0.10, 0.66, 0.84);
+
+    powerTgt[1] = clamp(powerTgt[1] + 0.44 + (main.intersectionRatio || 0) * 0.18, 0.56, 1.80);
+    coreTgt[1]  = clamp(coreTgt[1]  + 0.60 + (main.intersectionRatio || 0) * 0.24, 0.40, 2.30);
+
+    powerTgt[2] = clamp(powerTgt[2] + 0.44 + (main.intersectionRatio || 0) * 0.18, 0.56, 1.80);
+    coreTgt[2]  = clamp(coreTgt[2]  + 0.60 + (main.intersectionRatio || 0) * 0.24, 0.40, 2.30);
+
+    accentTgt = palette.accent || stylizeAccent({ r: 255, g: 255, b: 255 });
+    accentPosTgt.x = clamp(center.x + 12, 10, 90);
+    accentPosTgt.y = clamp(center.y - 10, 12, 88);
+    accentPosTgt.s = 30 + rand(-4, 6);
+    accentPosTgt.a = 0.24;
   }
 
   function setupObserver() {
