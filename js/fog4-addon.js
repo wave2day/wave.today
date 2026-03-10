@@ -1,4 +1,4 @@
-/* fog4-addon.js — living pour + stable 3 colors + screen-wide 4th accent */
+/* fog4-addon.js — living pour + stable 3 colors + real 4-color picker */
 
 (() => {
   const grid = document.getElementById("eventsGrid");
@@ -198,14 +198,7 @@ linear-gradient(180deg,
     streakTgt.y = clamp(streakTgt.y + rand(-3, 3), 10, 90);
   }
 
-  function tick(now) {
-    if (!nextDrift) nextDrift = now + 6200;
-
-    if (now >= nextDrift) {
-      pickDrift();
-      nextDrift = now + rand(5200, 8600);
-    }
-
+  function tick() {
     for (let i = 0; i < N; i++) {
       cur[i].r += (tgt[i].r - cur[i].r) * 0.018;
       cur[i].g += (tgt[i].g - cur[i].g) * 0.018;
@@ -240,6 +233,12 @@ linear-gradient(180deg,
     accentPosTgt.a = clamp(accentPosTgt.a - 0.0000004, 0.38, 0.62);
     streakTgt.a = clamp(streakTgt.a - 0.0000008, 0.24, 0.42);
 
+    if (!nextDrift) nextDrift = performance.now() + 6200;
+    if (performance.now() >= nextDrift) {
+      pickDrift();
+      nextDrift = performance.now() + rand(5200, 8600);
+    }
+
     applyFog();
     raf = requestAnimationFrame(tick);
   }
@@ -261,7 +260,7 @@ linear-gradient(180deg,
           ctx.drawImage(img, 0, 0, 40, 40);
 
           const data = ctx.getImageData(0, 0, 40, 40).data;
-          const buckets = new Map();
+          const buckets = {};
 
           for (let i = 0; i < data.length; i += 4) {
             const a = data[i + 3];
@@ -271,107 +270,70 @@ linear-gradient(180deg,
             const g = data[i + 1];
             const b = data[i + 2];
 
-            const qr = Math.round(r / 20) * 20;
-            const qg = Math.round(g / 20) * 20;
-            const qb = Math.round(b / 20) * 20;
-            const key = `${qr}_${qg}_${qb}`;
+            const key =
+              (Math.round(r / 24) * 24) + "_" +
+              (Math.round(g / 24) * 24) + "_" +
+              (Math.round(b / 24) * 24);
 
-            if (!buckets.has(key)) {
-              buckets.set(key, { r: 0, g: 0, b: 0, n: 0, score: 0 });
-            }
+            if (!buckets[key]) buckets[key] = { r: 0, g: 0, b: 0, n: 0 };
 
-            const bucket = buckets.get(key);
-            bucket.r += r;
-            bucket.g += g;
-            bucket.b += b;
-            bucket.n += 1;
-
-            const rgb = { r, g, b };
-            const sat = saturation(rgb);
-            const lum = luminance(rgb);
-
-            const darkWeight = lum < 85 ? 1.06 : 1;
-            const vividWeight = 1 + sat * 0.028;
-            const neutralPenalty = sat < 18 ? 0.92 : 1;
-
-            bucket.score += vividWeight * darkWeight * neutralPenalty;
+            buckets[key].r += r;
+            buckets[key].g += g;
+            buckets[key].b += b;
+            buckets[key].n++;
           }
 
-          const palette = [...buckets.values()]
-            .filter(x => x.n > 4)
+          const palette = Object.values(buckets)
             .map(x => ({
-              rgb: { r: x.r / x.n, g: x.g / x.n, b: x.b / x.n },
-              n: x.n,
-              score: x.score
+              r: x.r / x.n,
+              g: x.g / x.n,
+              b: x.b / x.n,
+              n: x.n
             }))
-            .sort((a, b) => (b.n + b.score) - (a.n + a.score));
+            .sort((a, b) => b.n - a.n);
 
-          const dominant = palette[0]?.rgb || BASE;
-          const accents = [];
+          const chosen = [palette[0] || BASE];
 
-          for (const item of palette.slice(1)) {
-            const rgb = item.rgb;
-            if (colorDist(rgb, dominant) < 22) continue;
-            if (accents.length && colorDist(rgb, accents[0]) < 20) continue;
-            accents.push(rgb);
-            if (accents.length >= 3) break;
-          }
+          for (const c of palette) {
+            if (chosen.length >= 4) break;
 
-          while (accents.length < 3) accents.push(accents[accents.length - 1] || dominant);
-
-          let accent = dominant;
-          let bestAccentScore = -1;
-
-          for (const item of palette) {
-            const rgb = item.rgb;
-            const sat = saturation(rgb);
-            const lum = luminance(rgb);
-
-            const accentScore =
-              sat * 1.0 +
-              (lum > 185 ? 10 : 0) +
-              (item.n < 42 ? 10 : 0);
-
-            if (accentScore > bestAccentScore) {
-              bestAccentScore = accentScore;
-              accent = rgb;
+            let ok = true;
+            for (const p of chosen) {
+              if (colorDist(p, c) < 38) ok = false;
             }
+
+            if (ok) chosen.push(c);
           }
+
+          while (chosen.length < 4) chosen.push(chosen[0]);
 
           const result = {
-            dominant: stylize(dominant),
-            alt1: stylize(accents[0]),
-            alt2: stylize(accents[1]),
-            alt3: stylize(accents[2]),
-            accent: stylizeAccent(accent)
+            dominant: chosen[0],
+            alt1: chosen[1],
+            alt2: chosen[2],
+            accent: chosen[3]
           };
 
           cache.set(src, result);
           resolve(result);
         } catch {
           const fallback = {
-            dominant: stylize(BASE),
-            alt1: stylize(BASE),
-            alt2: stylize(BASE),
-            alt3: stylize(BASE),
-            accent: stylizeAccent({ r: 255, g: 255, b: 255 })
+            dominant: BASE,
+            alt1: BASE,
+            alt2: BASE,
+            accent: BASE
           };
           cache.set(src, fallback);
           resolve(fallback);
         }
       };
 
-      img.onerror = () => {
-        const fallback = {
-          dominant: stylize(BASE),
-          alt1: stylize(BASE),
-          alt2: stylize(BASE),
-          alt3: stylize(BASE),
-          accent: stylizeAccent({ r: 255, g: 255, b: 255 })
-        };
-        cache.set(src, fallback);
-        resolve(fallback);
-      };
+      img.onerror = () => resolve({
+        dominant: BASE,
+        alt1: BASE,
+        alt2: BASE,
+        accent: BASE
+      });
 
       img.src = src;
     });
@@ -392,13 +354,12 @@ linear-gradient(180deg,
           pal.accent,
           pal.alt1,
           pal.alt2,
-          pal.alt3,
           pal.dominant
         ].filter(Boolean);
 
         for (const rgb of local) {
-          const sat = Math.max(rgb.r, rgb.g, rgb.b) - Math.min(rgb.r, rgb.g, rgb.b);
-          const lum = 0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b;
+          const sat = saturation(rgb);
+          const lum = luminance(rgb);
 
           const vividScore =
             sat * 1.35 +
@@ -416,7 +377,7 @@ linear-gradient(180deg,
 
     if (!candidates.length) {
       return {
-        rgb: stylizeAccent({ r: 255, g: 255, b: 255 }),
+        rgb: { r: 255, g: 255, b: 255 },
         rect: null
       };
     }
@@ -447,23 +408,15 @@ linear-gradient(180deg,
     const mainRect = mainImg.getBoundingClientRect();
     const center = viewportPercentFromRect(mainRect);
 
-    const dominant = palette.dominant || stylize(BASE);
+    const dominant = stylize(palette.dominant || BASE);
+    const altA = stylize(palette.alt1 || palette.dominant || BASE);
+    const altB = stylize(palette.alt2 || palette.alt1 || palette.dominant || BASE);
+
     tgt[0] = {
       r: tgt[0].r * 0.56 + dominant.r * 0.44,
       g: tgt[0].g * 0.56 + dominant.g * 0.44,
       b: tgt[0].b * 0.56 + dominant.b * 0.44
     };
-
-    posTgt[0].x = clamp(center.x - 8, 8, 92);
-    posTgt[0].y = clamp(center.y - 6, 10, 90);
-    posTgt[0].s = clamp(108 + (main.intersectionRatio || 0) * 14, 100, 126);
-    posTgt[0].a = clamp(0.78 + (main.intersectionRatio || 0) * 0.12, 0.78, 0.94);
-
-    powerTgt[0] = clamp(powerTgt[0] + 0.58 + (main.intersectionRatio || 0) * 0.24, 0.56, 1.80);
-    coreTgt[0]  = clamp(coreTgt[0]  + 0.84 + (main.intersectionRatio || 0) * 0.34, 0.40, 2.30);
-
-    const altA = palette.alt1 || palette.alt3 || dominant;
-    const altB = palette.alt2 || palette.alt3 || dominant;
 
     tgt[1] = {
       r: tgt[1].r * 0.58 + altA.r * 0.42,
@@ -477,6 +430,11 @@ linear-gradient(180deg,
       b: tgt[2].b * 0.58 + altB.b * 0.42
     };
 
+    posTgt[0].x = clamp(center.x - 8, 8, 92);
+    posTgt[0].y = clamp(center.y - 6, 10, 90);
+    posTgt[0].s = clamp(108 + (main.intersectionRatio || 0) * 14, 100, 126);
+    posTgt[0].a = clamp(0.78 + (main.intersectionRatio || 0) * 0.12, 0.78, 0.94);
+
     posTgt[1].x = clamp(center.x + 10, 8, 92);
     posTgt[1].y = clamp(center.y - 4, 10, 90);
     posTgt[1].s = clamp(102 + (main.intersectionRatio || 0) * 12, 96, 120);
@@ -487,6 +445,9 @@ linear-gradient(180deg,
     posTgt[2].s = clamp(100 + (main.intersectionRatio || 0) * 12, 94, 118);
     posTgt[2].a = clamp(0.66 + (main.intersectionRatio || 0) * 0.10, 0.66, 0.84);
 
+    powerTgt[0] = clamp(powerTgt[0] + 0.58 + (main.intersectionRatio || 0) * 0.24, 0.56, 1.80);
+    coreTgt[0]  = clamp(coreTgt[0]  + 0.84 + (main.intersectionRatio || 0) * 0.34, 0.40, 2.30);
+
     powerTgt[1] = clamp(powerTgt[1] + 0.44 + (main.intersectionRatio || 0) * 0.18, 0.56, 1.80);
     coreTgt[1]  = clamp(coreTgt[1]  + 0.60 + (main.intersectionRatio || 0) * 0.24, 0.40, 2.30);
 
@@ -494,7 +455,7 @@ linear-gradient(180deg,
     coreTgt[2]  = clamp(coreTgt[2]  + 0.60 + (main.intersectionRatio || 0) * 0.24, 0.40, 2.30);
 
     const accentPick = await extractAccentFromVisible(visible);
-    const accentRgb = accentPick.rgb || stylizeAccent({ r: 255, g: 255, b: 255 });
+    const accentRgb = accentPick.rgb || { r: 255, g: 255, b: 255 };
 
     accentTgt = accentRgb;
 
