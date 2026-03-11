@@ -449,3 +449,6 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   #eventsGrid.randomMode{ padding: 0 8px; }
   #eventsGrid.randomMode .poster{ padding: 8px; }
 }
+.wtGlass.isPill .wtText{
+  text-shadow: none;
+}
