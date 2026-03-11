@@ -260,11 +260,14 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   border-radius: 999px;
 }
 
-.scalePill{ zoom: .253; }
-.scaleRound{ zoom: .235; }
-@supports not (zoom: 1){
-  .scalePill{ zoom:1; transform: scale(.253); transform-origin:left center; }
-  .scaleRound{ zoom:1; transform: scale(.235); transform-origin:center; }
+.scalePill{
+  transform: scale(.253);
+  transform-origin:left center;
+}
+
+.scaleRound{
+  transform: scale(.235);
+  transform-origin:center;
 }
 
 .wtModeBtn{ display:flex; align-items:center; }
