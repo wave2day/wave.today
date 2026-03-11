@@ -224,26 +224,18 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   pointer-events:none;
   width: var(--textWidth);
   margin: 0 auto;
-  color: var(--textColor);
-  font-weight: 760;
-  font-size: var(--textSize);
-  letter-spacing: .40px;
-  line-height: 1;
-  text-transform: lowercase;
-  transform: scaleX(var(--textScaleX));
-  transform-origin: center;
-  text-shadow:
-    -0.75px 0 0 var(--stroke),
-     0.75px 0 0 var(--stroke),
-     0 -0.75px 0 var(--stroke),
-     0 0.75px 0 var(--stroke),
-    -0.55px -0.55px 0 var(--stroke),
-     0.55px -0.55px 0 var(--stroke),
-    -0.55px 0.55px 0 var(--stroke),
-     0.55px 0.55px 0 var(--stroke),
-     0 -0.55px 0 var(--lacquer),
-     0 1.25px 1.45px var(--depth1),
-     0 3px 8px var(--depth2);
+
+  color:#ffffff;
+  font-weight:760;
+  font-size:var(--textSize);
+  letter-spacing:.40px;
+  line-height:1;
+  text-transform:lowercase;
+
+  transform:scaleX(var(--textScaleX));
+  transform-origin:center;
+
+  text-shadow:0 2px 4px rgba(0,0,0,.35);
 }
 
 .wtGlass.isPill{
