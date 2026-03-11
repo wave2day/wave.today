@@ -260,11 +260,36 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   border-radius: 999px;
 }
 
-.scalePill{ zoom: .253; }
-.scaleRound{ zoom: .235; }
-@supports not (zoom: 1){
-  .scalePill{ zoom:1; transform: scale(.253); transform-origin:left center; }
-  .scaleRound{ zoom:1; transform: scale(.235); transform-origin:center; }
+/* NEW TOPBAR SIZE — no zoom */
+
+.scalePill{
+  width:111px;
+  height:48px;
+}
+
+.scalePill .wtGlass{
+  width:111px;
+  height:48px;
+}
+
+.scalePill .wtCore{
+  width:95px;
+  height:31px;
+}
+
+.scaleRound{
+  width:45px;
+  height:45px;
+}
+
+.scaleRound .wtGlass{
+  width:45px;
+  height:45px;
+}
+
+.scaleRound .wtCore{
+  width:29px;
+  height:29px;
 }
 
 .wtModeBtn{ display:flex; align-items:center; }
