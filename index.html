@@ -8,6 +8,7 @@
 <link href="css/share.css?v=1" rel="stylesheet"/>
 <link href="css/qr.css?v=3" rel="stylesheet"/>
 <link href="css/extra.css?v=1" rel="stylesheet"/>
+<link rel="stylesheet" href="css/wt-online.css?v=1">
 <!-- Debug guard: kdyby ti něco globálně schovalo IMG, tohle ho vytáhne zpět -->
 <style>
     #wtOrb img, #wtOverlay img { opacity: 1 !important; display: block !important; visibility: visible !important; }
@@ -1238,5 +1239,12 @@ const leds = window.leds; // make applyBG() use the bridged LED states
 <script src="js/wt-calendar.js"></script> 
 
 <script src="js/side-panel-app.js" defer></script>
+
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/map.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/geodata/continentsLow.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+<script src="js/wt-online.js?v=1" defer></script>
+
 </body>
 </html>
