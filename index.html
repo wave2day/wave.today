@@ -1246,5 +1246,30 @@ const leds = window.leds; // make applyBG() use the bridged LED states
 <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 <script src="js/wt-online.js?v=1" defer></script>
 
+<script>
+(function() {
+
+  // aby se skript nespouštěl při každém reloadu
+  const key = "finished_events_check";
+  const last = localStorage.getItem(key);
+  const now = Date.now();
+
+  // spustí kontrolu jen jednou za 30 minut
+  if (!last || now - last > 30 * 60 * 1000) {
+
+    fetch("/api/move_finished_events.php")
+      .then(r => r.json())
+      .then(data => {
+        console.log("Finished events check:", data);
+      })
+      .catch(() => {});
+
+    localStorage.setItem(key, now);
+
+  }
+
+})();
+</script>
+
 </body>
 </html>
