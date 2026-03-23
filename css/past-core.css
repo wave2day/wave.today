@@ -59,7 +59,7 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   --pressOut: 190ms;
 
   --textColor: rgba(255,255,255,.92);
-  --textSize: 34px;
+  --textSize: 45px;
   --textScaleX: 1.10;
   --textWidth: 92%;
 
