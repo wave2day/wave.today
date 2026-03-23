@@ -259,6 +259,7 @@
 
     outline: none !important;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
     user-select:none;
 
     background:
@@ -525,10 +526,19 @@ body{background:transparent !important;}
     --depth2: rgba(0,0,0,.18);
     --lacquer: rgba(255,255,255,.28);
 
-    
     --pillScale: .253;
-    display:flex;
-    align-items:center;}
+    --pillScaledW: calc(var(--pillW) * var(--pillScale));
+    --pillScaledH: calc(var(--outer) * var(--pillScale));
+    display:block;
+    width: var(--pillScaledW);
+    height: var(--pillScaledH);
+    min-width: var(--pillScaledW);
+    min-height: var(--pillScaledH);
+    flex: 0 0 var(--pillScaledW);
+    position: relative;
+    overflow: visible;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;}
 #oknoSection #wtPastPill *{box-sizing:border-box;}
 #oknoSection #wtPastPill .glassBase{--w: var(--outer);
     --h: var(--outer);
@@ -564,9 +574,15 @@ body{background:transparent !important;}
 
     transition: filter var(--pressTimeOut) ease;
 
-    
-    zoom: var(--pillScale);
-    transform-origin: left center;}
+    position:absolute;
+    left:0;
+    top:0;
+    zoom: 1;
+    transform: scale(var(--pillScale));
+    transform-origin: left top;
+    will-change: transform;
+    -webkit-transform: scale(var(--pillScale));
+    -webkit-transform-origin: left top;}
 @supports not (zoom: 1){#oknoSection #wtPastPill .glassBase{zoom: 1;
       transform: scale(var(--pillScale));}}
 #oknoSection #wtPastPill .glassBase::before{content:"";
@@ -726,6 +742,8 @@ body{background:transparent !important;}
     letter-spacing: .55px;
     line-height: 1;
     text-transform: lowercase;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 
     transform: scaleX(var(--textScaleX));
     transform-origin: center;
@@ -1249,22 +1267,21 @@ const leds = window.leds; // make applyBG() use the bridged LED states
 <script>
 (function() {
 
-  // aby se skript nespouštěl při každém reloadu
   const key = "finished_events_check";
   const last = localStorage.getItem(key);
   const now = Date.now();
 
-  // spustí kontrolu jen jednou za 30 minut
   if (!last || now - last > 30 * 60 * 1000) {
 
     fetch("/api/move_finished_events.php")
       .then(r => r.json())
       .then(data => {
         console.log("Finished events check:", data);
+        localStorage.setItem(key, now);
       })
-      .catch(() => {});
-
-    localStorage.setItem(key, now);
+      .catch(err => {
+        console.error("Finished events check failed:", err);
+      });
 
   }
 
