@@ -183,6 +183,7 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   padding:0;
   cursor:pointer;
   user-select:none;
+  touch-action: manipulation;
   text-decoration:none;
   display:grid;
   place-items:center;
@@ -230,8 +231,9 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   letter-spacing: .40px;
   line-height: 1;
   text-transform: lowercase;
-  transform: scaleX(var(--textScaleX));
-  transform-origin: center;
+  transform: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   text-shadow:
     -0.75px 0 0 var(--stroke),
      0.75px 0 0 var(--stroke),
@@ -260,11 +262,43 @@ a:focus, a:focus-visible, button:focus, button:focus-visible{ outline:none !impo
   border-radius: 999px;
 }
 
-.scalePill{ zoom: .253; }
-.scaleRound{ zoom: .235; }
-@supports not (zoom: 1){
-  .scalePill{ zoom:1; transform: scale(.253); transform-origin:left center; }
-  .scaleRound{ zoom:1; transform: scale(.235); transform-origin:center; }
+/* iPad/Safari fix: keep the same visual size/position without using zoom */
+.topBar .wtBarRow[aria-label="Main page"]{
+  position: relative;
+  width: calc(440px * .253);
+  height: calc(190px * .253);
+  flex: 0 0 calc(440px * .253);
+  overflow: visible;
+}
+
+#mainPill.scalePill{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 440px;
+  height: 190px;
+  transform: scale(.253);
+  transform-origin: left top;
+  will-change: transform;
+}
+
+.wtModeBtn{
+  position: relative;
+  width: calc(190px * .235);
+  height: calc(190px * .235);
+  flex: 0 0 calc(190px * .235);
+  overflow: visible;
+}
+
+.wtModeBtn > .scaleRound{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 190px;
+  height: 190px;
+  transform: scale(.235);
+  transform-origin: left top;
+  will-change: transform;
 }
 
 .wtModeBtn{ display:flex; align-items:center; }
